@@ -1,0 +1,9 @@
+import "msvcrt.dll", "printf __Printf"
+
+print PRINT_STRING, "YOLO\n"
+
+init_stack_dump_point
+
+push "Hello World\n"
+
+jit_call __Printf
