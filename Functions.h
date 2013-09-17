@@ -163,12 +163,35 @@ FUNCTION_BEGIN(JIT_Printf, 1, 0, ARG_NULL)
     RunAsm (code);
 FUNCTION_END
 
-FUNCTION_BEGIN(JIT_Call, 1, 0, ARG_DLL_FUNC)
+FUNCTION_BEGIN(JIT_Call_Void, 1, 0, ARG_DLL_FUNC)
     std::string code;
     for (stack<long long>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpPoint_]); i < $ dataStack_.end(); i++)
         code += "push " + GetAsmNumString (*i) + "\n";
     code += "mov eax, " + GetAsmNumString (int($ dllResolved_[arg.arg1])) + "\ncall eax\n";
     code += "add esp, " + GetAsmNumString (($ dataStack_.size()) * 4, "") + "\nretn\n";
+    RunAsm (code);
+FUNCTION_END
+
+FUNCTION_BEGIN(JIT_Call_DWord, 1, 3, ARG_DLL_FUNC _ ARG_REG _ ARG_VAR _ ARG_VAR_MEMBER)
+    std::string code;
+    void* ptr = $ isVar(arg.arg2) ? $ GetVarPt (arg.flag2, arg.arg2) : $ GetReg (arg.arg2).reg;
+    for (stack<long long>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpPoint_]); i < $ dataStack_.end(); i++)
+        code += "push " + GetAsmNumString (*i) + "\n";
+    code += "mov eax, " + GetAsmNumString (int($ dllResolved_[arg.arg1])) + "\ncall eax\n";
+    code += "add esp, " + GetAsmNumString (($ dataStack_.size()) * 4, "") + "\n";
+    code += "mov [" + GetAsmNumString (int(ptr), "") + "], eax\nretn\n";
+    RunAsm (code);
+FUNCTION_END
+
+FUNCTION_BEGIN(JIT_Call_QWord, 1, 3, ARG_DLL_FUNC _ ARG_REG _ ARG_VAR _ ARG_VAR_MEMBER)
+    std::string code;
+    void* ptr = $ isVar(arg.arg2) ? $ GetVarPt (arg.flag2, arg.arg2) : $ GetReg (arg.arg2).reg;
+    for (stack<long long>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpPoint_]); i < $ dataStack_.end(); i++)
+        code += "push " + GetAsmNumString (*i) + "\n";
+    code += "mov eax, " + GetAsmNumString (int($ dllResolved_[arg.arg1])) + "\ncall eax\n";
+    code += "add esp, " + GetAsmNumString (($ dataStack_.size()) * 4, "") + "\n";
+    code += "mov [" + GetAsmNumString (int(ptr), "") + "], eax\n";
+    code += "mov [" + GetAsmNumString (int(ptr) + 4, "") + "], edx\nretn\n";
     RunAsm (code);
 FUNCTION_END
 
