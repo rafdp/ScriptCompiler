@@ -135,7 +135,7 @@ _BUILD_CASE_FUNC (Import)
                          ERROR_IMPORT_DLL_INVALID_STR)
     {
         auto foundIt = dllImportMap_.end();
-        if ((foundIt = dllImportMap_.find (*(std::string*)arg.arg1)) ==
+        if ((foundIt = dllImportMap_.find (strings_[arg.arg1])) ==
              dllImportMap_.end())
         {
             DllVector_t vec;

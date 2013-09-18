@@ -1,12 +1,18 @@
 import "msvcrt.dll", "_atoi64 __atoll"
+import "msvcrt.dll", "sqrt __Sqrt"
 
 init_stack_dump_point
 
 push "2305843009213693922"
-;push "230584"
 
 jit_call_qword __atoll, rqword
 
-print PRINT_NUMBER, rqword
+print PRINT_NUMBER, rqword 
 
+print PRINT_STRING, "\n"
+
+init_stack_dump_point
+push 16
+jit_call_qword __Sqrt, aqx
+print PRINT_NUMBER, aqx
 print PRINT_STRING, "\n"

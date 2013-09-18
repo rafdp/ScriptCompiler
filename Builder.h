@@ -177,7 +177,7 @@ ScriptCompiler_t::ScriptCompiler_t (std::string filename, exception_data* expn) 
     {
         for ( ; !feof (f); n_line ++)
         {
-            //printf ("LINE %d, %d\n", n_line, mvars_.size());
+            //printf ("LINE %d\n", n_line);
             ScriptLine_t line (f);
             Cmd_t cmd (line.cmd);
             Arg_t arg (line.param1, line.param2);
