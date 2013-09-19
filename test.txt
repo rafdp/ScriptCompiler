@@ -1,18 +1,21 @@
-import "msvcrt.dll", "_atoi64 __atoll"
-import "msvcrt.dll", "sqrt __Sqrt"
-
+import "testVoid.dll", "TestFunc __TestVoid"
+import "msvcrt.dll", "_atoi64 __atoi"
+import "msvcrt.dll", "printf _printf"
 init_stack_dump_point
 
-push "2305843009213693922"
+push "32156513621541"
 
-jit_call_qword __atoll, rqword
-
+;jit_call_qword __atoi, rqword
 print PRINT_NUMBER, rqword 
-
 print PRINT_STRING, "\n"
 
-init_stack_dump_point
-push 16
-jit_call_qword __Sqrt, aqx
-print PRINT_NUMBER, aqx
+init_stack_dump_point 
+push 0
+push 0
+push "Hello World\n"
+jit_call_void _printf
+
+init_stack_dump_point 
+jit_call_void __TestVoid
+;print PRINT_NUMBER, rqword 
 print PRINT_STRING, "\n"

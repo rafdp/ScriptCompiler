@@ -31,11 +31,12 @@ FUNCTION_END
 
 FUNCTION_BEGIN(Push, 5, 0, ARG_NUM _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_STR)
     //printf ("Called push %lld\n", $ GetVal (arg.flag1, arg.arg1));
-    $ dataStack_.push ($ GetVal (arg.flag1, arg.arg1));
+    //ErrorPrintfBox (GetForegroundWindow(), 0, "%s %d", ARG_D[arg.flag1].c_str(), $ GetSize(arg.flag1, arg.arg1));
+    $ dataStack_.push (StackData_t ($ GetVal (arg.flag1, arg.arg1), $ GetSize(arg.flag1, arg.arg1)));
 FUNCTION_END
 
 FUNCTION_BEGIN(Pop, 4, 0, ARG_NULL _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG)
-    long long val = $ dataStack_.pop ();
+    long long val = $ dataStack_.pop ().data;
     if (! $ isNull (arg.flag1)) $ SetVal (arg.flag1, arg.arg1, val);
 FUNCTION_END
 
@@ -156,7 +157,7 @@ FUNCTION_END
 
 FUNCTION_BEGIN(JIT_Printf, 1, 0, ARG_NULL)
     std::string code;
-    for (stack<long long>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpPoint_]); i < $ dataStack_.end(); i++)
+    for (stack<StackData_t>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpPoint_]); i < $ dataStack_.end(); i++)
         code += "push " + GetAsmNumString (*i) + "\n";
     code += "mov eax, " + GetAsmNumString (int(printf)) + "\ncall eax\n";
     code += "add esp, " + GetAsmNumString (($ dataStack_.size()) * 4, "") + "\nretn\n";
@@ -164,8 +165,8 @@ FUNCTION_BEGIN(JIT_Printf, 1, 0, ARG_NULL)
 FUNCTION_END
 
 #define ASM_FILL_STACK(str) \
-for (stack<long long>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpPoint_]); i < $ dataStack_.end(); i++) \
-    str += "push " + GetAsmNumString (*i) + "\n";
+for (stack<StackData_t>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpPoint_]); i < $ dataStack_.end(); i++) \
+    PushStackValueString (*i, &str);/*str += "push " + GetAsmNumString (*i) + "\n"; */
 
 #define ASM_CALL_FUNC(ptr, str) \
 str += "mov eax, " + GetAsmNumString (int(ptr)) + "\ncall eax\n";
@@ -174,8 +175,10 @@ FUNCTION_BEGIN(JIT_Call_Void, 1, 0, ARG_DLL_FUNC)
     std::string code;
     ASM_FILL_STACK (code)
     ASM_CALL_FUNC($ dllResolved_[arg.arg1], code)
-    code += "add esp, " + GetAsmNumString (($ dataStack_.size() - $ stackDumpPoint_) * 4, "") + "\nretn\n";
+    code += "add esp, " + GetAsmNumString ($ EspAdd (), "") + "\nretn\n";
+    ErrorPrintfBox (GetForegroundWindow(), 0, "About to Run (void)");
     RunAsm (code);
+    ErrorPrintfBox (GetForegroundWindow(), 0, "Returned (void)");
 FUNCTION_END
 
 FUNCTION_BEGIN(JIT_Call_DWord, 1, 3, ARG_DLL_FUNC _ ARG_REG _ ARG_VAR _ ARG_VAR_MEMBER)
@@ -183,20 +186,25 @@ FUNCTION_BEGIN(JIT_Call_DWord, 1, 3, ARG_DLL_FUNC _ ARG_REG _ ARG_VAR _ ARG_VAR_
     void* ptr = $ isVar(arg.arg2) ? $ GetVarPt (arg.flag2, arg.arg2) : $ GetReg (arg.arg2).reg;
     ASM_FILL_STACK (code)
     ASM_CALL_FUNC($ dllResolved_[arg.arg1], code)
-    code += "add esp, " + GetAsmNumString (($ dataStack_.size() - $ stackDumpPoint_) * 4, "") + "\n";
+    code += "add esp, " + GetAsmNumString ($ EspAdd (), "") + "\n";
     code += "mov [" + GetAsmNumString (int(ptr), "") + "], eax\nretn\n";
     RunAsm (code);
 FUNCTION_END
 
 FUNCTION_BEGIN(JIT_Call_QWord, 1, 3, ARG_DLL_FUNC _ ARG_REG _ ARG_VAR _ ARG_VAR_MEMBER)
     std::string code;
+    //for (int i = 0; i < 15; i ++) code += "nop\n";
+    /*code += "nop\nnop\nnop\nnop\nint3\n";
+    code += "nop\nnop\nnop\nnop\n";*/
     void* ptr = $ isVar(arg.arg2) ? $ GetVarPt (arg.flag2, arg.arg2) : $ GetReg (arg.arg2).reg;
     ASM_FILL_STACK (code)
     ASM_CALL_FUNC($ dllResolved_[arg.arg1], code)
-    code += "add esp, " + GetAsmNumString (($ dataStack_.size() - $ stackDumpPoint_) * 4, "") + "\n";
+    code += "add esp, " + GetAsmNumString ($ EspAdd (), "") + "\n";
     code += "mov [" + GetAsmNumString (int(ptr), "") + "], eax\n";
     code += "mov [" + GetAsmNumString (int(ptr) + 4, "") + "], edx\nretn\n";
+    ErrorPrintfBox (GetForegroundWindow(), 0, "%s", code.c_str());
     RunAsm (code);
+    ErrorPrintfBox (GetForegroundWindow(), 0, "Returned");
 FUNCTION_END
 
 #undef ASM_FILL_STACK
@@ -226,7 +234,7 @@ FUNCTION_BEGIN(name, 0, 0, ARG_NULL) \
     { \
         return ErrorReturn_t (RET_ERROR_FATAL, "Invalid second operand value (0)"); \
     } \
-    $ dataStack_.push(val0 operator val1); \
+    $ dataStack_.push(StackData_t (val0 operator val1, sizeof (long long))); \
 FUNCTION_END
 
 

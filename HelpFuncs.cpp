@@ -198,6 +198,31 @@ template<class T> typename std::vector<T>::const_iterator find(const std::vector
     return vec.end();
 }
 
+struct StackData_t
+{
+    long long data;
+    size_t size;
+
+    template <typename T>
+    StackData_t (T data_ = 0, size_t size_ = 0) :
+        data ((long long) data_),
+        size (size_)
+    {}
+
+    bool operator! ()
+    {return data == 0;}
+
+    template <typename T>
+    operator T ()
+    {return (T)data;}
+
+    friend std::ostream& operator<< (std::ostream& output, const StackData_t& s)
+    {
+        output << s.data;
+        return output;
+    }
+};
+
 int RunAsm (std::string code)
 {
     {
@@ -254,6 +279,37 @@ std::string GetAsmNumString (int val, const char* operand = "dword")
     std::string val_str;
     val_str += std::string(operand) + "(0" + val_ + "h)";
     return val_str;
+}
+
+void PushStackValueString (const StackData_t& value, std::string* str)
+{
+    std::string type;
+    if (value.size <= sizeof (int))
+    {
+        switch (value.size)
+        {
+            case sizeof (char):
+            type = "byte";
+            break;
+            case sizeof (short):
+            type = "word";
+            break;
+            case sizeof (int):
+            type = "dword";
+            break;
+            //!default:
+            //!NAT_EXCEPTION ()
+        }
+        (*str) += "push " + GetAsmNumString (value.data, type.c_str()) + "\n";
+    }
+    else
+    if (value.size == sizeof (long long))
+    {
+        (*str) += "push dword[" + GetAsmNumString (int(&(value.data)) + 4, "") + "]\n";
+        (*str) += "push dword[" + GetAsmNumString (int(&(value.data)), "") + "]\n";
+        // (*str) += "push " + GetAsmNumString (int(&(value.data)), "qword") + "\n";
+    }
+
 }
 
 struct MemberVarDescriptor_t

@@ -21,7 +21,7 @@ struct UserFunc_t
 class RunInstanceDataHandler_t : public ScriptLoader_t
 {
 public:
-    stack<long long>        dataStack_;
+    stack<StackData_t>      dataStack_;
     stack<CallInfo_t>       callStack_;
     char                    registers_[REGISTERS_SIZE];
     size_t                  run_line_;
@@ -175,6 +175,15 @@ public:
         if ((flag & char(~ARG_UNREF_MASK)) == ARG_VAR_MEMBER) return typeSizes_[MemberVarType (arg)];
     }
 
+    size_t GetSize (char flag, long long arg)
+    {
+        if (isVar (flag)) return GetVarSize (flag, arg);
+        if (isReg (flag)) return GetReg (arg).size;
+        if (isStr (flag)) return sizeof (char*);
+        if (isNum (flag)) return sizeof (int);
+        return 0;
+    }
+
     inline bool isNum  (char flag) {return ((flag & char(~ARG_UNREF_MASK)) == ARG_NUM  ? true : false);}
     //inline bool isPtr  (char flag) {return ((flag & char(~ARG_UNREF_MASK)) == ARG_PTR  ? true : false);}
     inline bool isNull (char flag) {return ((flag & char(~ARG_UNREF_MASK)) == ARG_NULL ? true : false);}
@@ -188,6 +197,18 @@ public:
     {
         return GetVal (vars_[num].ptrFlag, GetVar (num));
     }*/
+    long long EspAdd ()
+    {
+        long long result = 0;
+        //($ dataStack_.size() - $ stackDumpPoint_) * 4
+        for (int i = stackDumpPoint_; i < dataStack_.size(); i++)
+        {
+            if (dataStack_[i].size == 8) result += 8;
+            else result += 4;
+        }
+        return result;
+    }
+
 };
 
 RunInstanceDataHandler_t::RunInstanceDataHandler_t (std::string filename,
@@ -265,3 +286,4 @@ bool RunInstanceDataHandler_t::SetVal (char arg_flag, long long arg_arg, long lo
 
 RunInstanceDataHandler_t::~RunInstanceDataHandler_t()
 {}
+
