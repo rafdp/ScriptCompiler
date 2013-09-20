@@ -109,6 +109,7 @@ void FillConstsMap (StrTo64Map_t* map)
     #undef ADD_CONST
 }
 
+#include "Jit_Compiler.h"
 #include "HelpFuncs.cpp"
 
 typedef std::map<StrTo32Pair_t, VarDescriptor_t> VarMap_t;

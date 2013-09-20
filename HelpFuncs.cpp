@@ -305,9 +305,37 @@ void PushStackValueString (const StackData_t& value, std::string* str)
     else
     if (value.size == sizeof (long long))
     {
-        (*str) += "push dword[" + GetAsmNumString (int(&(value.data)) + 4, "") + "]\n";
-        (*str) += "push dword[" + GetAsmNumString (int(&(value.data)), "") + "]\n";
+        (*str) += "push " + GetAsmNumString (*((int*)(&(value.data)) + 1), "") + "\n";
+        (*str) += "push " + GetAsmNumString (*((int*)(&(value.data))), "") + "\n";
         // (*str) += "push " + GetAsmNumString (int(&(value.data)), "qword") + "\n";
+    }
+
+}
+
+void PushStackValueJit (const StackData_t& value, JitCompiler_t* comp)
+{
+    std::string type;
+    if (value.size <= sizeof (int))
+    {
+        switch (value.size)
+        {
+            case sizeof (char):
+            case sizeof (short):
+            comp->PushWord (WORD (value.data));
+            break;
+            case sizeof (int):
+            comp->PushDword (DWORD (value.data));
+            break;
+            //!default:
+            //!NAT_EXCEPTION ()
+        }
+
+    }
+    else
+    if (value.size == sizeof (long long))
+    {
+        comp->PushDword (DWORD (*((int*)(&(value.data)) + 1)));
+        comp->PushDword (DWORD (*((int*)(&(value.data)) + 0)));
     }
 
 }
