@@ -41,7 +41,6 @@ bool isNum (std::string* str)
 
 bool IsString (std::string* str)
 {
-    //printf ("ISSTRING\n");
     return (*(str->begin()) == '"' && *(str->rbegin()) == '"');
 }
 
@@ -58,13 +57,11 @@ struct VarData_t
     void* var;
     long long code;
     size_t size;
-    //char ptrFlag;
 
     VarData_t (void* var_, long long code_, size_t size_) :
         var  (var_),
         code (code_),
-        size (size_)//,
-        //ptrFlag ()
+        size (size_)
     {}
 
     void Free()
@@ -165,7 +162,7 @@ int ErrorPrintfBox (HWND wnd, DWORD flags, const char* format, ...)
 {
     if (!format) return 0;
 
-    char str[4096] = "";
+    char str[MAX_BUFFER] = "";
 
     va_list arg; va_start (arg, format);
     int n = _vsnprintf (str, sizeof (str) - 1, format, arg);
@@ -222,65 +219,6 @@ struct StackData_t
         return output;
     }
 };
-
-int RunAsm (std::string code)
-{
-    {
-        FILE* compileAsm = fopen("fasm_compile.asm", "w");
-        assert (compileAsm);
-
-        code.push_back(0);
-        fprintf (compileAsm, "format pe\n");
-
-        fwrite (code.c_str(), sizeof (char), code.size(), compileAsm);
-
-        fclose (compileAsm);
-
-        HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-        SetStdHandle (STD_OUTPUT_HANDLE, 0);
-        system ("fasm.exe fasm_compile.asm");
-        SetStdHandle (STD_OUTPUT_HANDLE, h);
-    }
-    {
-        FILE* compiledAsm = fopen("fasm_compile.exe", "rb");
-        assert (compiledAsm);
-
-        while (!feof (compiledAsm)) fgetc (compiledAsm);
-
-        int size = ftell (compiledAsm) - 0x200;
-
-        rewind (compiledAsm);
-
-        for (int i = 0; i < 0x200; i++) fgetc (compiledAsm);
-
-
-        unsigned char* func = new unsigned char [size + 1];
-
-        fread (func, sizeof (char), size, compiledAsm);
-
-        //printf ("%X\n", *func);
-
-        //int ret = ((int (*) ())func) ();
-        ((void (*) ())func) ();
-        delete[] func;
-        fclose (compiledAsm);
-
-        //remove ("fasm_compile.asm");
-        //remove ("fasm_compile.exe");
-
-        //return ret;
-    }
-}
-
-std::string GetAsmNumString (int val, const char* operand = "dword")
-{
-    char val_[MAX_PATH] = "";
-    itoa (val, val_, 16);
-    std::string val_str;
-    val_str += std::string(operand) + "(0" + val_ + "h)";
-    return val_str;
-}
-
 void PushStackValueString (const StackData_t& value, std::string* str)
 {
     std::string type;
@@ -307,7 +245,6 @@ void PushStackValueString (const StackData_t& value, std::string* str)
     {
         (*str) += "push " + GetAsmNumString (*((int*)(&(value.data)) + 1), "") + "\n";
         (*str) += "push " + GetAsmNumString (*((int*)(&(value.data))), "") + "\n";
-        // (*str) += "push " + GetAsmNumString (int(&(value.data)), "qword") + "\n";
     }
 
 }

@@ -66,8 +66,6 @@ public:
 
     void Run ()
     {
-        FILE* f = fopen ("data.dat", "wb");
-        fwrite (buffer_.data(), buffer_.size(), 1, f);
         fclose (f);
         unsigned char* func = new unsigned char [buffer_.size() + 1];
         memcpy (func, buffer_.data(), buffer_.size());

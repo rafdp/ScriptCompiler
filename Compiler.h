@@ -151,11 +151,8 @@ void VirtualProcessor_t::RunScript (std::string filename, int error_mode, std::s
         ErrorPrintfBox (GetForegroundWindow(), 0, "About to loop %d %d\n", instance_->run_line_, instance_->funcs_.size());
         for ( ; instance_->run_line_ < instance_->funcs_.size(); instance_->run_line_ ++)
         {
-            //printf ("%d ", instance_->run_line_);
-            //Sleep (1000);
             if (instance_->funcs_[instance_->run_line_].flag == CMD_Func)
             {
-                //printf ("%s\n", CMD_D[instance_->funcs_[instance_->run_line_].cmd].c_str());
                 switch (instance_->funcs_[instance_->run_line_].cmd)
                 {
                     FuncCase (RebuildVar)

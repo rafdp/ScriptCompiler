@@ -19,19 +19,10 @@ FUNCTION_BEGIN(RebuildVar, 2, 4, ARG_VAR _ ARG_NULL _ ARG_NUM)
     var.Delete();
     var.code = $ isNum (arg.arg2) ? arg.arg2 : TYPE_QWORD;
     var.size = $ typeSizes_[var.code];
-    /*if ($ isPtr (arg.flag2))
-    {
-        $ SetVal (arg.flag1, arg.arg1, arg.arg2);
-        //var.code = arg.flag2;
-        var.size = $ vars_[arg.arg2].size;
-        var.ptrFlag = arg.flag2;
-    }*/
     var.Free();
 FUNCTION_END
 
 FUNCTION_BEGIN(Push, 5, 0, ARG_NUM _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_STR)
-    //printf ("Called push %lld\n", $ GetVal (arg.flag1, arg.arg1));
-    //ErrorPrintfBox (GetForegroundWindow(), 0, "%s %d", ARG_D[arg.flag1].c_str(), $ GetSize(arg.flag1, arg.arg1));
     $ dataStack_.push (StackData_t ($ GetVal (arg.flag1, arg.arg1), $ GetSize(arg.flag1, arg.arg1)));
 FUNCTION_END
 
@@ -172,13 +163,6 @@ for (stack<StackData_t>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpP
 str += "mov eax, " + GetAsmNumString (int(ptr)) + "\ncall eax\n";
 
 FUNCTION_BEGIN(JIT_Call_Void, 1, 0, ARG_DLL_FUNC)
-    /*std::string code;
-    ASM_FILL_STACK (code)
-    ASM_CALL_FUNC($ dllResolved_[arg.arg1], code)
-    code += "add esp, " + GetAsmNumString ($ EspAdd (), "") + "\nretn\n";
-    //ErrorPrintfBox (GetForegroundWindow(), 0, "About to Run (void)");
-    RunAsm (code);
-    //ErrorPrintfBox (GetForegroundWindow(), 0, "Returned (void)");*/
     JitCompiler_t comp;
     for (stack<StackData_t>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpPoint_]); i < $ dataStack_.end(); i++) \
         PushStackValueJit (*i, &comp);
@@ -191,13 +175,6 @@ FUNCTION_BEGIN(JIT_Call_Void, 1, 0, ARG_DLL_FUNC)
 FUNCTION_END
 
 FUNCTION_BEGIN(JIT_Call_DWord, 1, 3, ARG_DLL_FUNC _ ARG_REG _ ARG_VAR _ ARG_VAR_MEMBER)
-    /*std::string code;
-    void* ptr = $ isVar(arg.arg2) ? $ GetVarPt (arg.flag2, arg.arg2) : $ GetReg (arg.arg2).reg;
-    ASM_FILL_STACK (code)
-    ASM_CALL_FUNC($ dllResolved_[arg.arg1], code)
-    code += "add esp, " + GetAsmNumString ($ EspAdd (), "") + "\n";
-    code += "mov [" + GetAsmNumString (int(ptr), "") + "], eax\nretn\n";
-    RunAsm (code);*/
     void* ptr = $ isVar(arg.arg2) ? $ GetVarPt (arg.flag2, arg.arg2) : $ GetReg (arg.arg2).reg;
     JitCompiler_t comp;
     for (stack<StackData_t>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpPoint_]); i < $ dataStack_.end(); i++) \
@@ -211,17 +188,6 @@ FUNCTION_BEGIN(JIT_Call_DWord, 1, 3, ARG_DLL_FUNC _ ARG_REG _ ARG_VAR _ ARG_VAR_
 FUNCTION_END
 
 FUNCTION_BEGIN(JIT_Call_QWord, 1, 3, ARG_DLL_FUNC _ ARG_REG _ ARG_VAR _ ARG_VAR_MEMBER)
-    /*std::string code;
-    //for (int i = 0; i < 15; i ++) code += "nop\n";
-    void* ptr = $ isVar(arg.arg2) ? $ GetVarPt (arg.flag2, arg.arg2) : $ GetReg (arg.arg2).reg;
-    ASM_FILL_STACK (code)
-    ASM_CALL_FUNC($ dllResolved_[arg.arg1], code)
-    code += "add esp, " + GetAsmNumString ($ EspAdd (), "") + "\n";
-    code += "mov [" + GetAsmNumString (int(ptr), "") + "], eax\n";
-    code += "mov [" + GetAsmNumString (int(ptr) + 4, "") + "], edx\nretn\n";
-    //ErrorPrintfBox (GetForegroundWindow(), 0, "%s", code.c_str());
-    RunAsm (code);
-    //ErrorPrintfBox (GetForegroundWindow(), 0, "Returned");*/
     void* ptr = $ isVar(arg.arg2) ? $ GetVarPt (arg.flag2, arg.arg2) : $ GetReg (arg.arg2).reg;
     JitCompiler_t comp;
     for (stack<StackData_t>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpPoint_]); i < $ dataStack_.end(); i++) \

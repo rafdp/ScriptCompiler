@@ -15,18 +15,11 @@ int main()
     exception_data ex_data (10, "errors.txt");
     try
     {
-        //printf ("A\n");
         ScriptCompiler_t comp ("test.txt", &ex_data);
-        //printf ("B\n");
         comp.Save();
-        //printf ("C\n");
-        //comp.Dump();
         VirtualProcessor_t proc (&ex_data);
-        //printf ("D\n");
         int data = 17;
-        //printf ("E\n");
         proc.RegFunc (UserFunc_t(printHello, &data), "printhello");
-        //printf ("F\n");
         proc.RunScript ("test.pcs", MODE_PRINTF, "log.txt");
     }
     catch (ExceptionHandler& ex)

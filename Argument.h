@@ -69,7 +69,6 @@ void Arg_t::SetArg (char* flag, long long* arg, std::string* param)
     }
     else
     {
-        //printf ("ARG_NAME\n");
         *flag |= ARG_NAME;
         *arg = (long long) new std::string (*param);
     }

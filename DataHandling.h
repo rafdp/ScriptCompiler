@@ -68,23 +68,19 @@ public:
     long long GetMemberVar (long long arg)
     {
         short typeCode = MemberVarType (arg);
-
-
-        //printf ("GET_MEMBER_VAR  %d %d %d\n", typeCode, num, offset);
-
         switch (typeCode)
         {
-        case TYPE_BYTE:
-            return *(int8_t*)MemberVarPt (arg);
-        case TYPE_WORD:
-            return *(int16_t*)MemberVarPt (arg);
-        case TYPE_DWORD:
-        case TYPE_PTR:
-            return *(int32_t*)MemberVarPt (arg);
-        case TYPE_QWORD:
-            return *(int64_t*)MemberVarPt (arg);
-        default:
-            return 0;
+            case TYPE_BYTE:
+                return *(int8_t*)MemberVarPt (arg);
+            case TYPE_WORD:
+                return *(int16_t*)MemberVarPt (arg);
+            case TYPE_DWORD:
+            case TYPE_PTR:
+                return *(int32_t*)MemberVarPt (arg);
+            case TYPE_QWORD:
+                return *(int64_t*)MemberVarPt (arg);
+            default:
+                return 0;
         }
     }
 
@@ -92,21 +88,21 @@ public:
     {
         switch (vars_[num].code)
         {
-        case TYPE_BYTE:
-            *(int8_t*)vars_[num].var = (int8_t)val;
-            break;
-        case TYPE_WORD:
-            *(int16_t*)vars_[num].var = (int16_t)val;
-            break;
-        case TYPE_DWORD:
-        case TYPE_PTR:
-            *(int32_t*)vars_[num].var = (int32_t)val;
-            break;
-        case TYPE_QWORD:
-            *(int64_t*)vars_[num].var = (int64_t)val;
-            break;
-        default:
-            return;
+            case TYPE_BYTE:
+                *(int8_t*)vars_[num].var = (int8_t)val;
+                break;
+            case TYPE_WORD:
+                *(int16_t*)vars_[num].var = (int16_t)val;
+                break;
+            case TYPE_DWORD:
+            case TYPE_PTR:
+                *(int32_t*)vars_[num].var = (int32_t)val;
+                break;
+            case TYPE_QWORD:
+                *(int64_t*)vars_[num].var = (int64_t)val;
+                break;
+            default:
+                return;
         }
     }
 
@@ -116,21 +112,21 @@ public:
 
         switch (typeCode)
         {
-        case TYPE_BYTE:
-            *(int8_t*)MemberVarPt (arg) = (int8_t)val;
-            break;
-        case TYPE_WORD:
-            *(int16_t*)MemberVarPt (arg) = (int16_t)val;
-            break;
-        case TYPE_DWORD:
-        case TYPE_PTR:
-            *(int32_t*)MemberVarPt (arg) = (int32_t)val;
-            break;
-        case TYPE_QWORD:
-            *(int64_t*)MemberVarPt (arg) = (int64_t)val;
-            break;
-        default:
-            return;
+            case TYPE_BYTE:
+                *(int8_t*)MemberVarPt (arg) = (int8_t)val;
+                break;
+            case TYPE_WORD:
+                *(int16_t*)MemberVarPt (arg) = (int16_t)val;
+                break;
+            case TYPE_DWORD:
+            case TYPE_PTR:
+                *(int32_t*)MemberVarPt (arg) = (int32_t)val;
+                break;
+            case TYPE_QWORD:
+                *(int64_t*)MemberVarPt (arg) = (int64_t)val;
+                break;
+            default:
+                return;
         }
     }
 
@@ -185,7 +181,6 @@ public:
     }
 
     inline bool isNum  (char flag) {return ((flag & char(~ARG_UNREF_MASK)) == ARG_NUM  ? true : false);}
-    //inline bool isPtr  (char flag) {return ((flag & char(~ARG_UNREF_MASK)) == ARG_PTR  ? true : false);}
     inline bool isNull (char flag) {return ((flag & char(~ARG_UNREF_MASK)) == ARG_NULL ? true : false);}
     inline bool isVar  (char flag) {return ((flag & char(~ARG_UNREF_MASK)) == ARG_VAR ||
                                             (flag & char(~ARG_UNREF_MASK)) == ARG_VAR_MEMBER ? true : false);}
@@ -193,14 +188,10 @@ public:
     inline bool isData (char flag) {return isVar (flag) || isReg (flag);}
     inline bool isStr  (char flag) {return ((flag & char(~ARG_UNREF_MASK)) == ARG_STR  ? true : false);}
 
-    /*long long GetPtrData (long long num)
-    {
-        return GetVal (vars_[num].ptrFlag, GetVar (num));
-    }*/
+
     long long EspAdd ()
     {
         long long result = 0;
-        //($ dataStack_.size() - $ stackDumpPoint_) * 4
         for (int i = stackDumpPoint_; i < dataStack_.size(); i++)
         {
             if (dataStack_[i].size == 8) result += 8;

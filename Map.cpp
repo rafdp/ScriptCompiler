@@ -14,118 +14,13 @@ struct MapHeader
 };
 
 const int KEY = 0x7C5C2F7C;
-const int VERSION = 2007;
+const int VERSION = 2015;
 
 const char CONTROL_CHARACTER = 4;
 
 std::map<std::string, int> CMD_A;
 std::map<std::string, int> CMD_A_service;
 std::map<int, std::string> CMD_D;
-/**
-enum Cmd_Assembler
-{
-    CMD_PUSH     = 100,    //ok
-    CMD_POP      = 101,    //ok
-    CMD_DUP      = 102,    //ok
-    CMD_MULS     = 103,    //ok
-    CMD_ADDS     = 104,    //ok
-    CMD_SUBS     = 105,    //ok
-    CMD_DIVS     = 106,    //ok
-
-    CMD_JMP      = 200,    //ok
-    CMD_JE       = 201,    //ok
-    CMD_JNE      = 202,    //ok
-    CMD_JA       = 203,    //ok
-    CMD_JL       = 204,    //ok
-    CMD_JAE      = 205,    //ok
-    CMD_JLE      = 206,    //ok
-
-    CMD_SEL      = 300,    //ok
-    CMD_SET      = 301,    //ok
-    CMD_CMPR     = 302,    //ok
-    CMD_MULR     = 303,    //ok
-    CMD_ADDR     = 304,    //ok
-    CMD_SUBR     = 305,    //ok
-    CMD_DIVR     = 306,    //ok
-    CMD_RESULT   = 307,    //ok
-    //CMD_Func     = 308,    //ok
-    CMD_CALL     = 309,    //ok
-    CMD_RET      = 310,    //ok
-    CMD_START    = 311,    //ok
-    //CMD_EXT      = 312,    //ok
-    //CMD_EXT_F    = 313,    //ok
-    CMD_INPUT    = 314,    //ok
-    CMD_INPUT_   = 315,    //ok
-    CMD_S_INPUT  = 316,    //ok
-    CMD_S_INPUT_ = 317,    //ok
-
-    CMD_ASCII    = 400,    //ok
-    CMD_PRINTR   = 401,    //ok
-    CMD_PRINTS   = 402,    //ok
-    CMD_PRINTL   = 403,    //ok
-    CMD_EOF      = 404,    //ok
-    //CMD_Var      = 405,    //ok
-    CMD_DEL      = 406,    //ok
-    CMD_GETCH    = 407,    //ok
-    CMD_SLEEP    = 408,    //ok
-    CMD_Link     = 409     //ok
-};
-void SetMapAssembler()
-{
-    static bool set = false;
-    if (set)
-    {
-        return;
-    }
-
-    CMD_A["push"]     = CMD_PUSH;
-    CMD_A["pop"]      = CMD_POP;
-    CMD_A["dup"]      = CMD_DUP;
-    CMD_A["muls"]     = CMD_MULS;
-    CMD_A["adds"]     = CMD_ADDS;
-    CMD_A["subs"]     = CMD_SUBS;
-    CMD_A["divs"]     = CMD_DIVS;
-
-    CMD_A["jmp"]      = CMD_JMP;
-    CMD_A["je"]       = CMD_JE;
-    CMD_A["jne"]      = CMD_JNE;
-    CMD_A["ja"]       = CMD_JA;
-    CMD_A["jl"]       = CMD_JL;
-    CMD_A["jae"]      = CMD_JAE;
-    CMD_A["jle"]      = CMD_JLE;
-
-    CMD_A["sel"]      = CMD_SEL;
-    CMD_A["set"]      = CMD_SET;
-    CMD_A["cmpr"]     = CMD_CMPR;
-    CMD_A["mulr"]     = CMD_MULR;
-    CMD_A["addr"]     = CMD_ADDR;
-    CMD_A["subr"]     = CMD_SUBR;
-    CMD_A["divr"]     = CMD_DIVR;
-    CMD_A["result"]   = CMD_RESULT;
-    //CMD_A["func"]     = CMD_Func;
-    CMD_A["call"]     = CMD_CALL;
-    CMD_A["ret"]      = CMD_RET;
-    CMD_A["start"]    = CMD_START;
-    //CMD_A["extern"]   = CMD_EXT;
-    CMD_A["input"]    = CMD_INPUT;
-    CMD_A["input_"]   = CMD_INPUT_;
-    CMD_A["s_input"]  = CMD_S_INPUT;
-    CMD_A["s_input_"] = CMD_S_INPUT_;
-
-    CMD_A["ascii"]    = CMD_ASCII;
-    CMD_A["printr"]   = CMD_PRINTR;
-    CMD_A["prints"]   = CMD_PRINTS;
-    CMD_A["printl"]   = CMD_PRINTL;
-    CMD_A["eof"]      = CMD_EOF;
-    //CMD_A["var"]      = CMD_Var;
-    CMD_A["del"]      = CMD_DEL;
-    CMD_A["getch"]    = CMD_GETCH;
-    CMD_A["sleep"]    = CMD_SLEEP;
-    CMD_A["link"]     = CMD_Link;
-    set = true;
-}
-*/
-
 
 enum Cmd_Assembler
 {
@@ -147,38 +42,37 @@ enum Cmd_Assembler
     CMD_PLabel,
     CMD_PFunc,
     CMD_RebuildVar,
-    //CMD_Pointer,
     //! service
 
-    CMD_Push     = 100,
-    CMD_Pop,
-    CMD_Mov,
-    CMD_Print,
-    CMD_Cmpr,
-    CMD_Jmp,
-    CMD_Je,
-    CMD_Jne,
-    CMD_Ja,
-    CMD_Jb,
-    CMD_Jae,
-    CMD_Jbe,
-    CMD_Call,
-    CMD_Ret,
-    CMD_Decr,
-    CMD_InitStackDumpPoint,
-    CMD_JIT_Printf,
-    CMD_JIT_Call_Void,
-    CMD_JIT_Call_DWord,
-    CMD_JIT_Call_QWord,
-    CMD_Add,
-    CMD_Sub,
-    CMD_Mul,
-    CMD_Div,
-    CMD_Adds,
-    CMD_Subs,
-    CMD_Muls,
-    CMD_Divs,
-    CMD_Lea
+    CMD_Push                  = 100,
+    CMD_Pop,                //! 101
+    CMD_Mov,                //! 102
+    CMD_Print,              //! 103
+    CMD_Cmpr,               //! 104
+    CMD_Jmp,                //! 105
+    CMD_Je,                 //! 106
+    CMD_Jne,                //! 107
+    CMD_Ja,                 //! 108
+    CMD_Jb,                 //! 109
+    CMD_Jae,                //! 110
+    CMD_Jbe,                //! 111
+    CMD_Call,               //! 112
+    CMD_Ret,                //! 113
+    CMD_Decr,               //! 114
+    CMD_InitStackDumpPoint, //! 115
+    CMD_JIT_Printf,         //! 116
+    CMD_JIT_Call_Void,      //! 117
+    CMD_JIT_Call_DWord,     //! 118
+    CMD_JIT_Call_QWord,     //! 119
+    CMD_Add,                //! 120
+    CMD_Sub,                //! 121
+    CMD_Mul,                //! 122
+    CMD_Div,                //! 123
+    CMD_Adds,               //! 124
+    CMD_Subs,               //! 125
+    CMD_Muls,               //! 126
+    CMD_Divs,               //! 127
+    CMD_Lea                 //! 128
 };
 void SetMapAssembler()
 {
@@ -191,14 +85,13 @@ void SetMapAssembler()
     CMD_A_service["const"]      = CMD_Const;
     CMD_A_service["extern"]     = CMD_Extern;
     CMD_A_service["func"]       = CMD_CFunc;
-    CMD_A_service["import"]       = CMD_Import;
+    CMD_A_service["import"]     = CMD_Import;
     CMD_A_service["var"]        = CMD_Var;
     CMD_A_service["link"]       = CMD_Link;
     CMD_A_service["struct"]     = CMD_Struct;
     CMD_A_service["struct_end"] = CMD_End_Struct;
     CMD_A_service["plabel"]     = CMD_PLabel;
     CMD_A_service["pfunc"]      = CMD_PFunc;
-    //CMD_A_service["pointer"]    = CMD_Pointer;
 
     CMD_A["push"]                  = CMD_Push;
     CMD_A["pop"]                   = CMD_Pop;
@@ -232,17 +125,16 @@ void SetMapAssembler()
 
     STL_LOOP (i, CMD_A) CMD_D[i->second] = i->first;
 
-    ARG_D[ARG_NULL]   = "none";
-    ARG_D[ARG_NUM]    = "num";
-    ARG_D[ARG_REG]    = "reg";
-    ARG_D[ARG_VAR]    = "var";
-    ARG_D[ARG_LABEL]  = "label";
-    ARG_D[ARG_STR]    = "str";
-    ARG_D[ARG_FUNC]   = "func";
-    ARG_D[ARG_ERROR]  = "error";
-    ARG_D[ARG_VAR_MEMBER]  = "var_member";
-    ARG_D[ARG_DLL_FUNC]  = "dll_func";
-    //ARG_D[ARG_PTR]  = "pointer";
+    ARG_D[ARG_NULL]       = "none";
+    ARG_D[ARG_NUM]        = "num";
+    ARG_D[ARG_REG]        = "reg";
+    ARG_D[ARG_VAR]        = "var";
+    ARG_D[ARG_LABEL]      = "label";
+    ARG_D[ARG_STR]        = "str";
+    ARG_D[ARG_FUNC]       = "func";
+    ARG_D[ARG_ERROR]      = "error";
+    ARG_D[ARG_VAR_MEMBER] = "var_member";
+    ARG_D[ARG_DLL_FUNC]   = "dll_func";
 
     set = true;
 }
@@ -252,7 +144,7 @@ std::map<std::string, int> CMD_REG;
 
 enum Registers
 {
-    CMD_BADINP = -1,
+    CMD_BADINP  = -1,
 
     REG_ABX     = 0x0,
     REG_BBX     = 0x1,
@@ -277,7 +169,7 @@ enum Registers
     REG_PTBYTE  = 0x4B,
     REG_PTWORD  = 0x53,
     REG_PTDWORD = 0x5B,
-    REG_PTQWORD = 0x63,
+    REG_PTQWORD = 0x63
 };
 void SetMapReg()
 {
@@ -324,32 +216,6 @@ class AutoMapValuesInitialisator_t
     {
         SetMapAssembler();
         SetMapReg();
-
-        /*if (Different ("Map.cpp", "MapBak.cpp"))
-        {
-            Backup ("Map.cpp", "MapBak.cpp");
-            FILE* bak = fopen ("MapBak.cpp", "r");
-            int build = 0;
-            char c = 0;
-            while ((c = fgetc (bak)) != '2');
-            while ((c = fgetc (bak)) != ';') {build *= 10; build += c - '0';}
-            build++;
-            FILE* map = fopen ("Map_.cpp", "w");
-
-            fprintf (map, "const int VERSION = 2%05d;", build);
-
-            fseek (bak, SEEK_SET, 27);
-            while (!feof (bak))
-            {
-                char c = fgetc (bak);
-                fwrite (&c, 1, 1, map);
-            }
-            fclose (map);
-            fclose (bak);
-            Backup ("Map_.cpp", "MapBak.cpp");
-        }
-        */
-
     }
 };
 AutoMapValuesInitialisator_t AutoMapValuesInitialisator;

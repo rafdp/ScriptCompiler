@@ -189,7 +189,6 @@ _BUILD_CASE_FUNC (Var)
         ADD_STD_TOKEN
         auto foundIter = vars_.find (StrTo32Pair_t(STD_TOK, func_level_));
         if (arg.flag2 == ARG_NUM) foundIter->second.typeCode = arg.arg2;
-        //printf ("Created var with type %d\n", foundIter->second.typeCode);
 
         if (func_level_ > 0)
             CreateVarDieRequest (foundIter);
@@ -266,19 +265,6 @@ _BUILD_CASE_FUNC (CFunc)
     arg.Clear ();
     return true;
 _RETURN
-/*
-_BUILD_CASE_FUNC (CFunc)
-    if (func_level_ > 0)
-        ERROR_EXCEPTION ("Cannot create nested function", ERROR_NESTED_FUNC)
-    func_level_++;
-    CHECK_ARGS (arg.flag1 != ARG_NAME ||
-                arg.flag2 != ARG_NULL, "func")
-    CHECK_STD_TOKEN
-    ADD_STD_TOKEN
-    currFunc_ = STD_TOK;
-    arg.Clear ();
-_RETURN
-*/
 
 _BUILD_CASE_FUNC (Func)
     if (cmd.cmd == CMD_Ret) structFunc_ = false;
@@ -286,13 +272,10 @@ _BUILD_CASE_FUNC (Func)
 _RETURN
 
 _BUILD_CASE_FUNC (PFunc)
-//printf ("PFUNC found\n");
     CHECK_ARGS (arg.flag1 != ARG_NAME ||
                 arg.flag2 != ARG_NULL, "pfunc")
     CHECK_STD_TOKEN
-//printf ("PFUNC %s\n", (STD_TOK).c_str());
     assert (regTypes_.AddFunc (STD_TOK, -1, currStruct_));
-    //printf ("%d\n", memberFuncs_.size());
     arg.Clear ();
     return true;
 _RETURN

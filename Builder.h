@@ -30,8 +30,6 @@ class ScriptCompiler_t
     StrTo64Map_t                     userFuncs_;
     StrTo64Map_t                     createdFuncs_;
     MemberFuncMap_t                  memberFuncs_;
-    //StrTo64Map_t                     labels_;
-    //std::vector<std::string>         labelsSave_;
     std::map<std::string,
              LabelPair_t>            labels_;
     std::vector<std::string>         strings_;
@@ -148,7 +146,6 @@ ScriptCompiler_t::ScriptCompiler_t (std::string filename, exception_data* expn) 
     createdFuncs_   (),
     memberFuncs_    (),
     labels_         (),
-    //labelsSave_    (),
     funcs_          (),
     args_           (),
     expn_           (expn),
@@ -181,7 +178,6 @@ ScriptCompiler_t::ScriptCompiler_t (std::string filename, exception_data* expn) 
             ScriptLine_t line (f);
             Cmd_t cmd (line.cmd);
             Arg_t arg (line.param1, line.param2);
-            //printf ("DIVIDED |%s| |%s| |%s|\n", line.cmd.c_str(), ((std::string*)(arg.arg1))->c_str(), line.param2.c_str());
             if (line.cmd[0] == ';')
             {
                 cmd.Clear ();
@@ -190,7 +186,6 @@ ScriptCompiler_t::ScriptCompiler_t (std::string filename, exception_data* expn) 
             if (currStruct_ && ManageStruct(cmd, arg, n_line));
             else
             {
-                //printf ("YOO %d\n", n_line);
                 switch (cmd.flag)
                 {
                     CMD_CASE (Null)
@@ -228,14 +223,11 @@ void ScriptCompiler_t::_in_clsf_arg (char* flag, long long* arg, bool error, int
 {
     if ((*flag & ARG_NAME) == ARG_NAME)
     {
-        //printf ("CLSF 1\n");
         auto result = consts_.end();
         auto varResult = vars_.end();
         auto labResult = labels_.end();
         #define INVALID_UNREF_CHECK \
             if (*flag & ARG_UNREF_MASK) NAT_EXCEPTION (expn_, "Invalid use of '*'", ERROR_INVALID_UNREF)
-        //printf ("%s %d\n", ((std::string*)(*arg))->c_str(), func_level_);
-        //printf ("CLSF 2\n");
         if (var)
         for (int varLevel = func_level_; varLevel >= 0 && varResult == vars_.end(); varLevel--)
         {
@@ -247,7 +239,6 @@ void ScriptCompiler_t::_in_clsf_arg (char* flag, long long* arg, bool error, int
         }
         //!  operator = returns reference to object
         //!  c = b = a;
-        //printf ("CLSF 3\n");
         if ((result = consts_.find(*(std::string*)(*arg))) != consts_.end())
         {
             INVALID_UNREF_CHECK
@@ -329,11 +320,8 @@ void ScriptCompiler_t::_in_clsf_arg (char* flag, long long* arg, bool error, int
 
 void ScriptCompiler_t::ClassifyArg (Arg_t* arg, bool error, int line, bool var)
 {
-    //printf ("__1\n");
     _in_clsf_arg (&arg->flag1, &arg->arg1, error, line, var);
-    //printf ("__2\n");
     _in_clsf_arg (&arg->flag2, &arg->arg2, error, line, var);
-    //printf ("__3\n");
 }
 
 void ScriptCompiler_t::Dump ()
@@ -399,8 +387,6 @@ void ScriptCompiler_t::Save ()
     MapHeader maph = {KEY, VERSION};
     fwrite (&maph, sizeof (MapHeader), 1, save);
 
-    //const char CONTROL_CHARACTER_ = CONTROL_CHARACTER;
-
     #define WRITE_STR(name) \
         STL_LOOP(i, name) fwrite (&(*i), sizeof (char), 1, save); \
         fwrite (&CONTROL_CHARACTER, sizeof (CONTROL_CHARACTER), 1, save);
@@ -418,8 +404,6 @@ void ScriptCompiler_t::Save ()
         WRITE_SIZE (name) \
         STL_LOOP (var, name) { do }
 
-    //WRITE_STL_LOOP(vars_, fwrite(&(it->second.level), sizeof (long long), 1, save);)
-
     WRITE_STL_LOOP(dllImportMap_, {WRITE_STR(it->first);
                                    auto& vec = it->second;
                                    WRITE_STL_LOOP_(vec, it_,
@@ -428,13 +412,11 @@ void ScriptCompiler_t::Save ()
 
     WRITE_STL_LOOP(typeSizes_, {fwrite(&(it->first), sizeof (long long), 1, save);
                                 fwrite(&(it->second), sizeof (size_t), 1, save);})
-    //WRITE_SIZE (vars_)
     WRITE_STL_LOOP(vars_, {fwrite(&(it->second.typeCode), sizeof (long long), 1, save);
                            fwrite(&(typeSizes_[it->second.typeCode]), sizeof (size_t), 1, save);})
 
 
     WRITE_STL_LOOP(userFuncs_, WRITE_STR(it->first))
-    //WRITE_STL_LOOP(labelsSave_, {fwrite(&(labels_[*it]), sizeof (long long), 1, save);})
     size_t size_labels_ = labels_.size();
     fwrite (&size_labels_, sizeof (size_t), 1, save);
     long long written = 0;
@@ -513,7 +495,7 @@ bool ScriptCompiler_t::CheckName (std::string name, int line)
 
 bool ScriptCompiler_t::AddName (std::string name, char flag, long long cmd, int line)
 {
-    bool ok = true/*CheckName (name, line)*/;
+    bool ok = true
 
     if (ok)
     {
@@ -523,17 +505,12 @@ bool ScriptCompiler_t::AddName (std::string name, char flag, long long cmd, int 
                 consts_[name] = cmd;
                 break;
             case CMD_Label:
-                //printf ("ADDING LABEL %s %d %d\n", name.c_str(), line, labels_.size());
-                //if (find(labelsSave_, name) == labelsSave_.end())
-                //    {printf ("PUSH BACK\n"); labelsSave_.push_back(name);}
                 if (labels_.find (name) == labels_.end())
                 {
                     size_t size = labels_.size();
                     labels_[name] = {line, size};
                 }
                 else labels_[name].line = line;
-                //labels_[name] = /*labels_.size() - 1*/{line, labels_.size()};
-
                 break;
             case CMD_Extern:
                 userFuncs_[name] = userFuncs_.size() - 1;
@@ -551,10 +528,8 @@ bool ScriptCompiler_t::AddName (std::string name, char flag, long long cmd, int 
 
 bool ScriptCompiler_t::ManageStruct (Cmd_t& cmd, Arg_t& arg, int n_line)
 {
-    //printf ("___0___\n");
     ClassifyArg (&arg, false, n_line, false);
     #define STRUCT_CASE(name) case CMD_##name: /*printf ("case %s\n", #name);*/ return Struct##name (cmd, arg, n_line);
-    //printf ("A\n");
     switch (cmd.flag)
     {
         STRUCT_CASE (Var)
@@ -574,8 +549,6 @@ bool ScriptCompiler_t::ManageStruct (Cmd_t& cmd, Arg_t& arg, int n_line)
 
 void ScriptCompiler_t::ResolvePrototypes ()
 {
-    //printf ("Resolving prototypes\n");
-    //printf ("A\n");
     STL_LOOP (i, createdFuncs_)
     {
         if (i->second == -1)
@@ -584,7 +557,6 @@ void ScriptCompiler_t::ResolvePrototypes ()
             ERROR_EXCEPTION (str_err.c_str(), ERROR_UNDEFINED_REFERENCE_FUNC)
         }
     }
-    //printf ("B\n");
     STL_LOOP (i, labels_)
     {
         if (i->second.line == -1)
@@ -593,8 +565,6 @@ void ScriptCompiler_t::ResolvePrototypes ()
             ERROR_EXCEPTION (str_err.c_str(), ERROR_UNDEFINED_REFERENCE_LABEL)
         }
     }
-
-    //printf ("C\n");
     STL_LOOP (i, memberFuncs_)
     {
         if (i->second.func_ == -1)
@@ -604,19 +574,8 @@ void ScriptCompiler_t::ResolvePrototypes ()
         }
     }
 
-    //printf ("D\n");
     STL_LOOP (i, args_)
     {
-        //printf ("%d\n", i - args_.begin());
-        /*if (i->flag1 == ARG_FUNC_IT || i->flag1 == ARG_LABEL_IT)
-        {
-            long long line = (i->flag1 == ARG_FUNC_IT) ?
-                             createdFuncs_[*(std::string*)i->arg1] :
-                             labels_[*(std::string*)i->arg1].line;
-            delete (std::string*)i->arg1;
-            i->arg1 = line;
-            i->flag1 = (i->flag1 == ARG_FUNC_IT ? ARG_FUNC : ARG_LABEL);
-        }*/
         switch (i->flag1)
         {
             case ARG_FUNC_IT:
@@ -671,18 +630,6 @@ void ScriptCompiler_t::ResolvePrototypes ()
                 break;
             }
         }
-        /*
-        if (i->flag2 == ARG_FUNC_IT || i->flag2 == ARG_LABEL_IT)
-        {
-            long long line = (i->flag2 == ARG_FUNC_IT) ?
-                             createdFuncs_[*(std::string*)i->arg2] :
-                             labels_[*(std::string*)i->arg2].line;
-            delete (std::string*)i->arg2;
-            i->arg2 = line;
-            i->flag2 = (i->flag2 == ARG_FUNC_IT ? ARG_FUNC : ARG_LABEL);
-        }
-        */
     }
-    //printf ("Resolving prototypes ok\n");
 }
 #undef ERROR_EXCEPTION
