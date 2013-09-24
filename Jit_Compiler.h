@@ -66,9 +66,9 @@ public:
 
     void Run ()
     {
-        fclose (f);
         unsigned char* func = new unsigned char [buffer_.size() + 1];
         memcpy (func, buffer_.data(), buffer_.size());
+        //VirtualProtect(func, buffer_.size(), PAGE_EXECUTE_READWRITE, nullptr);
         ((void (*) ())func) ();
         delete [] func;
         func = nullptr;

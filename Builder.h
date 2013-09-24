@@ -495,7 +495,7 @@ bool ScriptCompiler_t::CheckName (std::string name, int line)
 
 bool ScriptCompiler_t::AddName (std::string name, char flag, long long cmd, int line)
 {
-    bool ok = true
+    bool ok = true;
 
     if (ok)
     {

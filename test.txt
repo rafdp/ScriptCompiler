@@ -18,4 +18,4 @@ push "Hello World\n"
 ;jit_call_void _printf
 
 init_stack_dump_point 
-jit_call_void _Test
+;jit_call_void _Test

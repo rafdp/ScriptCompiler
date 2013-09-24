@@ -152,7 +152,7 @@ FUNCTION_BEGIN(JIT_Printf, 1, 0, ARG_NULL)
         code += "push " + GetAsmNumString (*i) + "\n";
     code += "mov eax, " + GetAsmNumString (int(printf)) + "\ncall eax\n";
     code += "add esp, " + GetAsmNumString (($ dataStack_.size()) * 4, "") + "\nretn\n";
-    RunAsm (code);
+    //RunAsm (code);
 FUNCTION_END
 
 #define ASM_FILL_STACK(str) \

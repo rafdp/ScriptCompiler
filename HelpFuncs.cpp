@@ -219,6 +219,16 @@ struct StackData_t
         return output;
     }
 };
+
+std::string GetAsmNumString (int val, const char* operand = "dword")
+{
+    char val_[MAX_PATH] = "";
+    itoa (val, val_, 16);
+    std::string val_str;
+    val_str += std::string(operand) + "(0" + val_ + "h)";
+    return val_str;
+}
+
 void PushStackValueString (const StackData_t& value, std::string* str)
 {
     std::string type;

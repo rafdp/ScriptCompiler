@@ -14,7 +14,7 @@ struct MapHeader
 };
 
 const int KEY = 0x7C5C2F7C;
-const int VERSION = 2015;
+const int VERSION = 2020;
 
 const char CONTROL_CHARACTER = 4;
 
