@@ -7,7 +7,7 @@ init_stack_dump_point
 
 push "3215651362154"
 
-;jit_call_qword __atoi, rdword
+jit_call_qword __atoi, rdword
 print PRINT_NUMBER, rdword 
 print PRINT_STRING, "\n"
 
@@ -18,4 +18,5 @@ push "Hello World\n"
 ;jit_call_void _printf
 
 init_stack_dump_point 
+push 513516513
 ;jit_call_void _Test

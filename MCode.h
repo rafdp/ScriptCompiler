@@ -3,10 +3,11 @@
 
 class MCode_t
 {
-    std::vector <unsigned char> buffer_;
+    public:
+    std::vector <uint8_t> buffer_;
 
     public:
-    MCode () :
+    MCode_t () :
         buffer_ ()
     {}
 
@@ -18,5 +19,12 @@ class MCode_t
             buffer_.push_back (uint8_t (val >> i * 8));
         }
     }
+
+    void AddToTop (uint8_t val)
+    {
+        *(buffer_.rbegin()) += val;
+    }
+
+
 };
 #endif // MCODE_H_INCLUDED

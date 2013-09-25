@@ -1,7 +1,4 @@
 
-#define STL_LOOP(iterator, object) for (auto iterator = (object).begin(); iterator != (object).end(); iterator++)
-#define STL_RLOOP(iterator, object) for (auto iterator = (object).begin(); iterator != (object).end(); iterator++)
-
 #define RET_NO_ERRORS ErrorReturn_t (RET_SUCCESS)
 
 #define NAT_EXCEPTION(data, message, code) \

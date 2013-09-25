@@ -2,6 +2,10 @@
 #define CONSTS_H_INCLUDED
 
 
+#define STL_LOOP(iterator, object) for (auto iterator = (object).begin(); iterator != (object).end(); iterator++)
+#define STL_RLOOP(iterator, object) for (auto iterator = (object).begin(); iterator != (object).end(); iterator++)
+
+
 typedef std::map<std::string, long long> StrTo64Map_t;
 typedef std::pair<std::string, int> StrTo32Pair_t;
 

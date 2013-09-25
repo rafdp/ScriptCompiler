@@ -115,7 +115,7 @@ ScriptLoader_t::ScriptLoader_t (std::string filename, exception_data* expn) :
 
     IMPORT_LOOP(funcs, {funcs_.push_back (_load(Cmd_t));
                         args_.push_back (_load(Arg_t));})
-    ErrorPrintfBox (GetForegroundWindow(), 0, "%d", n_funcs);
+    //ErrorPrintfBox (GetForegroundWindow(), 0, "%d", n_funcs);
 
 
     #undef _load
