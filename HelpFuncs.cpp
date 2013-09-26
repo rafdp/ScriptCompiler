@@ -155,20 +155,6 @@ char _GetString (FILE* f, std::string* str, char del)
     return c;
 }
 
-int ErrorPrintfBox (HWND wnd, DWORD flags, const char* format, ...)
-{
-    if (!format) return 0;
-
-    char str[MAX_BUFFER] = "";
-
-    va_list arg; va_start (arg, format);
-    int n = _vsnprintf (str, sizeof (str) - 1, format, arg);
-    va_end (arg);
-
-    MessageBoxA (wnd, str, "", flags);
-    return n;
-}
-
 struct ExpectedArg_t
 {
     std::vector<char> expFlag1;
@@ -265,21 +251,15 @@ void PushStackValueJit (const StackData_t& value, JitCompiler_t* comp)
         {
             case sizeof (char):
             case sizeof (short):
-            comp->PushWord (WORD (value.data));
-            break;
             case sizeof (int):
-            comp->PushDword (DWORD (value.data));
+            comp->push(value.data);
             break;
+            case sizeof (long long):
+            comp->push (*((int*)(&(value.data)) + 1));
+            comp->push (*((int*)(&(value.data)) + 0));
             //!default:
             //!NAT_EXCEPTION ()
         }
-
-    }
-    else
-    if (value.size == sizeof (long long))
-    {
-        comp->PushDword (DWORD (*((int*)(&(value.data)) + 1)));
-        comp->PushDword (DWORD (*((int*)(&(value.data)) + 0)));
     }
 
 }

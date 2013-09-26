@@ -8,6 +8,35 @@
 
 typedef std::map<std::string, long long> StrTo64Map_t;
 typedef std::pair<std::string, int> StrTo32Pair_t;
+const int MAX_BUFFER = 4096;
+
+int ErrorPrintfBox (HWND wnd, DWORD flags, const char* format, ...)
+{
+    if (!format) return 0;
+
+    char str[MAX_BUFFER] = "";
+
+    va_list arg; va_start (arg, format);
+    int n = _vsnprintf (str, sizeof (str) - 1, format, arg);
+    va_end (arg);
+
+    MessageBoxA (wnd, str, "", flags);
+    return n;
+}
+
+int ErrorPrintfBox (const char* format, ...)
+{
+    if (!format) return 0;
+
+    char str[MAX_BUFFER] = "";
+
+    va_list arg; va_start (arg, format);
+    int n = _vsnprintf (str, sizeof (str) - 1, format, arg);
+    va_end (arg);
+
+    MessageBoxA (GetForegroundWindow(), str, "", 0);
+    return n;
+}
 
 
 enum ERRORS
@@ -102,7 +131,6 @@ enum FUNC_RETURN_CODES
 };
 
 const int STRING_SIZE = 200;
-const int MAX_BUFFER = 4096;
 
 void FillConstsMap (StrTo64Map_t* map)
 {

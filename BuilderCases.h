@@ -121,7 +121,9 @@ _BUILD_CASE_FUNC (Import)
     ClassifyArg (&arg, false, n_line);
     CHECK_ARGS (arg.flag1 != ARG_STR ||
                 arg.flag2 != ARG_STR, "import")
-    int num = dllImportMap_.size();
+
+    int num = 0;
+    STL_LOOP (i, dllImportMap_) num += i->second.size();
 
     std::string funcName (strings_[arg.arg2].begin (),
                           strings_[arg.arg2].begin () +

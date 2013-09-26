@@ -23,101 +23,90 @@ enum RMModes
 #include "MCode.h"
 #include "Instruction.h"
 
-class JitCompiler_t
+struct RegisterInfo_t
 {
-    std::vector<char> buffer_;
-    template <typename T>
-    void PushNum (T num)
-    {
-        for (int i = 0; i < sizeof (T); i++)
-        {
-            buffer_.push_back (char (num >> i * 8));
-        }
-    }
-
-    InstructionManager_t man;
-public:
-    JitCompiler_t () :
-        buffer_ (),
-        man     ()
+    int8_t reg;
+    RegisterInfo_t (int8_t reg_) :
+        reg (reg_)
     {}
-
-    void PushDword (DWORD dw)
-    {
-        buffer_.push_back (0x68);
-        PushNum (dw);
-        man.EmitPush(dw);
-    }
-    void PushWord (WORD w)
-    {
-        buffer_.push_back (0x66);
-        buffer_.push_back (0x68);
-        PushNum (w);
-    }
-    void MovToEax (DWORD dw)
-    {
-        buffer_.push_back (0xB8);
-        PushNum (dw);
-        man.EmitMov(R_EAX, dw);
-    }
-    void CallEax ()
-    {
-        buffer_.push_back (0xFF);
-        buffer_.push_back (0xD0);
-        man.EmitCall(R_EAX);
-    }
-    void AddToEsp (DWORD dw)
-    {
-        buffer_.push_back (0x81);
-        buffer_.push_back (0xC4);
-        PushNum (dw);
-        man.EmitAdd(R_ESP, dw);
-    }
-    void MovEaxToPtr (DWORD dw)
-    //! mov [dw], eax
-    {
-        buffer_.push_back (0xA3);
-        PushNum (dw);
-        man.EmitMov((void*)dw, R_EAX);
-    }
-    void MovEdxToPtr (DWORD dw)
-    //! mov [dw], edx
-    {
-        buffer_.push_back (0x89);
-        buffer_.push_back (0x15);
-        PushNum (dw);
-        man.EmitMov((void*)dw, R_EDX);
-    }
-    void Retn ()
-    {
-        //buffer_.push_back (0xCC);
-        buffer_.push_back (0xC3);
-        man.EmitRetn();
-    }
-
-    void Run ()
-    {
-        man.SaveData();
-        FILE* f = fopen ("Jit/dump.bin", "wb");
-        fwrite (buffer_.data(), 1, buffer_.size(), f);
-        fclose (f);
-        /*unsigned char* func = new unsigned char [buffer_.size() + 1];
-        memcpy (func, buffer_.data(), buffer_.size());
-        //VirtualProtect(func, buffer_.size(), PAGE_EXECUTE_READWRITE, nullptr);
-        ((void (*) ())func) ();
-        delete [] func;
-        func = nullptr;*/
-
-
-        unsigned char* func = new unsigned char [man.emitter_.mcode_.buffer_.size() + 1];
-        memcpy (func, man.emitter_.mcode_.buffer_.data(), man.emitter_.mcode_.buffer_.size());
-        //VirtualProtect(func, buffer_.size(), PAGE_EXECUTE_READWRITE, nullptr);
-        ((void (*) ())func) ();
-        delete [] func;
-        func = nullptr;
-    }
 };
 
+class JitCompiler_t
+{
+    InstructionManager_t man;
+
+    public:
+
+    RegisterInfo_t r_eax,
+                   r_ecx,
+                   r_edx,
+                   r_ebx,
+                   r_esp,
+                   sib,
+                   r_ebp,
+                   off,
+                   r_esi,
+                   r_edi;
+
+    JitCompiler_t () :
+        man   (),
+        r_eax (R_EAX),
+        r_ecx (R_ECX),
+        r_edx (R_EDX),
+        r_ebx (R_EBX),
+        r_esp (R_ESP),
+        sib   (SIB),
+        r_ebp (R_EBP),
+        off   (OFF),
+        r_esi (R_ESI),
+        r_edi (R_EDI)
+    {}
+
+    void mov (RegisterInfo_t regDest, RegisterInfo_t regSrc)
+    {
+        man.EmitMov (regDest.reg, regSrc.reg);
+    }
+
+    template <typename T>
+    void mov (RegisterInfo_t regDest, T imm)
+    {
+        man.EmitMov (regDest.reg, imm);
+    }
+
+    template <typename T>
+    void mov (T* pointer, RegisterInfo_t regSrc)
+    {
+        man.EmitMov (pointer, regSrc.reg);
+    }
+
+    template <typename T>
+    void push (T imm)
+    {
+        man.EmitPush (imm);
+    }
+
+    void call (RegisterInfo_t regDest)
+    {
+        man.EmitCall (regDest.reg);
+    }
+
+    template <typename T>
+    void add (RegisterInfo_t regDest, T data)
+    {
+        man.EmitAdd (regDest.reg, data);
+    }
+
+    void retn ()
+    {
+        man.EmitRetn ();
+    }
+
+    void BuildAndRun ()
+    {
+        man.BuildAndRun();
+    }
+
+};
 
 #undef R_EAX
 #undef R_ECX

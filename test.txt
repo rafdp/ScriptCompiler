@@ -1,22 +1,24 @@
 import "test.dll", "TestFunc _test"
 import "testDll.dll", "TestFunc _Test"
 import "msvcrt.dll", "sprintf _sprintf"
-import "msvcrt.dll", "atoi __atoi"
+import "msvcrt.dll", "_atoi64 __atoi"
 import "msvcrt.dll", "printf _printf"
+
 init_stack_dump_point
 
 push "3215651362154"
 
-jit_call_qword __atoi, rdword
-print PRINT_NUMBER, rdword 
+jit_call_qword __atoi, rqword
+print PRINT_STRING, "rqword = "
+print PRINT_NUMBER, rqword
 print PRINT_STRING, "\n"
 
-init_stack_dump_point 
+init_stack_dump_point
 ;push 0
 ;push 0
 push "Hello World\n"
 ;jit_call_void _printf
 
-init_stack_dump_point 
+init_stack_dump_point
 push 513516513
 ;jit_call_void _Test

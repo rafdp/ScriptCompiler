@@ -70,7 +70,7 @@ class CmdEmitter_t
     }
 
     template <typename T>
-    void EmitInstruction(Instruction_t instr, uint8_t regDest, T imm)
+    void EmitInstructionImm(Instruction_t instr, uint8_t regDest, T imm)
     {
         EmitOpcode (&instr);
         mcode_.AddToTop (regDest);
@@ -119,7 +119,7 @@ public:
     template <typename T>
     void EmitMov (uint8_t regDest, T imm)
     {
-        emitter_.EmitInstruction (inMov_RM_Imm, regDest, imm);
+        emitter_.EmitInstructionImm (inMov_RM_Imm, regDest, imm);
     }
 
     template <typename T>
@@ -137,12 +137,13 @@ public:
 
     void EmitCall (uint8_t regDest)
     {
-        emitter_.EmitInstruction (inCall_RM, regDest, (uint8_t)2);
+        emitter_.EmitInstruction (inCall_RM, regDest, 2);
     }
+
     template <typename T>
     void EmitAdd (uint8_t regDest, T data)
     {
-        emitter_.EmitInstruction (inAdd_RM_Imm, regDest, (uint8_t)0);
+        emitter_.EmitInstruction (inAdd_RM_Imm, regDest, 0);
         emitter_.EmitData((int32_t) data);
     }
 
@@ -156,6 +157,11 @@ public:
         FILE* f = fopen ("Jit/jittest.bin", "wb");
         fwrite (emitter_.mcode_.buffer_.data(), 1, emitter_.mcode_.buffer_.size(), f);
         fclose (f);
+    }
+
+    void BuildAndRun ()
+    {
+        emitter_.mcode_.BuildAndRun();
     }
 
 };
