@@ -214,6 +214,20 @@ FUNCTION_BEGIN(name, 2, 3, ARG_VAR _ ARG_REG _ ARG_VAR _ ARG_REG _ ARG_NUM) \
     } \
     $ SetVal (arg.flag1, arg.arg1, $ GetVal (arg.flag1, arg.arg1) operator opVal); \
 FUNCTION_END
+/*
+FUNCTION_BEGIN(Add, 2, 3, ARG_VAR _ ARG_REG _ ARG_VAR _ ARG_REG _ ARG_NUM)
+    long long opVal = $ GetVal (arg.flag2, arg.arg2);
+    void* pt = $ GetPt (arg.flag1, arg.arg1);
+
+    JitCompiler_t comp;
+    comp.add(comp.r_esp, $ EspAdd());
+    comp.mov(ptr, comp.r_eax);
+    comp.mov(ptr + 4, comp.r_edx);
+    comp.retn();
+    comp.BuildAndRun();
+
+    $ SetVal (arg.flag1, arg.arg1, $ GetVal (arg.flag1, arg.arg1) operator opVal);
+FUNCTION_END*/
 
 ARITHMETIC_FUNCTION (Add, +, false)
 ARITHMETIC_FUNCTION (Sub, -, false)

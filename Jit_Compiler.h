@@ -31,6 +31,8 @@ struct RegisterInfo_t
     {}
 };
 
+#define CHECK_64(T) if (sizeof (T) == 8) man.Emit64Prefix();
+
 class JitCompiler_t
 {
     InstructionManager_t man;
@@ -64,6 +66,7 @@ class JitCompiler_t
 
     void mov (RegisterInfo_t regDest, RegisterInfo_t regSrc)
     {
+        CHECK_64(T)
         man.EmitMov (regDest.reg, regSrc.reg);
     }
 
@@ -91,9 +94,67 @@ class JitCompiler_t
     }
 
     template <typename T>
-    void add (RegisterInfo_t regDest, T data)
+    void add (RegisterInfo_t regDest, T imm)
     {
-        man.EmitAdd (regDest.reg, data);
+        man.EmitAdd (regDest.reg, imm);
+    }
+
+    template <typename T>
+    void add (RegisterInfo_t regDest, T* src)
+    {
+        man.EmitAdd (regDest.reg, src);
+    }
+
+    template <typename T>
+    void add (T* dest, RegisterInfo_t regSrc)
+    {
+        man.EmitAdd (dest, regSrc.reg);
+    }
+
+    template <typename T>
+    void sub (RegisterInfo_t regDest, T imm)
+    {
+        man.EmitSub (regDest.reg, imm);
+    }
+
+    template <typename T>
+    void sub (RegisterInfo_t regDest, T* src)
+    {
+        man.EmitSub (regDest.reg, src);
+    }
+
+    template <typename T>
+    void sub (T* dest, RegisterInfo_t regSrc)
+    {
+        man.EmitSub (dest, regSrc.reg);
+    }
+
+    template <typename T>
+    void mul (RegisterInfo_t regDest, RegisterInfo_t regSrc, T imm)
+    {
+        man.EmitMul (regDest.reg, regSrc.reg, imm);
+    }
+
+    template <typename T>
+    void mul (RegisterInfo_t regDest, T* src)
+    {
+        man.EmitMul (regDest.reg, src);
+    }
+
+    void mul (RegisterInfo_t regDest, RegisterInfo_t regSrc)
+    {
+        man.EmitMul (regDest.reg, regSrc.reg);
+    }
+
+    void div (RegisterInfo_t regSrc)
+    {
+        man.EmitDiv (regSrc.reg);
+    }
+
+    template <typename T>
+    void div (T* src)
+    {
+        man.EmitDiv (src);
     }
 
     void retn ()

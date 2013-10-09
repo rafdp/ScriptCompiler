@@ -157,6 +157,7 @@ public:
     {
         if ((flag & char(~ARG_UNREF_MASK)) == ARG_VAR)        return vars_[arg].var;
         if ((flag & char(~ARG_UNREF_MASK)) == ARG_VAR_MEMBER) return MemberVarPt (arg);
+        return NULL;
     }
 
     long long GetVarType (char flag, long long arg)
@@ -188,6 +189,13 @@ public:
     inline bool isData (char flag) {return isVar (flag) || isReg (flag);}
     inline bool isStr  (char flag) {return ((flag & char(~ARG_UNREF_MASK)) == ARG_STR  ? true : false);}
 
+    void* GetPt (char flag, long long arg)
+    {
+        void* ret = NULL;
+        if (ret = GetVarPt(flag, arg)) return ret;
+        if (isReg (flag)) return GetReg (arg).reg;
+        return ret;
+    }
 
     long long EspAdd ()
     {

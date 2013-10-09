@@ -97,18 +97,34 @@ class InstructionManager_t
                   inMov_RM_RM,
                   inPush_Imm,
                   inCall_RM,
+                  inRetn,
                   inAdd_RM_Imm,
-                  inRetn;
+                  inAdd_R_RM,
+                  inAdd_RM_R,
+                  inSub_RM_Imm,
+                  inSub_R_RM,
+                  inSub_RM_R,
+                  inIMul_R_RM_Imm,
+                  inIMul_R_RM,
+                  inIDiv_RM;
 
 public:
     InstructionManager_t () :
-        emitter_      (),
-        inMov_RM_Imm  ({0xB8}),
-        inMov_RM_RM   ({0x89}),
-        inPush_Imm    ({0x68}),
-        inCall_RM     ({0xFF}),
-        inAdd_RM_Imm  ({0x81}),
-        inRetn        ({0xC3})
+        emitter_         (),
+        inMov_RM_Imm     ({0xB8}),
+        inMov_RM_RM      ({0x89}),
+        inPush_Imm       ({0x68}),
+        inCall_RM        ({0xFF}),
+        inRetn           ({0xC3}),
+        inAdd_RM_Imm     ({0x81}),
+        inAdd_R_RM       ({0x01}),
+        inAdd_RM_R       ({0x03}),
+        inSub_RM_Imm     ({0x81}),
+        inSub_R_RM       ({0x2B}),
+        inSub_RM_R       ({0x29}),
+        inIMul_R_RM_Imm  ({0x69}),
+        inIMul_R_RM      ({0x0F, 0xAF}),
+        inIDiv_RM        ({0xF7})
     {}
 
     void EmitMov (uint8_t regDest, uint8_t regSrc)
@@ -140,13 +156,6 @@ public:
         emitter_.EmitInstruction (inCall_RM, regDest, 2);
     }
 
-    template <typename T>
-    void EmitAdd (uint8_t regDest, T data)
-    {
-        emitter_.EmitInstruction (inAdd_RM_Imm, regDest, 0);
-        emitter_.EmitData((int32_t) data);
-    }
-
     void EmitRetn ()
     {
         emitter_.EmitInstruction (inRetn);
@@ -157,6 +166,84 @@ public:
         FILE* f = fopen ("Jit/jittest.bin", "wb");
         fwrite (emitter_.mcode_.buffer_.data(), 1, emitter_.mcode_.buffer_.size(), f);
         fclose (f);
+    }
+
+    template <typename T>
+    void EmitAdd (uint8_t regDest, T data)
+    {
+        emitter_.EmitInstruction (inAdd_RM_Imm, regDest, 0);
+        emitter_.EmitData((int32_t) data);
+    }
+
+    template <typename T>
+    void EmitAdd (uint8_t regDest, T* src)
+    {
+        emitter_.EmitInstruction (inAdd_R_RM, MODE_ADDRESS, regDest, OFF);
+        emitter_.EmitData((int32_t) src);
+    }
+
+    template <typename T>
+    void EmitAdd (T* dest, uint8_t regSrc)
+    {
+        emitter_.EmitInstruction (inAdd_RM_R, MODE_ADDRESS, regSrc, OFF);
+        emitter_.EmitData((int32_t) dest);
+    }
+
+    template <typename T>
+    void EmitSub (uint8_t regDest, T data)
+    {
+        emitter_.EmitInstruction (inSub_RM_Imm, regDest, 5);
+        emitter_.EmitData((int32_t) data);
+    }
+
+    template <typename T>
+    void EmitSub (uint8_t regDest, T* src)
+    {
+        emitter_.EmitInstruction (inSub_R_RM, MODE_ADDRESS, regDest, OFF);
+        emitter_.EmitData((int32_t) src);
+    }
+
+    template <typename T>
+    void EmitSub (T* dest, uint8_t regSrc)
+    {
+        emitter_.EmitInstruction (inSub_RM_R, MODE_ADDRESS, regSrc, OFF);
+        emitter_.EmitData((int32_t) dest);
+    }
+
+    template <typename T>
+    void EmitMul (uint8_t regDest, uint8_t regSrc, T data)
+    {
+        emitter_.EmitInstruction (inIMul_R_RM_Imm, regDest, regSrc);
+        emitter_.EmitData((int32_t) data);
+    }
+
+    template <typename T>
+    void EmitMul (uint8_t regDest, T* src)
+    {
+        emitter_.EmitInstruction (inIMul_R_RM, MODE_ADDRESS, regDest, OFF);
+        emitter_.EmitData((int32_t) src);
+    }
+
+    void EmitMul (uint8_t regDest, uint8_t regSrc)
+    {
+        emitter_.EmitInstruction (inIMul_R_RM, regDest, regSrc);
+    }
+
+    void EmitDiv (uint8_t regSrc)
+    {
+        emitter_.EmitInstruction (inIDiv_RM, regSrc, 7);
+    }
+
+    template <typename T>
+    void EmitDiv (T* ptr)
+    {
+        emitter_.EmitInstruction (inIDiv_RM, MODE_ADDRESS, OFF, 7);
+        emitter_.EmitData((int32_t) ptr);
+    }
+
+    void Emit64Prefix ()
+    {
+        emitter_.EmitData((int8_t) 0x48);
     }
 
     void BuildAndRun ()
