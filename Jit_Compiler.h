@@ -1,16 +1,16 @@
 #ifndef JIT_COMPILER_H_INCLUDED
 #define JIT_COMPILER_H_INCLUDED
 
-#define R_EAX 0b000
-#define R_ECX 0b001
-#define R_EDX 0b010
-#define R_EBX 0b011
-#define R_ESP 0b100
+#define R_RAX 0b000
+#define R_RCX 0b001
+#define R_RDX 0b010
+#define R_RBX 0b011
+#define R_RSP 0b100
 #define SIB   0b100
-#define R_EBP 0b101
+#define R_RBP 0b101
 #define OFF   0b101
-#define R_ESI 0b110
-#define R_EDI 0b111
+#define R_RSI 0b110
+#define R_RDI 0b111
 
 enum RMModes
 {
@@ -31,7 +31,7 @@ struct RegisterInfo_t
     {}
 };
 
-#define CHECK_64(T) if (sizeof (T) == 8) man.Emit64Prefix();
+#define CHECK_64(T) if (sizeof (T) == 8) {ErrorPrintfBox ("%d %s", __LINE__, __PRETTY_FUNCTION__); man.Emit64Prefix();}
 
 class JitCompiler_t
 {
@@ -39,53 +39,60 @@ class JitCompiler_t
 
     public:
 
-    RegisterInfo_t r_eax,
-                   r_ecx,
-                   r_edx,
-                   r_ebx,
-                   r_esp,
+    RegisterInfo_t r_rax,
+                   r_rcx,
+                   r_rdx,
+                   r_rbx,
+                   r_rsp,
                    sib,
-                   r_ebp,
+                   r_rbp,
                    off,
-                   r_esi,
-                   r_edi;
+                   r_rsi,
+                   r_rdi;
 
     JitCompiler_t () :
         man   (),
-        r_eax (R_EAX),
-        r_ecx (R_ECX),
-        r_edx (R_EDX),
-        r_ebx (R_EBX),
-        r_esp (R_ESP),
+        r_rax (R_RAX),
+        r_rcx (R_RCX),
+        r_rdx (R_RDX),
+        r_rbx (R_RBX),
+        r_rsp (R_RSP),
         sib   (SIB),
-        r_ebp (R_EBP),
+        r_rbp (R_RBP),
         off   (OFF),
-        r_esi (R_ESI),
-        r_edi (R_EDI)
+        r_rsi (R_RSI),
+        r_rdi (R_RDI)
     {}
 
     void mov (RegisterInfo_t regDest, RegisterInfo_t regSrc)
     {
-        CHECK_64(T)
         man.EmitMov (regDest.reg, regSrc.reg);
     }
 
     template <typename T>
     void mov (RegisterInfo_t regDest, T imm)
     {
+        CHECK_64(T)
         man.EmitMov (regDest.reg, imm);
     }
 
     template <typename T>
     void mov (T* pointer, RegisterInfo_t regSrc)
     {
+        CHECK_64(T)
         man.EmitMov (pointer, regSrc.reg);
     }
 
     template <typename T>
     void push (T imm)
     {
-        man.EmitPush (imm);
+        if (sizeof (imm) == sizeof (int64_t))
+        {
+            ErrorPrintfBox ("%d %s", __LINE__, __PRETTY_FUNCTION__);
+            man.EmitPush (DWORD(imm >> (sizeof (int32_t)*8)));
+            man.EmitPush (DWORD(imm));
+        }
+        else man.EmitPush (imm);
     }
 
     void call (RegisterInfo_t regDest)
@@ -96,48 +103,56 @@ class JitCompiler_t
     template <typename T>
     void add (RegisterInfo_t regDest, T imm)
     {
+        CHECK_64(T)
         man.EmitAdd (regDest.reg, imm);
     }
 
     template <typename T>
     void add (RegisterInfo_t regDest, T* src)
     {
+        CHECK_64(T)
         man.EmitAdd (regDest.reg, src);
     }
 
     template <typename T>
     void add (T* dest, RegisterInfo_t regSrc)
     {
+        CHECK_64(T)
         man.EmitAdd (dest, regSrc.reg);
     }
 
     template <typename T>
     void sub (RegisterInfo_t regDest, T imm)
     {
+        CHECK_64(T)
         man.EmitSub (regDest.reg, imm);
     }
 
     template <typename T>
     void sub (RegisterInfo_t regDest, T* src)
     {
+        CHECK_64(T)
         man.EmitSub (regDest.reg, src);
     }
 
     template <typename T>
     void sub (T* dest, RegisterInfo_t regSrc)
     {
+        CHECK_64(T)
         man.EmitSub (dest, regSrc.reg);
     }
 
     template <typename T>
     void mul (RegisterInfo_t regDest, RegisterInfo_t regSrc, T imm)
     {
+        CHECK_64(T)
         man.EmitMul (regDest.reg, regSrc.reg, imm);
     }
 
     template <typename T>
     void mul (RegisterInfo_t regDest, T* src)
     {
+        CHECK_64(T)
         man.EmitMul (regDest.reg, src);
     }
 
@@ -154,6 +169,7 @@ class JitCompiler_t
     template <typename T>
     void div (T* src)
     {
+        CHECK_64(T)
         man.EmitDiv (src);
     }
 

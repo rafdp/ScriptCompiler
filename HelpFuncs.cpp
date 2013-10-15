@@ -252,7 +252,7 @@ void PushStackValueJit (const StackData_t& value, JitCompiler_t* comp)
             case sizeof (char):
             case sizeof (short):
             case sizeof (int):
-            comp->push(value.data);
+            comp->push((long)value.data);
             break;
             case sizeof (long long):
             comp->push (*((int*)(&(value.data)) + 1));

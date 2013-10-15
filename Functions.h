@@ -166,38 +166,39 @@ FUNCTION_BEGIN(JIT_Call_Void, 1, 0, ARG_DLL_FUNC)
     JitCompiler_t comp;
     for (stack<StackData_t>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpPoint_]); i < $ dataStack_.end(); i++) \
         PushStackValueJit (*i, &comp);
-    comp.mov (comp.r_eax, int32_t($ dllResolved_[arg.arg1]));
-    comp.call (comp.r_eax);
-    comp.add(comp.r_esp, $ EspAdd());
+    comp.mov (comp.r_rax, int32_t($ dllResolved_[arg.arg1]));
+    comp.call (comp.r_rax);
+    comp.add(comp.r_rsp, $ EspAdd());
     comp.retn();
     comp.BuildAndRun();
 
 FUNCTION_END
 
 FUNCTION_BEGIN(JIT_Call_DWord, 1, 3, ARG_DLL_FUNC _ ARG_REG _ ARG_VAR _ ARG_VAR_MEMBER)
-    void* ptr = $ isVar(arg.arg2) ? $ GetVarPt (arg.flag2, arg.arg2) : $ GetReg (arg.arg2).reg;
+    auto* ptr = $ isVar(arg.arg2) ? $ GetVarPt (arg.flag2, arg.arg2) : TYPED_PTR_REGISTER($ GetReg (arg.arg2));
+    //auto* ptr = $ isVar(arg.arg2) ? $ GetVarPt (arg.flag2, arg.arg2) : RegTypeRetriever<($ GetReg (arg.arg2)).size>(($ GetReg (arg.arg2)).reg).GetPtr();
 
     JitCompiler_t comp;
     for (stack<StackData_t>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpPoint_]); i < $ dataStack_.end(); i++) \
         PushStackValueJit (*i, &comp);
-    comp.mov (comp.r_eax, int32_t($ dllResolved_[arg.arg1]));
-    comp.call (comp.r_eax);
-    comp.add(comp.r_esp, $ EspAdd());
+    comp.mov (comp.r_rax, int32_t($ dllResolved_[arg.arg1]));
+    comp.call (comp.r_rax);
+    comp.add(comp.r_rsp, $ EspAdd());
     comp.retn();
-    comp.mov(ptr, comp.r_eax);
+    comp.mov(ptr, comp.r_rax);
     comp.BuildAndRun();
 FUNCTION_END
 
 FUNCTION_BEGIN(JIT_Call_QWord, 1, 3, ARG_DLL_FUNC _ ARG_REG _ ARG_VAR _ ARG_VAR_MEMBER)
-    void* ptr = $ isVar(arg.arg2) ? $ GetVarPt (arg.flag2, arg.arg2) : $ GetReg (arg.arg2).reg;
+    void* ptr = $ isVar(arg.arg2) ? $ GetVarPt (arg.flag2, arg.arg2) : TYPED_PTR_REGISTER($ GetReg (arg.arg2));
     JitCompiler_t comp;
     for (stack<StackData_t>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpPoint_]); i < $ dataStack_.end(); i++) \
         PushStackValueJit (*i, &comp);
-    comp.mov (comp.r_eax, int32_t($ dllResolved_[arg.arg1]));
-    comp.call (comp.r_eax);
-    comp.add(comp.r_esp, $ EspAdd());
-    comp.mov(ptr, comp.r_eax);
-    comp.mov(ptr + 4, comp.r_edx);
+    comp.mov (comp.r_rax, int32_t($ dllResolved_[arg.arg1]));
+    comp.call (comp.r_rax);
+    comp.add(comp.r_rsp, $ EspAdd());
+    comp.mov(ptr, comp.r_rax);
+    comp.mov(ptr + 4, comp.r_rdx);
     comp.retn();
     comp.BuildAndRun();
 FUNCTION_END

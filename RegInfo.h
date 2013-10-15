@@ -45,6 +45,30 @@ struct RegInfo_t
         }
     }
 
+    template <typename T>
+    T* GetPtr ()
+    {
+        switch (size)
+        {
+            case 1:
+                return (int8_t*) reg;
+            case 2:
+                return (int16_t*)reg;
+            case 4:
+                return (int32_t*)reg;
+            case 8:
+                return (int64_t*)reg;
+        }
+        return NULL;
+    }
+/*
+    #define TYPED_PTR_REGISTER(register) \
+    register.GetPtr <(((register).size == sizeof (long long)) ? (long long*) : \
+    (((register).size == sizeof (long)) ? (long*) : \
+    (((register).size == sizeof (short)) ? (short*) : \
+    (((register).size == sizeof (char)) ? (char*) : (void*)))))> ()
+*/
+
     long long Get8byte ()
     {
         switch (size)
