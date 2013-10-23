@@ -5,7 +5,7 @@
 #define STL_LOOP(iterator, object) for (auto iterator = (object).begin(); iterator != (object).end(); iterator++)
 #define STL_RLOOP(iterator, object) for (auto iterator = (object).begin(); iterator != (object).end(); iterator++)
 
-
+typedef int64_t QWORD;
 typedef std::map<std::string, long long> StrTo64Map_t;
 typedef std::pair<std::string, int> StrTo32Pair_t;
 const int MAX_BUFFER = 4096;

@@ -91,11 +91,12 @@ class CmdEmitter_t
 };
 
 class InstructionManager_t
-{public:
+{
     CmdEmitter_t emitter_;
     Instruction_t inMov_RM_Imm,
                   inMov_RM_RM,
                   inPush_Imm,
+                  inPush_RM,
                   inCall_RM,
                   inRetn,
                   inAdd_RM_Imm,
@@ -114,6 +115,7 @@ public:
         inMov_RM_Imm     ({0xB8}),
         inMov_RM_RM      ({0x89}),
         inPush_Imm       ({0x68}),
+        inPush_RM        ({0xFF}),
         inCall_RM        ({0xFF}),
         inRetn           ({0xC3}),
         inAdd_RM_Imm     ({0x81}),
@@ -151,9 +153,21 @@ public:
         emitter_.EmitInstruction (inPush_Imm, imm);
     }
 
-    void EmitCall (uint8_t regDest)
+    template <typename T>
+    void EmitPush (T* mem)
     {
-        emitter_.EmitInstruction (inCall_RM, regDest, 2);
+        emitter_.EmitInstruction (inPush_RM, MODE_ADDRESS, 6);
+        emitter_.EmitInstruction (mem);
+    }
+
+    void EmitPush (uint8_t reg)
+    {
+        emitter_.EmitInstruction (inPush_RM, reg, 6);
+    }
+
+    void EmitCall (uint8_t reg)
+    {
+        emitter_.EmitInstruction (inCall_RM, reg, 2);
     }
 
     void EmitRetn ()

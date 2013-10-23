@@ -3,11 +3,11 @@
 #define FUNCTION_BEGIN(name, n_params1, n_params2, params) \
 ErrorReturn_t VirtualProcessor_t::name (Arg_t arg) \
 { \
-    ManageInputArgs_t man (ExpectedArg_t (n_params1, n_params2, params), arg); \
-    if (man.error) return man.CreateError();
+ManageInputArgs_t man (ExpectedArg_t (n_params1, n_params2, params), arg); \
+if (man.error) return man.CreateError();
 
 #define FUNCTION_END \
-    return RET_NO_ERRORS; \
+return RET_NO_ERRORS; \
 }
 
 #define CHECK_VAR_TYPE()
@@ -107,11 +107,11 @@ FUNCTION_END
 
 #define JUMP_AUTOFILL(name, situation) \
 FUNCTION_BEGIN(name, 1, 0, ARG_LABEL) \
-    const char error1[] = "Flag not set"; \
-    if ($ cmpr_flag_ == FLAG_NOT_SET) \
-        return ErrorReturn_t (RET_ERROR_CONTINUE, error1); \
-    if (situation) \
-        $ run_line_ = $ labels_[arg.arg1]; \
+const char error1[] = "Flag not set"; \
+if ($ cmpr_flag_ == FLAG_NOT_SET) \
+return ErrorReturn_t (RET_ERROR_CONTINUE, error1); \
+if (situation) \
+$ run_line_ = $ labels_[arg.arg1]; \
 FUNCTION_END
 
 JUMP_AUTOFILL (Je, $ cmpr_flag_ == FLAG_EQUAL)
@@ -157,50 +157,55 @@ FUNCTION_END
 
 #define ASM_FILL_STACK(str) \
 for (stack<StackData_t>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpPoint_]); i < $ dataStack_.end(); i++) \
-    PushStackValueString (*i, &str);/*str += "push " + GetAsmNumString (*i) + "\n"; */
+PushStackValueString (*i, &str);/*str += "push " + GetAsmNumString (*i) + "\n"; */
 
 #define ASM_CALL_FUNC(ptr, str) \
 str += "mov eax, " + GetAsmNumString (int(ptr)) + "\ncall eax\n";
 
 FUNCTION_BEGIN(JIT_Call_Void, 1, 0, ARG_DLL_FUNC)
     JitCompiler_t comp;
-    for (stack<StackData_t>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpPoint_]); i < $ dataStack_.end(); i++) \
+    for (stack<StackData_t>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpPoint_]); i < $ dataStack_.end(); i++)
         PushStackValueJit (*i, &comp);
     comp.mov (comp.r_rax, int32_t($ dllResolved_[arg.arg1]));
     comp.call (comp.r_rax);
-    comp.add(comp.r_rsp, $ EspAdd());
+    comp.add(comp.r_rsp, $ RspAdd());
     comp.retn();
     comp.BuildAndRun();
 
 FUNCTION_END
 
 FUNCTION_BEGIN(JIT_Call_DWord, 1, 3, ARG_DLL_FUNC _ ARG_REG _ ARG_VAR _ ARG_VAR_MEMBER)
-    auto* ptr = $ isVar(arg.arg2) ? $ GetVarPt (arg.flag2, arg.arg2) : TYPED_PTR_REGISTER($ GetReg (arg.arg2));
-    //auto* ptr = $ isVar(arg.arg2) ? $ GetVarPt (arg.flag2, arg.arg2) : RegTypeRetriever<($ GetReg (arg.arg2)).size>(($ GetReg (arg.arg2)).reg).GetPtr();
-
+    if ($ GetSize(arg.flag2, arg.arg2) != sizeof (DWORD))
+        return ErrorReturn_t (RET_ERROR_CONTINUE, $ isReg (arg.flag2) ? "Invalid reg size" : "Invalid var size");
     JitCompiler_t comp;
-    for (stack<StackData_t>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpPoint_]); i < $ dataStack_.end(); i++) \
+    for (stack<StackData_t>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpPoint_]); i < $ dataStack_.end(); i++)
         PushStackValueJit (*i, &comp);
     comp.mov (comp.r_rax, int32_t($ dllResolved_[arg.arg1]));
     comp.call (comp.r_rax);
-    comp.add(comp.r_rsp, $ EspAdd());
+    comp.add(comp.r_rsp, $ RspAdd());
     comp.retn();
-    comp.mov(ptr, comp.r_rax);
+    if (! $ isVar (arg.arg2)) ($ GetReg (arg.arg2)).MovFromReg (&comp, comp.r_rax);
+    else comp.mov ((DWORD*)$ GetPtr (arg.flag2, arg.arg2), comp.r_rax);
+    //comp.mov(ptr, comp.r_rax);
     comp.BuildAndRun();
 FUNCTION_END
 
 FUNCTION_BEGIN(JIT_Call_QWord, 1, 3, ARG_DLL_FUNC _ ARG_REG _ ARG_VAR _ ARG_VAR_MEMBER)
-    void* ptr = $ isVar(arg.arg2) ? $ GetVarPt (arg.flag2, arg.arg2) : TYPED_PTR_REGISTER($ GetReg (arg.arg2));
+    long long res = 0;
+    if ($ GetSize(arg.flag2, arg.arg2) != sizeof (QWORD))
+        return ErrorReturn_t (RET_ERROR_CONTINUE, $ isReg (arg.flag2) ? "Invalid reg size" : "Invalid var size");
     JitCompiler_t comp;
-    for (stack<StackData_t>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpPoint_]); i < $ dataStack_.end(); i++) \
+    for (stack<StackData_t>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpPoint_]); i < $ dataStack_.end(); i++)
         PushStackValueJit (*i, &comp);
     comp.mov (comp.r_rax, int32_t($ dllResolved_[arg.arg1]));
     comp.call (comp.r_rax);
-    comp.add(comp.r_rsp, $ EspAdd());
-    comp.mov(ptr, comp.r_rax);
-    comp.mov(ptr + 4, comp.r_rdx);
+    comp.mov((DWORD*)&res, comp.r_rax);
+    comp.mov((DWORD*)&res + 1, comp.r_rdx);
+    comp.add(comp.r_rsp, $ RspAdd());
     comp.retn();
     comp.BuildAndRun();
+    if (! $ isVar (arg.arg2)) ($ GetReg (arg.arg2)).Set (res);
+    else *(QWORD*)$ GetPtr (arg.flag2, arg.arg2) = res;
 FUNCTION_END
 
 #undef ASM_FILL_STACK
@@ -208,26 +213,26 @@ FUNCTION_END
 
 #define ARITHMETIC_FUNCTION(name, operator, check0) \
 FUNCTION_BEGIN(name, 2, 3, ARG_VAR _ ARG_REG _ ARG_VAR _ ARG_REG _ ARG_NUM) \
-    long long opVal = $ GetVal (arg.flag2, arg.arg2); \
-    if (check0 && opVal == 0) \
-    { \
-        return ErrorReturn_t (RET_ERROR_FATAL, "Invalid second operand value (0)"); \
-    } \
-    $ SetVal (arg.flag1, arg.arg1, $ GetVal (arg.flag1, arg.arg1) operator opVal); \
+long long opVal = $ GetVal (arg.flag2, arg.arg2); \
+if (check0 && opVal == 0) \
+{ \
+return ErrorReturn_t (RET_ERROR_FATAL, "Invalid second operand value (0)"); \
+} \
+$ SetVal (arg.flag1, arg.arg1, $ GetVal (arg.flag1, arg.arg1) operator opVal); \
 FUNCTION_END
 /*
 FUNCTION_BEGIN(Add, 2, 3, ARG_VAR _ ARG_REG _ ARG_VAR _ ARG_REG _ ARG_NUM)
-    long long opVal = $ GetVal (arg.flag2, arg.arg2);
-    void* pt = $ GetPt (arg.flag1, arg.arg1);
+long long opVal = $ GetVal (arg.flag2, arg.arg2);
+void* pt = $ GetPt (arg.flag1, arg.arg1);
 
-    JitCompiler_t comp;
-    comp.add(comp.r_esp, $ EspAdd());
-    comp.mov(ptr, comp.r_eax);
-    comp.mov(ptr + 4, comp.r_edx);
-    comp.retn();
-    comp.BuildAndRun();
+JitCompiler_t comp;
+comp.add(comp.r_esp, $ EspAdd());
+comp.mov(ptr, comp.r_eax);
+comp.mov(ptr + 4, comp.r_edx);
+comp.retn();
+comp.BuildAndRun();
 
-    $ SetVal (arg.flag1, arg.arg1, $ GetVal (arg.flag1, arg.arg1) operator opVal);
+$ SetVal (arg.flag1, arg.arg1, $ GetVal (arg.flag1, arg.arg1) operator opVal);
 FUNCTION_END*/
 
 ARITHMETIC_FUNCTION (Add, +, false)
@@ -238,13 +243,13 @@ ARITHMETIC_FUNCTION (Div, /, true)
 
 #define STACK_ARITHMETIC_FUNCTION(name, operator, check0) \
 FUNCTION_BEGIN(name, 0, 0, ARG_NULL) \
-    long long val1 = $ dataStack_.pop(); \
-    long long val0 = $ dataStack_.pop(); \
-    if (check0 && val1 == 0) \
-    { \
-        return ErrorReturn_t (RET_ERROR_FATAL, "Invalid second operand value (0)"); \
-    } \
-    $ dataStack_.push(StackData_t (val0 operator val1, sizeof (long long))); \
+long long val1 = $ dataStack_.pop(); \
+long long val0 = $ dataStack_.pop(); \
+if (check0 && val1 == 0) \
+{ \
+return ErrorReturn_t (RET_ERROR_FATAL, "Invalid second operand value (0)"); \
+} \
+$ dataStack_.push(StackData_t (val0 operator val1, sizeof (long long))); \
 FUNCTION_END
 
 

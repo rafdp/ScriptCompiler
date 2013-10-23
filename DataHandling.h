@@ -189,7 +189,7 @@ public:
     inline bool isData (char flag) {return isVar (flag) || isReg (flag);}
     inline bool isStr  (char flag) {return ((flag & char(~ARG_UNREF_MASK)) == ARG_STR  ? true : false);}
 
-    void* GetPt (char flag, long long arg)
+    void* GetPtr (char flag, long long arg)
     {
         void* ret = NULL;
         if (ret = GetVarPt(flag, arg)) return ret;
@@ -197,7 +197,7 @@ public:
         return ret;
     }
 
-    long long EspAdd ()
+    long long RspAdd ()
     {
         long long result = 0;
         for (int i = stackDumpPoint_; i < dataStack_.size(); i++)

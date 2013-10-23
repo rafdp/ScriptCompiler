@@ -1,17 +1,17 @@
 ;import "test.dll", "TestFunc _test"
 ;import "testDll.dll", "TestFunc _Test"
 ;import "msvcrt.dll", "sprintf _sprintf"
-import "msvcrt.dll", "atoi __atoi"
+import "msvcrt.dll", "_atoi64 __atoi"
 ;import "msvcrt.dll", "printf _printf"
 
 init_stack_dump_point
 
-;push "3215651362157"
-push "156"
+push "742949672957"
+;push "127"
 
-jit_call_dword __atoi, rdword
-print PRINT_STRING, "rdword = "
-print PRINT_NUMBER, rdword
+jit_call_qword __atoi, rqword
+print PRINT_STRING, "rqword = "
+print PRINT_NUMBER, rqword
 print PRINT_STRING, "\n"
 
 ;init_stack_dump_point

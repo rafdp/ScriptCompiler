@@ -45,22 +45,6 @@ struct RegInfo_t
         }
     }
 
-    template <typename T>
-    T* GetPtr ()
-    {
-        switch (size)
-        {
-            case 1:
-                return (int8_t*) reg;
-            case 2:
-                return (int16_t*)reg;
-            case 4:
-                return (int32_t*)reg;
-            case 8:
-                return (int64_t*)reg;
-        }
-        return NULL;
-    }
 /*
     #define TYPED_PTR_REGISTER(register) \
     register.GetPtr <(((register).size == sizeof (long long)) ? (long long*) : \
@@ -106,5 +90,26 @@ struct RegInfo_t
 
         return;
     }
+
+    void MovFromReg (JitCompiler_t* comp, CPURegisterInfo_t register_)
+    {
+        switch (size)
+        {
+            case 1:
+                comp->mov ((char*)reg,      register_);
+                break;
+            case 2:
+                comp->mov ((short*)reg,     register_);
+                break;
+            case 4:
+                comp->mov ((long*)reg,      register_);
+                break;
+            case 8:
+                comp->mov ((long long*)reg, register_);
+                break;
+        }
+    }
 };
+
+
 #endif
