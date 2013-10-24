@@ -32,6 +32,7 @@ FUNCTION_BEGIN(Pop, 4, 0, ARG_NULL _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG)
 FUNCTION_END
 
 FUNCTION_BEGIN(Mov, 3, 5, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_NUM _ ARG_STR)
+
     if ($ isVar (arg.flag1) && $ isVar (arg.flag2) &&
         $ GetVarType (arg.flag1, arg.arg1) == $ GetVarType (arg.flag2, arg.arg2))
         memcpy ($ GetVarPt (arg.flag1, arg.arg1),
@@ -163,6 +164,8 @@ PushStackValueString (*i, &str);/*str += "push " + GetAsmNumString (*i) + "\n"; 
 str += "mov eax, " + GetAsmNumString (int(ptr)) + "\ncall eax\n";
 
 FUNCTION_BEGIN(JIT_Call_Void, 1, 0, ARG_DLL_FUNC)
+    //ErrorPrintfBox ("%d %d %s\n", $ stackDumpPoint_, $ dataStack_.size(), __PRETTY_FUNCTION__);
+
     JitCompiler_t comp;
     for (stack<StackData_t>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpPoint_]); i < $ dataStack_.end(); i++)
         PushStackValueJit (*i, &comp);
@@ -178,14 +181,15 @@ FUNCTION_BEGIN(JIT_Call_DWord, 1, 3, ARG_DLL_FUNC _ ARG_REG _ ARG_VAR _ ARG_VAR_
     if ($ GetSize(arg.flag2, arg.arg2) != sizeof (DWORD))
         return ErrorReturn_t (RET_ERROR_CONTINUE, $ isReg (arg.flag2) ? "Invalid reg size" : "Invalid var size");
     JitCompiler_t comp;
+
     for (stack<StackData_t>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpPoint_]); i < $ dataStack_.end(); i++)
         PushStackValueJit (*i, &comp);
     comp.mov (comp.r_rax, int32_t($ dllResolved_[arg.arg1]));
     comp.call (comp.r_rax);
-    comp.add(comp.r_rsp, $ RspAdd());
-    comp.retn();
     if (! $ isVar (arg.arg2)) ($ GetReg (arg.arg2)).MovFromReg (&comp, comp.r_rax);
     else comp.mov ((DWORD*)$ GetPtr (arg.flag2, arg.arg2), comp.r_rax);
+    comp.add(comp.r_rsp, $ RspAdd());
+    comp.retn();
     //comp.mov(ptr, comp.r_rax);
     comp.BuildAndRun();
 FUNCTION_END
@@ -220,22 +224,41 @@ return ErrorReturn_t (RET_ERROR_FATAL, "Invalid second operand value (0)"); \
 } \
 $ SetVal (arg.flag1, arg.arg1, $ GetVal (arg.flag1, arg.arg1) operator opVal); \
 FUNCTION_END
-/*
-FUNCTION_BEGIN(Add, 2, 3, ARG_VAR _ ARG_REG _ ARG_VAR _ ARG_REG _ ARG_NUM)
-long long opVal = $ GetVal (arg.flag2, arg.arg2);
-void* pt = $ GetPt (arg.flag1, arg.arg1);
 
+FUNCTION_BEGIN(Add, 2, 3, ARG_VAR _ ARG_REG _ ARG_VAR _ ARG_REG _ ARG_NUM)
 JitCompiler_t comp;
-comp.add(comp.r_esp, $ EspAdd());
-comp.mov(ptr, comp.r_eax);
-comp.mov(ptr + 4, comp.r_edx);
+//comp.add (comp.r_rax, 1);
+//comp.push<long long> (comp.r_rax);
+long long var = 0;
+comp.mov (comp.r_rax, &var/*(long*) $ GetPtr(arg.flag1, arg.arg1)*/);
+//comp.add (comp.r_rax, (long*) $ GetPtr(arg.flag2, arg.arg2));
+/*if ($ isReg (arg.flag1)) $ GetReg (arg.arg2) . MovFromReg (&comp, comp.r_rax);
+else
+{
+    switch ($ GetSize (arg.flag2, arg.arg2))
+    {
+        #define SIZE_CASE(type) \
+        case sizeof (type): \
+            comp.mov ((type*) $ GetPtr(arg.flag1, arg.arg1), comp.r_rax); \
+            break;
+
+        SIZE_CASE(char)
+        SIZE_CASE(short)
+        SIZE_CASE(long)
+        SIZE_CASE(long long)
+
+        #undef SIZE_CASE
+    }
+}*/
+
+
+//comp.add (comp.r_rsp, 4);
 comp.retn();
 comp.BuildAndRun();
 
-$ SetVal (arg.flag1, arg.arg1, $ GetVal (arg.flag1, arg.arg1) operator opVal);
-FUNCTION_END*/
+FUNCTION_END
 
-ARITHMETIC_FUNCTION (Add, +, false)
+//ARITHMETIC_FUNCTION (Add, +, false)
 ARITHMETIC_FUNCTION (Sub, -, false)
 ARITHMETIC_FUNCTION (Mul, *, false)
 ARITHMETIC_FUNCTION (Div, /, true)

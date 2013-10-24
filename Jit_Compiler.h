@@ -84,11 +84,25 @@ class JitCompiler_t
     }
 
     template <typename T>
+    void mov (CPURegisterInfo_t regDest, T* pointer)
+    {
+        CHECK_64(T)
+        man.EmitMov (regDest.reg, pointer);
+    }
+
+    template <typename T>
+    void push (CPURegisterInfo_t reg)
+    {
+        CHECK_64(T)
+        man.EmitPush (reg.reg);
+    }
+
+    template <typename T>
     void push (T imm)
     {
         if (sizeof (imm) == sizeof (int64_t))
         {
-            ErrorPrintfBox ("%d %s", __LINE__, __PRETTY_FUNCTION__);
+            //ErrorPrintfBox ("%d %s", __LINE__, __PRETTY_FUNCTION__);
             man.EmitPush (DWORD(imm >> (sizeof (int32_t)*8)));
             man.EmitPush (DWORD(imm));
         }

@@ -244,9 +244,7 @@ void PushStackValueString (const StackData_t& value, std::string* str)
 
 void PushStackValueJit (const StackData_t& value, JitCompiler_t* comp)
 {
-    std::string type;
-    if (value.size <= sizeof (int))
-    {
+    //ErrorPrintfBox ("%d %s", value.size, __PRETTY_FUNCTION__);
         switch (value.size)
         {
             case sizeof (char):
@@ -255,12 +253,13 @@ void PushStackValueJit (const StackData_t& value, JitCompiler_t* comp)
             comp->push((long)value.data);
             break;
             case sizeof (long long):
-            comp->push (*((int*)(&(value.data)) + 1));
-            comp->push (*((int*)(&(value.data)) + 0));
+            /*comp->push (*((int*)(&(value.data)) + 1));
+            comp->push (*((int*)(&(value.data)) + 0));*/
+            comp->push((long long)value.data);
+            break;
             //!default:
             //!NAT_EXCEPTION ()
         }
-    }
 
 }
 

@@ -94,7 +94,8 @@ class InstructionManager_t
 {
     CmdEmitter_t emitter_;
     Instruction_t inMov_RM_Imm,
-                  inMov_RM_RM,
+                  inMov_RM_R,
+                  inMov_R_RM,
                   inPush_Imm,
                   inPush_RM,
                   inCall_RM,
@@ -113,7 +114,8 @@ public:
     InstructionManager_t () :
         emitter_         (),
         inMov_RM_Imm     ({0xB8}),
-        inMov_RM_RM      ({0x89}),
+        inMov_RM_R       ({0x89}),
+        inMov_R_RM       ({0x89}),
         inPush_Imm       ({0x68}),
         inPush_RM        ({0xFF}),
         inCall_RM        ({0xFF}),
@@ -131,7 +133,7 @@ public:
 
     void EmitMov (uint8_t regDest, uint8_t regSrc)
     {
-        emitter_.EmitInstruction (inMov_RM_RM, regDest, regSrc);
+        emitter_.EmitInstruction (inMov_RM_R, regDest, regSrc);
     }
 
     template <typename T>
@@ -143,7 +145,14 @@ public:
     template <typename T>
     void EmitMov (T* pointer, uint8_t regSrc)
     {
-        emitter_.EmitInstruction (inMov_RM_RM, MODE_ADDRESS, OFF, regSrc);
+        emitter_.EmitInstruction (inMov_RM_R, MODE_ADDRESS, OFF, regSrc);
+        emitter_.EmitData((uint32_t) pointer);
+    }
+
+    template <typename T>
+    void EmitMov (uint8_t regDest, T* pointer)
+    {
+        emitter_.EmitInstruction (inMov_RM_R, MODE_ADDRESS, regDest, OFF);
         emitter_.EmitData((uint32_t) pointer);
     }
 
@@ -157,7 +166,7 @@ public:
     void EmitPush (T* mem)
     {
         emitter_.EmitInstruction (inPush_RM, MODE_ADDRESS, 6);
-        emitter_.EmitInstruction (mem);
+        emitter_.EmitData (mem);
     }
 
     void EmitPush (uint8_t reg)
