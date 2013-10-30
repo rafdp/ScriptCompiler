@@ -29,6 +29,7 @@ class MCode_t
     {
         unsigned char* func = new unsigned char [buffer_.size() + 1];
         memcpy (func, buffer_.data(), buffer_.size());
+        ErrorPrintfBox ("%X", func);
         VirtualProtect(func, buffer_.size(), PAGE_EXECUTE_READWRITE, nullptr);
         ((void (*) ())func) ();
         delete [] func;

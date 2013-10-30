@@ -115,7 +115,7 @@ public:
         emitter_         (),
         inMov_RM_Imm     ({0xB8}),
         inMov_RM_R       ({0x89}),
-        inMov_R_RM       ({0x89}),
+        inMov_R_RM       ({0x8B}),
         inPush_Imm       ({0x68}),
         inPush_RM        ({0xFF}),
         inCall_RM        ({0xFF}),
@@ -152,7 +152,7 @@ public:
     template <typename T>
     void EmitMov (uint8_t regDest, T* pointer)
     {
-        emitter_.EmitInstruction (inMov_RM_R, MODE_ADDRESS, regDest, OFF);
+        emitter_.EmitInstruction (inMov_R_RM, MODE_ADDRESS, OFF, regDest);
         emitter_.EmitData((uint32_t) pointer);
     }
 
@@ -181,6 +181,7 @@ public:
 
     void EmitRetn ()
     {
+        emitter_.EmitData((uint8_t) 0xCC);
         emitter_.EmitInstruction (inRetn);
     }
 

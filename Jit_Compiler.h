@@ -115,17 +115,17 @@ class JitCompiler_t
     }
 
     template <typename T>
-    void add (CPURegisterInfo_t regDest, T imm)
-    {
-        CHECK_64(T)
-        man.EmitAdd (regDest.reg, imm);
-    }
-
-    template <typename T>
     void add (CPURegisterInfo_t regDest, T* src)
     {
         CHECK_64(T)
         man.EmitAdd (regDest.reg, src);
+    }
+
+    template <typename T>
+    void add (CPURegisterInfo_t regDest, T imm)
+    {
+        CHECK_64(T)
+        man.EmitAdd (regDest.reg, imm);
     }
 
     template <typename T>

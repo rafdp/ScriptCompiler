@@ -228,10 +228,13 @@ FUNCTION_END
 FUNCTION_BEGIN(Add, 2, 3, ARG_VAR _ ARG_REG _ ARG_VAR _ ARG_REG _ ARG_NUM)
 JitCompiler_t comp;
 //comp.add (comp.r_rax, 1);
-//comp.push<long long> (comp.r_rax);
-long long var = 0;
-comp.mov (comp.r_rax, &var/*(long*) $ GetPtr(arg.flag1, arg.arg1)*/);
-//comp.add (comp.r_rax, (long*) $ GetPtr(arg.flag2, arg.arg2));
+comp.push<long long> (comp.r_rax);
+//long long var = 0;
+        //ErrorPrintfBox ("ADDRESS %X", &var);
+comp.mov (comp.r_rax, (long long*) $ GetPtr(arg.flag2, arg.arg2));
+//comp.add (comp.r_rax, 5LL);
+comp.mov ((long long*) $ GetPtr(arg.flag1, arg.arg1), comp.r_rax);
+//comp.add (comp.r_rax, (long long*) $ GetPtr(arg.flag2, arg.arg2));
 /*if ($ isReg (arg.flag1)) $ GetReg (arg.arg2) . MovFromReg (&comp, comp.r_rax);
 else
 {
@@ -252,7 +255,7 @@ else
 }*/
 
 
-//comp.add (comp.r_rsp, 4);
+comp.add (comp.r_rsp, 4);
 comp.retn();
 comp.BuildAndRun();
 

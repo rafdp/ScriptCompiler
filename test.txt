@@ -7,14 +7,12 @@ mov newVar, 331
 
 mov aqx, 666
 
-add newVar, aqx
 
+add newVar, aqx
 
 init_stack_dump_point
 
 push newVar
-;push 1
-;push 2
 push "newVar = %lld\n"
 
 jit_call_void printf
