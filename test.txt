@@ -1,18 +1,20 @@
-import "msvcrt.dll", "printf printf"
+import "msvcrt.dll", "printf _printf"
 
 
 var newVar, type_qword
 
-mov newVar, 331
+mov newVar, 48318382080
 
-mov aqx, 666
+mov aqx, 11005853696
 
+print PRINT_NUMBER, newVar
+print PRINT_STRING, "\n"
 
-add newVar, aqx
+sub newVar, aqx
 
 init_stack_dump_point
 
 push newVar
 push "newVar = %lld\n"
 
-jit_call_void printf
+jit_call_void _printf

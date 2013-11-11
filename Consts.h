@@ -1,6 +1,8 @@
 #ifndef CONSTS_H_INCLUDED
 #define CONSTS_H_INCLUDED
 
+//#define nullptr NULL
+
 
 #define STL_LOOP(iterator, object) for (auto iterator = (object).begin(); iterator != (object).end(); iterator++)
 #define STL_RLOOP(iterator, object) for (auto iterator = (object).begin(); iterator != (object).end(); iterator++)

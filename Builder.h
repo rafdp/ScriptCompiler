@@ -7,6 +7,7 @@
 #include <map>
 #include <vector>
 #include <assert.h>
+#define nullptr NULL
 #include "Stack/StackV2.h"
 #include "Consts.h"
 #include "ScriptLine.h"

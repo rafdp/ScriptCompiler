@@ -64,7 +64,7 @@ void Arg_t::SetArg (char* flag, long long* arg, std::string* param)
     if (isNum (param))
     {
         *flag |= ARG_NUM;
-        *arg = atoi (param->c_str());
+        *arg = atoll (param->c_str());
         return;
     }
     else

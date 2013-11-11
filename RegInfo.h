@@ -74,18 +74,15 @@ struct RegInfo_t
     {
         switch (size)
         {
-            case 1:
-                *(int8_t*)reg = *(int8_t*)(&data);
+            #define SIZE_CASE(n) \
+            case sizeof (int##n##_t): \
+                memcpy (reg, &data, sizeof (int##n##_t)); \
                 break;
-            case 2:
-                *(int16_t*)reg = *(int16_t*)(&data);
-                break;
-            case 4:
-                *(int32_t*)reg = *(int32_t*)(&data);
-                break;
-            case 8:
-                *(int64_t*)reg = *(int64_t*)(&data);
-                break;
+            SIZE_CASE (8)
+            SIZE_CASE (16)
+            SIZE_CASE (32)
+            SIZE_CASE (64)
+            #undef SIZE_CASE
         }
 
         return;
@@ -102,11 +99,24 @@ struct RegInfo_t
                 comp->mov ((short*)reg,     register_);
                 break;
             case 4:
+            case 8:
+                *(long*)reg = 0;
                 comp->mov ((long*)reg,      register_);
                 break;
-            case 8:
+            /*case 8:
                 comp->mov ((long long*)reg, register_);
-                break;
+                break;*/
+        }
+    }
+
+    void Mov64FromReg (JitCompiler_t* comp,
+                       CPURegisterInfo_t register1_,
+                       CPURegisterInfo_t register2_)
+    {
+        if (size == sizeof (long long))
+        {
+            comp->mov ((long*)reg, register1_);
+            comp->mov ((long*)reg + 1, register2_);
         }
     }
 };

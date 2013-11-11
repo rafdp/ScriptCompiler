@@ -256,7 +256,7 @@ long long RunInstanceDataHandler_t::GetVal (char arg_flag, long long arg_arg)
         case ARG_STR:
             return (long long)strings_[arg_arg];
         case ARG_NUM:
-        return arg_arg;
+            return arg_arg;
         break;
         default:
             return 0;

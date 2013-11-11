@@ -1,5 +1,8 @@
 #define _ ,
 
+#define FUNC_OPEN  (
+#define FUNC_CLOSE )
+
 #define FUNCTION_BEGIN(name, n_params1, n_params2, params) \
 ErrorReturn_t VirtualProcessor_t::name (Arg_t arg) \
 { \
@@ -39,7 +42,19 @@ FUNCTION_BEGIN(Mov, 3, 5, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_VAR _ ARG_VAR
                 $ GetVarPt (arg.flag2, arg.arg2),
                 $ GetVarSize (arg.flag2, arg.arg2));
     else
+    {
+        /*ErrorPrintfBox ("MOV before\n%s %lld %lld\n%s %lld %lld\n",
+                        ARG_D[arg.flag1].c_str(), arg.arg1, $ GetVal (arg.flag1, arg.arg1),
+                        ARG_D[arg.flag2].c_str(), arg.arg2, $ GetVal (arg.flag2, arg.arg2));
+        long long res = $ GetVal (arg.flag2, arg.arg2);*/
         $ SetVal (arg.flag1, arg.arg1, $ GetVal (arg.flag2, arg.arg2));
+
+        /*ErrorPrintfBox ("MOV after\n%s %lld %lld\n%s %lld %lld\n",
+                        ARG_D[arg.flag1].c_str(), arg.arg1, $ GetVal (arg.flag1, arg.arg1),
+                        ARG_D[arg.flag2].c_str(), arg.arg2, $ GetVal (arg.flag2, arg.arg2));
+        */
+    }
+
 FUNCTION_END
 
 FUNCTION_BEGIN(Lea, 2, 4, ARG_VAR _ ARG_VAR_MEMBER _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_STR)
@@ -171,7 +186,7 @@ FUNCTION_BEGIN(JIT_Call_Void, 1, 0, ARG_DLL_FUNC)
         PushStackValueJit (*i, &comp);
     comp.mov (comp.r_rax, int32_t($ dllResolved_[arg.arg1]));
     comp.call (comp.r_rax);
-    comp.add(comp.r_rsp, $ RspAdd());
+    comp.add(comp.r_rsp, (long) $ RspAdd());
     comp.retn();
     comp.BuildAndRun();
 
@@ -225,47 +240,162 @@ return ErrorReturn_t (RET_ERROR_FATAL, "Invalid second operand value (0)"); \
 $ SetVal (arg.flag1, arg.arg1, $ GetVal (arg.flag1, arg.arg1) operator opVal); \
 FUNCTION_END
 
-FUNCTION_BEGIN(Add, 2, 3, ARG_VAR _ ARG_REG _ ARG_VAR _ ARG_REG _ ARG_NUM)
-JitCompiler_t comp;
-//comp.add (comp.r_rax, 1);
-comp.push<long long> (comp.r_rax);
-//long long var = 0;
-        //ErrorPrintfBox ("ADDRESS %X", &var);
-comp.mov (comp.r_rax, (long long*) $ GetPtr(arg.flag2, arg.arg2));
-//comp.add (comp.r_rax, 5LL);
-comp.mov ((long long*) $ GetPtr(arg.flag1, arg.arg1), comp.r_rax);
-//comp.add (comp.r_rax, (long long*) $ GetPtr(arg.flag2, arg.arg2));
-/*if ($ isReg (arg.flag1)) $ GetReg (arg.arg2) . MovFromReg (&comp, comp.r_rax);
-else
-{
-    switch ($ GetSize (arg.flag2, arg.arg2))
-    {
-        #define SIZE_CASE(type) \
-        case sizeof (type): \
-            comp.mov ((type*) $ GetPtr(arg.flag1, arg.arg1), comp.r_rax); \
-            break;
+#define SIZE_CASE(type) \
+case sizeof (type): \
+    comp.mov ((type*) $ GetPtr(arg.flag1, arg.arg1), comp.r_rax); \
+    break;
 
-        SIZE_CASE(char)
-        SIZE_CASE(short)
-        SIZE_CASE(long)
-        SIZE_CASE(long long)
-
-        #undef SIZE_CASE
+#define ARG_SIZE_SWITCH_PTR_LONG(num, offset, preEmission, postEmission) \
+    switch ($ GetSize(arg.flag##num, arg.arg##num)) \
+    { \
+        case sizeof (char): \
+            preEmission (char*) $ GetPtr(arg.flag##num, arg.arg##num) + offset postEmission; \
+            break; \
+        case sizeof (short): \
+            preEmission (short*) $ GetPtr(arg.flag##num, arg.arg##num) + offset postEmission; \
+            break; \
+        case sizeof (long): \
+        case sizeof (long long): \
+            preEmission (long*) $ GetPtr(arg.flag##num, arg.arg##num) + offset postEmission; \
+            break; \
     }
-}*/
+
+#define ARITHMETIC_FUNCTION_ADD_SUB_MUL_BASE(func) \
+{ \
+    JitCompiler_t comp; \
+    comp.push (comp.r_rax); \
+    ARG_SIZE_SWITCH_PTR_LONG(1, 0, comp.mov FUNC_OPEN comp.r_rax _ , FUNC_CLOSE) \
+    ARG_SIZE_SWITCH_PTR_LONG(2, 0, comp.func FUNC_OPEN comp.r_rax _ , FUNC_CLOSE) \
+    if ($ isReg (arg.flag1)) $ GetReg (arg.arg1) . MovFromReg (&comp, comp.r_rax); \
+    else \
+    { \
+        ARG_SIZE_SWITCH_PTR_LONG(1, 0, comp.mov FUNC_OPEN , _ comp.r_rax FUNC_CLOSE) \
+    } \
+    comp.pop (comp.r_rax); \
+    comp.retn(); \
+    comp.BuildAndRun(); \
+}
+
+#define ARITHMETIC_FUNCTION_ADD_SUB_64_PART(func1, func2) \
+bool first64 = $ GetSize(arg.flag1, arg.arg1) > sizeof (DWORD); \
+bool second64 = $ GetSize(arg.flag1, arg.arg1) > sizeof (DWORD); \
+if (first64 || \
+    second64) \
+{ \
+    JitCompiler_t comp; \
+    comp.push (comp.r_rax); \
+    comp.push (comp.r_rdx); \
+ \
+    ARG_SIZE_SWITCH_PTR_LONG(1, 0, comp.mov FUNC_OPEN comp.r_rax _ , FUNC_CLOSE) \
+    if (first64) \
+        ARG_SIZE_SWITCH_PTR_LONG(1, 1, comp.mov FUNC_OPEN comp.r_rdx _ , FUNC_CLOSE) \
+ \
+    ARG_SIZE_SWITCH_PTR_LONG(2, 0, comp.func1 FUNC_OPEN comp.r_rax _ , FUNC_CLOSE) \
+    if (second64 && first64) \
+        ARG_SIZE_SWITCH_PTR_LONG(2, 1, comp.func2 FUNC_OPEN comp.r_rdx _ , FUNC_CLOSE) \
+ \
+    if ($ isReg (arg.flag1)) \
+    { \
+        if (first64) \
+            $ GetReg (arg.arg1) . Mov64FromReg (&comp, comp.r_rax, comp.r_rdx); \
+        else \
+            $ GetReg (arg.arg1) . MovFromReg (&comp, comp.r_rax); \
+    } \
+    else \
+    { \
+        ARG_SIZE_SWITCH_PTR_LONG(1, 0, comp.mov FUNC_OPEN , _ comp.r_rax FUNC_CLOSE) \
+        if (first64) \
+            ARG_SIZE_SWITCH_PTR_LONG(1, 1, comp.mov FUNC_OPEN , _ comp.r_rdx FUNC_CLOSE) \
+ \
+    } \
+ \
+    comp.pop (comp.r_rdx); \
+    comp.pop (comp.r_rax); \
+    comp.retn(); \
+    comp.BuildAndRun(); \
+} \
+else
 
 
-comp.add (comp.r_rsp, 4);
-comp.retn();
-comp.BuildAndRun();
+FUNCTION_BEGIN(Add, 2, 3, ARG_VAR _ ARG_REG _ ARG_VAR _ ARG_REG _ ARG_NUM)
+
+ARITHMETIC_FUNCTION_ADD_SUB_64_PART(add, adc)
+ARITHMETIC_FUNCTION_ADD_SUB_MUL_BASE (add)
 
 FUNCTION_END
 
+FUNCTION_BEGIN(Sub, 2, 3, ARG_VAR _ ARG_REG _ ARG_VAR _ ARG_REG _ ARG_NUM)
+
+ARITHMETIC_FUNCTION_ADD_SUB_64_PART(sub, sbb)
+ARITHMETIC_FUNCTION_ADD_SUB_MUL_BASE (sub)
+
+FUNCTION_END
+
+FUNCTION_BEGIN(Mul, 2, 3, ARG_VAR _ ARG_REG _ ARG_VAR _ ARG_REG _ ARG_NUM)
+if ($ GetSize(arg.flag1, arg.arg1) > sizeof (DWORD) ||
+    $ GetSize(arg.flag2, arg.arg2) > sizeof (DWORD))
+    $ SetVal (arg.flag1, arg.arg1,
+              $ GetVal (arg.flag1, arg.arg1) * $ GetVal (arg.flag2, arg.arg2));
+else
+ARITHMETIC_FUNCTION_ADD_SUB_MUL_BASE (mul)
+FUNCTION_END
+
+
+//ARITHMETIC_FUNCTION_ADD_SUB_MUL(Add, +, add)
+//ARITHMETIC_FUNCTION_ADD_SUB_MUL(Sub, -, sub)
+//ARITHMETIC_FUNCTION_ADD_SUB_MUL(Mul, *, mul)
+
+FUNCTION_BEGIN(Div, 2, 3, ARG_VAR _ ARG_REG _ ARG_VAR _ ARG_REG _ ARG_NUM)
+long long opVal = $ GetVal (arg.flag2, arg.arg2);
+
+if (opVal == 0)
+{
+    return ErrorReturn_t (RET_ERROR_FATAL, "Invalid second operand value (0)");
+}
+
+if ($ GetSize(arg.flag2, arg.arg2) > sizeof (DWORD))
+    $ SetVal (arg.flag1, arg.arg1,
+              $ GetVal (arg.flag1, arg.arg1) / opVal);
+else
+{
+    JitCompiler_t comp;
+    comp.push (comp.r_rax);
+    comp.push (comp.r_rdx);
+
+    comp.mov (comp.r_rax, (long*) $ GetPtr(arg.flag1, arg.arg1));
+    if ($ GetSize(arg.flag1, arg.arg1) > sizeof (DWORD))
+        comp.mov (comp.r_rdx, (long*) $ GetPtr(arg.flag1, arg.arg1) + 1);
+    else
+        comp.mov (comp.r_rdx, 0);
+    comp.div ((long*) $ GetPtr(arg.flag2, arg.arg2));
+    if ($ isReg (arg.flag1)) $ GetReg (arg.arg1) . MovFromReg (&comp, comp.r_rax);
+    else
+    {
+        switch ($ GetSize (arg.flag1, arg.arg1))
+        {
+            SIZE_CASE(char)
+            SIZE_CASE(short)
+            case sizeof (long long):
+            comp.mov ((long*) $ GetPtr(arg.flag1, arg.arg1) + 1, 0);
+            SIZE_CASE(long)
+        }
+    }
+
+    comp.pop (comp.r_rdx);
+    comp.pop (comp.r_rax);
+    comp.retn();
+    comp.BuildAndRun();
+}
+FUNCTION_END
+
+
 //ARITHMETIC_FUNCTION (Add, +, false)
-ARITHMETIC_FUNCTION (Sub, -, false)
-ARITHMETIC_FUNCTION (Mul, *, false)
-ARITHMETIC_FUNCTION (Div, /, true)
+//ARITHMETIC_FUNCTION (Sub, -, false)
+//ARITHMETIC_FUNCTION (Mul, *, false)
+//ARITHMETIC_FUNCTION (Div, /, true)
 #undef ARITHMETIC_FUNCTION
+#undef ARITHMETIC_FUNCTION_ADD_SUB
+#undef SIZE_CASE
 
 #define STACK_ARITHMETIC_FUNCTION(name, operator, check0) \
 FUNCTION_BEGIN(name, 0, 0, ARG_NULL) \
@@ -283,9 +413,19 @@ STACK_ARITHMETIC_FUNCTION (Adds, +, false)
 STACK_ARITHMETIC_FUNCTION (Subs, -, false)
 STACK_ARITHMETIC_FUNCTION (Muls, *, false)
 STACK_ARITHMETIC_FUNCTION (Divs, /, true)
+
+
 #undef STACK_ARITHMETIC_FUNCTION
 
 
 #undef $
 
 #undef _
+
+#undef FUNC_OPEN
+#undef FUNC_CLOSE
+
+
+#undef ARG_SIZE_SWITCH_PTR_LONG
+#undef ARITHMETIC_FUNCTION_ADD_SUB_64_PART
+#undef ARITHMETIC_FUNCTION_ADD_SUB_MUL_BASE

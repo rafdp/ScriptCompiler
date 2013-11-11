@@ -7,7 +7,8 @@ class FileHandler_t
     template<typename T>
     T GetData ()
     {
-        T data = {};
+        //T data = {};
+        T data;
         fread (&data, sizeof (T), 1, file);
         return data;
     }
