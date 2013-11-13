@@ -141,7 +141,11 @@ JUMP_AUTOFILL (Jbe, $ cmpr_flag_ == FLAG_LOW || $ cmpr_flag_ == FLAG_EQUAL)
 
 
 FUNCTION_BEGIN(Ret, 1, 0, ARG_NULL)
-    $ run_line_ = $ callStack_.pop().retLine;
+   // ErrorPrintfBox("Returning to line %d", $ callStack_.top().retLine);
+    $ run_line_ = $ callStack_.top().retLine;
+    $ callStack_.pop();
+    //$ callStack_.Dump();
+    //ErrorPrintfBox("Returned to line %d", $ run_line_);
 FUNCTION_END
 
 FUNCTION_BEGIN(Call, 2, 0, ARG_FUNC _ ARG_FUNC_MEMBER)
@@ -150,11 +154,13 @@ FUNCTION_BEGIN(Call, 2, 0, ARG_FUNC _ ARG_FUNC_MEMBER)
     else
     {
         $ callStack_.push (CallInfo_t($ run_line_));
+        //$ callStack_.Dump();
+        //ErrorPrintfBox("Call from line %d", $ run_line_);
         $ run_line_ = arg.arg1;
     }
 FUNCTION_END
 
-FUNCTION_BEGIN(Decr, 1, 0, ARG_VAR _ ARG_VAR_MEMBER)
+FUNCTION_BEGIN(Decr, 3, 0, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG)
     $ SetVal(arg.flag1, arg.arg1, $ GetVal(arg.flag1, arg.arg1) - 1);
 FUNCTION_END
 
@@ -278,7 +284,7 @@ case sizeof (type): \
 
 #define ARITHMETIC_FUNCTION_ADD_SUB_64_PART(func1, func2) \
 bool first64 = $ GetSize(arg.flag1, arg.arg1) > sizeof (DWORD); \
-bool second64 = $ GetSize(arg.flag1, arg.arg1) > sizeof (DWORD); \
+bool second64 = $ GetSize(arg.flag2, arg.arg2) > sizeof (DWORD); \
 if (first64 || \
     second64) \
 { \
@@ -334,8 +340,11 @@ FUNCTION_END
 FUNCTION_BEGIN(Mul, 2, 3, ARG_VAR _ ARG_REG _ ARG_VAR _ ARG_REG _ ARG_NUM)
 if ($ GetSize(arg.flag1, arg.arg1) > sizeof (DWORD) ||
     $ GetSize(arg.flag2, arg.arg2) > sizeof (DWORD))
+    {
+        //ErrorPrintfBox("SIZE %d %d\n", $ GetSize(arg.flag1, arg.arg1), $ GetSize(arg.flag2, arg.arg2));
     $ SetVal (arg.flag1, arg.arg1,
               $ GetVal (arg.flag1, arg.arg1) * $ GetVal (arg.flag2, arg.arg2));
+    }
 else
 ARITHMETIC_FUNCTION_ADD_SUB_MUL_BASE (mul)
 FUNCTION_END
@@ -344,7 +353,7 @@ FUNCTION_END
 //ARITHMETIC_FUNCTION_ADD_SUB_MUL(Add, +, add)
 //ARITHMETIC_FUNCTION_ADD_SUB_MUL(Sub, -, sub)
 //ARITHMETIC_FUNCTION_ADD_SUB_MUL(Mul, *, mul)
-
+/*
 FUNCTION_BEGIN(Div, 2, 3, ARG_VAR _ ARG_REG _ ARG_VAR _ ARG_REG _ ARG_NUM)
 long long opVal = $ GetVal (arg.flag2, arg.arg2);
 
@@ -386,6 +395,27 @@ else
     comp.retn();
     comp.BuildAndRun();
 }
+FUNCTION_END
+*/
+
+#define ARITHMETIC_FUNCTION(name, operator, check0) \
+FUNCTION_BEGIN(name, 2, 3, ARG_VAR _ ARG_REG _ ARG_VAR _ ARG_REG _ ARG_NUM) \
+long long opVal = $ GetVal (arg.flag2, arg.arg2); \
+if (check0 && opVal == 0) \
+{ \
+return ErrorReturn_t (RET_ERROR_FATAL, "Invalid second operand value (0)"); \
+} \
+$ SetVal (arg.flag1, arg.arg1, $ GetVal (arg.flag1, arg.arg1) operator opVal); \
+FUNCTION_END
+
+ARITHMETIC_FUNCTION(Div, /, true)
+
+
+FUNCTION_BEGIN(Sqrt, 3, 0, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG)
+    long long val = $ GetVal(arg.flag1, arg.arg1);
+    if (val < 0)
+        return ErrorReturn_t (RET_ERROR_CONTINUE, "Cannot calculate square root of a negative value");
+    $ SetVal (arg.flag1, arg.arg1, (long long) (sqrt(val)));
 FUNCTION_END
 
 

@@ -81,10 +81,10 @@ enum PREDEFINED_CONSTS
 enum TYPES
 {
     TYPE_BYTE     = 1,
-    TYPE_WORD,  //! 2
-    TYPE_DWORD, //! 3
-    TYPE_QWORD, //! 4
-    TYPE_PTR    //! 5
+    TYPE_WORD     = 2,
+    TYPE_DWORD    = 3,
+    TYPE_QWORD    = 4,
+    TYPE_PTR      = 5
 };
 std::map<int, std::string> ARG_D;
 

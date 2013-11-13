@@ -52,13 +52,17 @@ public:
         switch (vars_[num].code)
         {
         case TYPE_BYTE:
+            //ErrorPrintfBox ("VAR 8 %d", *(int8_t*)vars_[num].var);
             return *(int8_t*)vars_[num].var;
         case TYPE_WORD:
+            //ErrorPrintfBox ("VAR 16 %d", *(int16_t*)vars_[num].var);
             return *(int16_t*)vars_[num].var;
         case TYPE_DWORD:
         case TYPE_PTR:
+            //ErrorPrintfBox ("VAR 32 %d", *(int32_t*)vars_[num].var);
             return *(int32_t*)vars_[num].var;
         case TYPE_QWORD:
+            //ErrorPrintfBox ("VAR 64 %lld", *(int64_t*)vars_[num].var);
             return *(int64_t*)vars_[num].var;
         default:
             return 0;
@@ -147,8 +151,13 @@ public:
 
     void ComplexCall (long long arg)
     {
-        callStack_.push ({run_line_, int(arg >> 32)});
+        ErrorPrintfBox("CC called\n");
+        int arg_nested_call = 0;
+        if (int(arg >> 32) == 0) arg_nested_call = callStack_[callStack_.size() - 1].var;
+        else arg_nested_call = int(arg >> 32);
+        callStack_.push ({run_line_, arg_nested_call});
         run_line_ = int(arg);
+        ErrorPrintfBox("CC ok\n");
     }
 
     ~RunInstanceDataHandler_t();

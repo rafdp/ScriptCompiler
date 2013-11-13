@@ -81,6 +81,13 @@ ScriptLoader_t::ScriptLoader_t (std::string filename, exception_data* expn) :
     { \
         action \
     }
+    #define IMPORT_LOOP__(var, preaction, action) \
+    size_t n_##var = _load(size_t); \
+    preaction \
+    for (size_t iter = 0; iter < n_##var; iter++) \
+    { \
+        action \
+    }
 
     #define READ_STR(name) \
     std::string name; \
@@ -101,8 +108,10 @@ ScriptLoader_t::ScriptLoader_t (std::string filename, exception_data* expn) :
     IMPORT_LOOP(typeSizes, {long long code = _load(long long);
                             typeSizes_[code] = _load (size_t);})
 
-    IMPORT_LOOP(vars, {long long code = _load(long long);
-                       vars_.push_back(VarData_t(nullptr, code, _load (size_t)));})
+    IMPORT_LOOP__(vars, {vars_.reserve (n_vars); for (int i = 0; i < n_vars; i++) vars_.push_back(VarData_t());},
+                  {long long num = _load(long long);
+                   long long code = _load(long long);
+                   vars_[num] = VarData_t(nullptr, code, _load (size_t));})
 
 
     IMPORT_LOOP(userFuncs, {READ_STR(currentStr)
@@ -122,6 +131,7 @@ ScriptLoader_t::ScriptLoader_t (std::string filename, exception_data* expn) :
 
     #undef IMPORT_LOOP
     #undef IMPORT_LOOP_
+    #undef IMPORT_LOOP__
     #undef READ_STR
 
     fclose (script);

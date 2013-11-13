@@ -37,7 +37,7 @@ public:
         vars_        (vars),
         memberFuncs_ (memberFuncs),
         expn_        (expn),
-        freeCode_    (TYPE_QWORD + 1),
+        freeCode_    (TYPE_PTR + 1),
         func_level_  (func_level)
     {
         AddType ("byte", TYPE_BYTE, 1);
@@ -94,7 +94,16 @@ public:
             return false;
         int nested = struct_ ? 1 : 0;
         long long offset = /*struct_ ? (*mvars_)[struct_][*(std::string*)(*arg)].offset :*/ 0;
-        long long typeCode = (struct_ && !mvars_->empty()) ? (*mvars_)[struct_][*(std::string*)(*arg)].typeCode : 0;
+        long long typeCode = 0;
+        if (struct_ && !mvars_->empty())
+        {
+            auto varsFnd = (*mvars_)[struct_].end();
+            if ((varsFnd = (*mvars_)[struct_].find(*(std::string*)(*arg))) != (*mvars_)[struct_].end())
+            {
+                typeCode = varsFnd->second.typeCode;
+            }
+        }
+
         size_t pointOld = 0;
         size_t point = struct_ ? -1 : 0;
         long long var = 0;
@@ -132,8 +141,8 @@ public:
                 {
                     offset += varsFound1->second.offset;
                     typeCode = varsFound1->second.typeCode;
-                    if (!(*sizes_)[varsFound1->second.typeCode])
-                        NAT_EXCEPTION (expn_, "Internal error, size = 0", ERROR_NULL_SIZE_STRUCT)
+                    if (!(*sizes_)[varsFound1->second.typeCode]) error = true;
+                    //    NAT_EXCEPTION (expn_, "Internal error, size = 0", ERROR_NULL_SIZE_STRUCT)
                 }
                 else if ((funcFound = memberFuncs_->find(token)) != memberFuncs_->end())
                 {
@@ -142,10 +151,11 @@ public:
                 }
                 else
                 {
-                    static std::string str ("Member \"");
+                    /*static std::string str ("Member \"");
                     str += token;
                     str += "\" not found in structure";
-                    NAT_EXCEPTION (expn_, str.c_str(), ERROR_MEMBER_NOT_FOUND)
+                    NAT_EXCEPTION (expn_, str.c_str(), ERROR_MEMBER_NOT_FOUND)*/
+                    error = true;
                 }
                 varCode = typeCode;
             }

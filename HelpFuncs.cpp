@@ -61,6 +61,12 @@ struct VarData_t
         size (size_)
     {}
 
+    VarData_t () :
+        var  (nullptr),
+        code (0),
+        size (0)
+    {}
+
     void Free()
     {
         if (size > 0) var = new char [size];
@@ -285,10 +291,16 @@ struct LabelPair_t
 struct CallInfo_t
 {
     int retLine;
-    long long var;
+    int var;
     CallInfo_t (int retLine_ = 0, long long var_ = 0) :
         retLine (retLine_),
         var (var_)
     {}
+
+    friend std::ostream& operator<< (std::ostream& output, const CallInfo_t& s)
+    {
+        output << s.retLine;
+        return output;
+    }
 };
 

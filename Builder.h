@@ -7,6 +7,7 @@
 #include <map>
 #include <vector>
 #include <assert.h>
+#include <math.h>
 #define nullptr NULL
 #include "Stack/StackV2.h"
 #include "Consts.h"
@@ -20,8 +21,10 @@ class ScriptCompiler_t
                        long long* arg,
                        bool error,
                        int line,
-                       bool var = true);
+                       bool var = true,
+                       bool struct_ = false);
     int func_level_;
+    int struct_func_level_;
     public:
     std::string                      file_;
     StrTo64Map_t                     consts_;
@@ -54,7 +57,8 @@ class ScriptCompiler_t
     void ClassifyArg (Arg_t* arg,
                       bool error,
                       int line,
-                      bool var = true);
+                      bool var = true,
+                      bool struct_ = false);
 
     void Dump ();
 
@@ -115,6 +119,8 @@ class ScriptCompiler_t
     FUNC_PROT_S (CFunc)
     FUNC_PROT_S (Func)
     FUNC_PROT_S (PFunc)
+    FUNC_PROT_S (Label)
+    FUNC_PROT_S (PLabel)
     FUNC_PROT_S (Extern)
     FUNC_PROT_S (Name)
     FUNC_PROT_S (Struct)
@@ -137,32 +143,33 @@ class ScriptCompiler_t
 #include "BuilderCases.h"
 
 ScriptCompiler_t::ScriptCompiler_t (std::string filename, exception_data* expn) :
-    func_level_     (),
-    file_           (filename),
-    consts_         (),
-    typeSizes_      (),
-    vars_           (),
-    mvars_          (),
-    userFuncs_      (),
-    createdFuncs_   (),
-    memberFuncs_    (),
-    labels_         (),
-    funcs_          (),
-    args_           (),
-    expn_           (expn),
-    die_requests_   (),
-    regTypes_       (&consts_,
-                     &typeSizes_,
-                     &mvars_,
-                     &vars_,
-                     &func_level_,
-                     &memberFuncs_,
-                     expn_),
-    currFunc_        (),
-    currStruct_      (),
-    structFunc_      (false),
-    dllImportMap_    (),
-    dllFuncsMap_     ()
+    struct_func_level_ (),
+    func_level_        (),
+    file_              (filename),
+    consts_            (),
+    typeSizes_         (),
+    vars_              (),
+    mvars_             (),
+    userFuncs_         (),
+    createdFuncs_      (),
+    memberFuncs_       (),
+    labels_            (),
+    funcs_             (),
+    args_              (),
+    expn_              (expn),
+    die_requests_      (),
+    regTypes_          (&consts_,
+                        &typeSizes_,
+                        &mvars_,
+                        &vars_,
+                        &func_level_,
+                        &memberFuncs_,
+                        expn_),
+    currFunc_           (),
+    currStruct_         (),
+    structFunc_         (false),
+    dllImportMap_       (),
+    dllFuncsMap_        ()
 {
     FillConstsMap (&consts_);
 
@@ -175,10 +182,12 @@ ScriptCompiler_t::ScriptCompiler_t (std::string filename, exception_data* expn) 
     {
         for ( ; !feof (f); n_line ++)
         {
-            //printf ("LINE %d\n", n_line);
+            printf ("LINE %d ", n_line);
             ScriptLine_t line (f);
             Cmd_t cmd (line.cmd);
             Arg_t arg (line.param1, line.param2);
+
+            printf ("%s %s %s\n", line.cmd.c_str(), line.param1.c_str(), line.param2.c_str());
             if (line.cmd[0] == ';')
             {
                 cmd.Clear ();
@@ -220,7 +229,7 @@ void ScriptCompiler_t::PushData (const Cmd_t& cmd, const Arg_t& arg)
     args_.push_back(arg);
 }
 
-void ScriptCompiler_t::_in_clsf_arg (char* flag, long long* arg, bool error, int line, bool var)
+void ScriptCompiler_t::_in_clsf_arg (char* flag, long long* arg, bool error, int line, bool var, bool struct_)
 {
     if ((*flag & ARG_NAME) == ARG_NAME)
     {
@@ -230,7 +239,7 @@ void ScriptCompiler_t::_in_clsf_arg (char* flag, long long* arg, bool error, int
         #define INVALID_UNREF_CHECK \
             if (*flag & ARG_UNREF_MASK) NAT_EXCEPTION (expn_, "Invalid use of '*'", ERROR_INVALID_UNREF)
         if (var)
-        for (int varLevel = func_level_; varLevel >= 0 && varResult == vars_.end(); varLevel--)
+        for (int varLevel = (!struct_ ? func_level_ : struct_func_level_); varLevel >= 0 && varResult == vars_.end(); varLevel--)
         {
             varResult = vars_.find(StrTo32Pair_t(*(std::string*)(*arg), varLevel));
             if (varResult != vars_.end() &&
@@ -301,14 +310,14 @@ void ScriptCompiler_t::_in_clsf_arg (char* flag, long long* arg, bool error, int
             }
         }
         else
-        if (regTypes_.ManageStructVar (flag, arg, (structFunc_ && memberFuncs_.size() > 0) ? memberFuncs_.rbegin()->second.struct_ : 0));
-        else
         if ((result = dllFuncsMap_.find (*(std::string*)(*arg))) != dllFuncsMap_.end())
         {
             INVALID_UNREF_CHECK
             *flag = ARG_DLL_FUNC;
             *arg = result->second;
         }
+        else
+        if (regTypes_.ManageStructVar (flag, arg, (structFunc_ && memberFuncs_.size() > 0) ? memberFuncs_.rbegin()->second.struct_ : 0));
         else if (error)
         {
             *flag = ARG_ERROR;
@@ -319,10 +328,10 @@ void ScriptCompiler_t::_in_clsf_arg (char* flag, long long* arg, bool error, int
     #undef $
 }
 
-void ScriptCompiler_t::ClassifyArg (Arg_t* arg, bool error, int line, bool var)
+void ScriptCompiler_t::ClassifyArg (Arg_t* arg, bool error, int line, bool var, bool struct_)
 {
-    _in_clsf_arg (&arg->flag1, &arg->arg1, error, line, var);
-    _in_clsf_arg (&arg->flag2, &arg->arg2, error, line, var);
+    _in_clsf_arg (&arg->flag1, &arg->arg1, error, line, var, struct_);
+    _in_clsf_arg (&arg->flag2, &arg->arg2, error, line, var, struct_);
 }
 
 void ScriptCompiler_t::Dump ()
@@ -339,7 +348,12 @@ void ScriptCompiler_t::Dump ()
     printf ("vars_:\n");
     STL_LOOP (i, vars_)
     {
-        printf ("  %s %d %lld %lld\n", i->first.first.c_str(), i->first.second, i->second.num, i->second.die);
+        printf ("  %s %d %lld %d, %lld\n",
+                i->first.first.c_str(),
+                i->first.second,
+                i->second.num,
+                i->second.die,
+                i->second.typeCode);
     }
     PRINT_MAP(userFuncs_)
     //PRINT_MAP(labels_)
@@ -354,7 +368,7 @@ void ScriptCompiler_t::Dump ()
     {
         printf ("  %s\n", i->c_str());
     }
-
+/*
     printf ("funcs_:\n");
     STL_LOOP (i, funcs_)
     {
@@ -366,6 +380,7 @@ void ScriptCompiler_t::Dump ()
     {
         printf ("  %d %lld %d %lld\n", i->flag1, i->arg1, i->flag2, i->arg2);
     }
+    */
     #undef PRINT_MAP
 }
 
@@ -413,7 +428,8 @@ void ScriptCompiler_t::Save ()
 
     WRITE_STL_LOOP(typeSizes_, {fwrite(&(it->first), sizeof (long long), 1, save);
                                 fwrite(&(it->second), sizeof (size_t), 1, save);})
-    WRITE_STL_LOOP(vars_, {fwrite(&(it->second.typeCode), sizeof (long long), 1, save);
+    WRITE_STL_LOOP(vars_, {fwrite(&(it->second.num), sizeof (long long), 1, save);
+                           fwrite(&(it->second.typeCode), sizeof (long long), 1, save);
                            fwrite(&(typeSizes_[it->second.typeCode]), sizeof (size_t), 1, save);})
 
 
@@ -529,7 +545,11 @@ bool ScriptCompiler_t::AddName (std::string name, char flag, long long cmd, int 
 
 bool ScriptCompiler_t::ManageStruct (Cmd_t& cmd, Arg_t& arg, int n_line)
 {
-    ClassifyArg (&arg, false, n_line, false);
+    //if (cmd.cmd != CMD_Label && cmd.cmd != CMD_PLabel) ClassifyArg (&arg, false, n_line, true);
+
+    ClassifyArg (&arg, false, n_line, false, false);
+
+
     #define STRUCT_CASE(name) case CMD_##name: /*printf ("case %s\n", #name);*/ return Struct##name (cmd, arg, n_line);
     switch (cmd.flag)
     {
@@ -537,6 +557,8 @@ bool ScriptCompiler_t::ManageStruct (Cmd_t& cmd, Arg_t& arg, int n_line)
         STRUCT_CASE (CFunc)
         STRUCT_CASE (Func)
         STRUCT_CASE (PFunc)
+        STRUCT_CASE (Label)
+        STRUCT_CASE (PLabel)
         STRUCT_CASE (Extern)
         STRUCT_CASE (Name)
         STRUCT_CASE (End_Struct)

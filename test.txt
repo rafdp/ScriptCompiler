@@ -1,20 +1,152 @@
-import "msvcrt.dll", "printf _printf"
+import "msvcrt.dll", "scanf _scanf"
+
+var FOUR, type_dword
+mov FOUR, 4
+
+var TWO, type_dword
+mov TWO, 2
+
+struct Equation
+  var A,      type_dword
+  var B,      type_dword
+  var C,      type_dword
+  var D,      type_qword
+  var ptr,    type_ptr
+  var nRoots, type_dword  
+  var temp, type_qword
+
+  pfunc Input
+  pfunc Init
+  pfunc CalculateD
+  pfunc CalculateNroots
+  pfunc Result
+
+  func Run
+    call Init
+    call CalculateD
+    call CalculateNroots
+    call Result
+  ret
+
+  func Init
+
+    lea ptr, A
+    call Input
+
+    lea ptr, B
+    call Input
+
+    lea ptr, C
+    call Input
+  ret
+
+  func Input
+    init_stack_dump_point
+    push ptr
+    push "%d"
+    jit_call_void _scanf
+  ret
+
+  func CalculateD
+    mov D, B
+    mul D, B
+
+    
+    mov temp, A
+    mul temp, C
+    mul temp, FOUR
+
+    sub D, temp
+  ret
+
+  func CalculateNroots
+    plabel root0
+    plabel root1
+    plabel root2
+    plabel endCalculateNroots
+
+    cmpr D, 0
+    jb root0
+    je root1
+    ja root2
+
+    root0:
+    mov nRoots, 0
+    jmp endCalculateNroots
+
+    root1:
+    mov nRoots, 1
+    jmp endCalculateNroots
+
+    root2:
+    mov nRoots, 2
+    sqrt D
+    jmp endCalculateNroots
+
+    endCalculateNroots:
+  ret
+
+  func Result
+    plabel no_roots
+    plabel one_root
+    plabel two_roots
+    plabel error
+    plabel endResult
+
+    cmpr nRoots, 0
+    je no_roots
+    cmpr nRoots, 1
+    je one_root
+    cmpr nRoots, 2
+    je two_roots
+
+    jmp error
+
+    no_roots:
+    print PRINT_STRING, "0 roots\n"
+    jmp endResult
+
+    one_root:
+    var x, type_qword
+    mov x, -1
+    mul x, B
+    div x, A
+    div x, TWO
+    print PRINT_STRING, "1 root: "
+    print PRINT_NUMBER, x
+    print PRINT_STRING, "\n"
+    jmp endResult
+
+    two_roots:
+    var x1, type_qword
+    var x2, type_qword
+    mov x1, -1
+    mul x1, B
+    add x1, D
+    div x1, A
+    div x1, TWO
+
+    mov x2, -1
+    mul x2, B
+    sub x2, D
+    div x2, A
+    div x2, TWO
+    print PRINT_STRING, "2 roots: "
+    print PRINT_NUMBER, x1
+    print PRINT_STRING, " "
+    print PRINT_NUMBER, x2
+    print PRINT_STRING, "\n"
+    jmp endResult
+    
+    error:
+    print PRINT_STRING, "Error occurred (invalid nRoots)\n"
+    endResult:
+  ret
+    
+struct_end
+
+var equation, type_Equation
+
+call equation.Run
 
 
-var newVar, type_qword
-
-mov newVar, 48318382080
-
-mov aqx, 11005853696
-
-print PRINT_NUMBER, newVar
-print PRINT_STRING, "\n"
-
-sub newVar, aqx
-
-init_stack_dump_point
-
-push newVar
-push "newVar = %lld\n"
-
-jit_call_void _printf

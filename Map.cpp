@@ -72,7 +72,8 @@ enum Cmd_Assembler
     CMD_Subs,               //! 125
     CMD_Muls,               //! 126
     CMD_Divs,               //! 127
-    CMD_Lea                 //! 128
+    CMD_Lea,                //! 128
+    CMD_Sqrt                //! 129
 };
 void SetMapAssembler()
 {
@@ -122,6 +123,7 @@ void SetMapAssembler()
     CMD_A["muls"]                  = CMD_Muls;
     CMD_A["divs"]                  = CMD_Divs;
     CMD_A["lea"]                   = CMD_Lea;
+    CMD_A["sqrt"]                  = CMD_Sqrt;
 
     STL_LOOP (i, CMD_A) CMD_D[i->second] = i->first;
 
