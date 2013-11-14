@@ -179,13 +179,15 @@ public:
                 }
                 else *flag = ARG_VAR_MEMBER;
                 delete (std::string*)(*arg);
+                *arg = 0;
                 *arg = short (typeCode);
                 *arg <<= 16;
                 *arg |= short (var + 1);
                 *arg <<= 32;
                 *arg |= int (offset);
+
             }
-            else
+            else //! isFunc
             {
                 if (*flag & ARG_UNREF_MASK)
                     NAT_EXCEPTION (expn_, "Invalid use of '*'", ERROR_INVALID_UNREF)
@@ -199,6 +201,7 @@ public:
                 {
                     *flag = ARG_FUNC_MEMBER;
                     delete (std::string*)(*arg);
+                    *arg = 0;
                     *arg |= int (var + 1);
                     *arg <<= 32;
                     *arg |= int (func);

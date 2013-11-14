@@ -149,10 +149,10 @@ void VirtualProcessor_t::RunScript (std::string filename, int error_mode, std::s
 
     try
     {
-        ErrorPrintfBox (GetForegroundWindow(), 0, "About to loop %d %d\n", instance_->run_line_, instance_->funcs_.size());
+        //ErrorPrintfBox (GetForegroundWindow(), 0, "About to loop %d %d\n", instance_->run_line_, instance_->funcs_.size());
         for ( ; instance_->run_line_ < instance_->funcs_.size(); instance_->run_line_ ++)
         {
-            printf ("LINE %d\n", instance_->run_line_);
+            //printf ("LINE %d\n", instance_->run_line_);
             if (instance_->funcs_[instance_->run_line_].flag == CMD_Func)
             {
                 switch (instance_->funcs_[instance_->run_line_].cmd)
@@ -200,9 +200,15 @@ void VirtualProcessor_t::RunScript (std::string filename, int error_mode, std::s
             else
             if (instance_->funcs_[instance_->run_line_].flag == CMD_CFunc)
             {
-                while (instance_->funcs_[instance_->run_line_].cmd != CMD_Ret &&
-                       instance_->run_line_ < instance_->funcs_.size()) instance_->run_line_++;
+                while (instance_->run_line_ < instance_->funcs_.size())
+                {
+                    if (instance_->funcs_[instance_->run_line_].cmd == CMD_Ret) break;
+                    //if (instance_->run_line_ > 60) ErrorPrintfBox("%d", instance_->funcs_[instance_->run_line_].cmd);
+                    instance_->run_line_++;
+                }
             }
+
+            //printf ("LINE %d\n", instance_->run_line_);
         }
     }
     CATCH_CONS (instance_->expn_, "Virtual processor crashed", ERROR_VIRTUAL_PROC_CRASHED)

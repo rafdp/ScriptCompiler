@@ -53,7 +53,7 @@ ScriptLoader_t::ScriptLoader_t (std::string filename, exception_data* expn) :
     dllFuncs_  (),
     expn_      (expn)
 {
-    FILE* script = fopen (filename.c_str(), "r");
+    FILE* script = fopen (filename.c_str(), "rb");
     if (!script)
     {
         ExceptionHandler* e = new (expn) ExceptionHandler (E_NAT((std::string ("Unable to open file: ") + filename).c_str(), ERROR_SCRIPT_OPEN_FILE_CTOR));

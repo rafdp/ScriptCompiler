@@ -182,12 +182,12 @@ ScriptCompiler_t::ScriptCompiler_t (std::string filename, exception_data* expn) 
     {
         for ( ; !feof (f); n_line ++)
         {
-            printf ("LINE %d ", n_line);
+            //printf ("LINE %d ", n_line);
             ScriptLine_t line (f);
             Cmd_t cmd (line.cmd);
             Arg_t arg (line.param1, line.param2);
 
-            printf ("%s %s %s\n", line.cmd.c_str(), line.param1.c_str(), line.param2.c_str());
+            //printf ("%s %s %s\n", line.cmd.c_str(), line.param1.c_str(), line.param2.c_str());
             if (line.cmd[0] == ';')
             {
                 cmd.Clear ();
@@ -368,13 +368,13 @@ void ScriptCompiler_t::Dump ()
     {
         printf ("  %s\n", i->c_str());
     }
-/*
+
     printf ("funcs_:\n");
     STL_LOOP (i, funcs_)
     {
         printf ("  %d %lld\n", i->flag, i->cmd);
     }
-
+    /*
     printf ("args_:\n");
     STL_LOOP (i, args_)
     {
@@ -547,7 +547,7 @@ bool ScriptCompiler_t::ManageStruct (Cmd_t& cmd, Arg_t& arg, int n_line)
 {
     //if (cmd.cmd != CMD_Label && cmd.cmd != CMD_PLabel) ClassifyArg (&arg, false, n_line, true);
 
-    ClassifyArg (&arg, false, n_line, false, false);
+    //ClassifyArg (&arg, false, n_line, false, false);
 
 
     #define STRUCT_CASE(name) case CMD_##name: /*printf ("case %s\n", #name);*/ return Struct##name (cmd, arg, n_line);

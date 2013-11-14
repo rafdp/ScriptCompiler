@@ -17,6 +17,7 @@ int main()
     {
         ScriptCompiler_t comp ("test.txt", &ex_data);
         comp.Save();
+        //comp.Dump();
         VirtualProcessor_t proc (&ex_data);
         int data = 17;
         proc.RegFunc (UserFunc_t(printHello, &data), "printhello");

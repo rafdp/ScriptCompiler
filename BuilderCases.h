@@ -52,13 +52,15 @@ _BUILD_CASE_FUNC (Null)
 _RETURN
 
 _BUILD_CASE_FUNC (Func)
+    bool struct_ = structFunc_;
     if(cmd.cmd == CMD_Ret)
     {
         if (structFunc_) currFunc_.clear();
         func_level_--;
         ActivateDieRequests (n_line);
+        structFunc_ = false;
     }
-    ClassifyArg (&arg, true, n_line);
+    ClassifyArg (&arg, true, n_line, true, struct_);
 _RETURN
 
 _BUILD_CASE_FUNC (Struct)
@@ -270,7 +272,6 @@ _BUILD_CASE_FUNC (CFunc)
 _RETURN
 
 _BUILD_CASE_FUNC (Func)
-    if (cmd.cmd == CMD_Ret) structFunc_ = false;
     return false;
 _RETURN
 
