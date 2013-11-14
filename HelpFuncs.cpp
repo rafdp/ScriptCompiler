@@ -218,36 +218,6 @@ std::string GetAsmNumString (int val, const char* operand = "dword")
     return val_str;
 }
 
-void PushStackValueString (const StackData_t& value, std::string* str)
-{
-    std::string type;
-    if (value.size <= sizeof (int))
-    {
-        switch (value.size)
-        {
-            case sizeof (char):
-            type = "byte";
-            break;
-            case sizeof (short):
-            type = "word";
-            break;
-            case sizeof (int):
-            type = "dword";
-            break;
-            //!default:
-            //!NAT_EXCEPTION ()
-        }
-        (*str) += "push " + GetAsmNumString (value.data, type.c_str()) + "\n";
-    }
-    else
-    if (value.size == sizeof (long long))
-    {
-        (*str) += "push " + GetAsmNumString (*((int*)(&(value.data)) + 1), "") + "\n";
-        (*str) += "push " + GetAsmNumString (*((int*)(&(value.data))), "") + "\n";
-    }
-
-}
-
 void PushStackValueJit (const StackData_t& value, JitCompiler_t* comp)
 {
     //ErrorPrintfBox ("%d %s", value.size, __PRETTY_FUNCTION__);
@@ -280,12 +250,6 @@ struct FuncStructPair_t
 {
     long long func_;
     long long struct_;
-};
-
-struct LabelPair_t
-{
-    long long line;
-    long long num;
 };
 
 struct CallInfo_t

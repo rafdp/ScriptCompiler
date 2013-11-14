@@ -35,7 +35,7 @@ class ScriptCompiler_t
     StrTo64Map_t                     createdFuncs_;
     MemberFuncMap_t                  memberFuncs_;
     std::map<std::string,
-             LabelPair_t>            labels_;
+             long long>              labels_;
     std::vector<std::string>         strings_;
     std::vector<Cmd_t>               funcs_;
     std::vector<Arg_t>               args_;
@@ -143,8 +143,8 @@ class ScriptCompiler_t
 #include "BuilderCases.h"
 
 ScriptCompiler_t::ScriptCompiler_t (std::string filename, exception_data* expn) :
-    struct_func_level_ (),
     func_level_        (),
+    struct_func_level_ (),
     file_              (filename),
     consts_            (),
     typeSizes_         (),
@@ -272,7 +272,7 @@ void ScriptCompiler_t::_in_clsf_arg (char* flag, long long* arg, bool error, int
         if ((labResult = labels_.find(((std::string*)(*arg))->c_str())) != labels_.end())
         {
             INVALID_UNREF_CHECK
-            if (result->second == -1)
+            if (labResult->second == -1)
             {
                 *flag = ARG_LABEL_IT;
             }
@@ -280,7 +280,7 @@ void ScriptCompiler_t::_in_clsf_arg (char* flag, long long* arg, bool error, int
             {
                 *flag = ARG_LABEL;
                 delete (std::string*)(*arg);
-                *arg = labResult->second.num;
+                *arg = labResult->second;
             }
         }
         else
@@ -360,7 +360,7 @@ void ScriptCompiler_t::Dump ()
     printf ("labels_:\n");
     STL_LOOP (i, labels_)
     {
-        printf ("  %s %lld %lld\n", i->first.c_str(), i->second.line, i->second.num);
+        printf ("  %s %lld\n", i->first.c_str(), i->second);
     }
 
     printf ("strings_:\n");
@@ -387,6 +387,7 @@ void ScriptCompiler_t::Dump ()
 void ScriptCompiler_t::Save ()
 {
     //Dump ();
+
     std::string saveFile (file_);
     size_t point = saveFile.rfind (".");
     if (point != saveFile.npos)
@@ -434,20 +435,6 @@ void ScriptCompiler_t::Save ()
 
 
     WRITE_STL_LOOP(userFuncs_, WRITE_STR(it->first))
-    size_t size_labels_ = labels_.size();
-    fwrite (&size_labels_, sizeof (size_t), 1, save);
-    long long written = 0;
-    while (written != size_labels_)
-    {
-        STL_LOOP (it, labels_)
-        {
-            if (it->second.num == written)
-            {
-                fwrite(&(it->second.line), sizeof (long long), 1, save);
-                written++;
-            }
-        }
-    }
     WRITE_STL_LOOP(strings_, WRITE_STR((*it)))
     assert (funcs_.size() == args_.size());
     auto it1 = args_.begin();
@@ -505,7 +492,7 @@ bool ScriptCompiler_t::CheckName (std::string name, int line)
     if (ok && varRes != vars_.end() && varRes->second.die > line) ok = false;
     if (ok && userFuncs_.find (name) != userFuncs_.end()) ok = false;
     if (ok && ((fRes = createdFuncs_.find (name)) != createdFuncs_.end()) && fRes->second != -1) ok = false;
-    if (ok && ((labRes = labels_.find (name)) != labels_.end()) && labRes->second.line != -1) ok = false;
+    if (ok && ((labRes = labels_.find (name)) != labels_.end()) && labRes->second != -1) ok = false;
     return ok;
 }
 
@@ -524,10 +511,9 @@ bool ScriptCompiler_t::AddName (std::string name, char flag, long long cmd, int 
             case CMD_Label:
                 if (labels_.find (name) == labels_.end())
                 {
-                    size_t size = labels_.size();
-                    labels_[name] = {line, size};
+                    labels_[name] = line;
                 }
-                else labels_[name].line = line;
+                else labels_[name] = line;
                 break;
             case CMD_Extern:
                 userFuncs_[name] = userFuncs_.size() - 1;
@@ -582,7 +568,7 @@ void ScriptCompiler_t::ResolvePrototypes ()
     }
     STL_LOOP (i, labels_)
     {
-        if (i->second.line == -1)
+        if (i->second == -1)
         {
             static std::string str_err ("Undefined reference to label \"" + i->first + "\"");
             ERROR_EXCEPTION (str_err.c_str(), ERROR_UNDEFINED_REFERENCE_LABEL)
@@ -619,7 +605,7 @@ void ScriptCompiler_t::ResolvePrototypes ()
             }
             case ARG_LABEL_IT:
             {
-                long long line = labels_[*(std::string*)i->arg1].line;
+                long long line = labels_[*(std::string*)i->arg1];
                 delete (std::string*)i->arg1;
                 i->arg1 = line;
                 i->flag1 = ARG_LABEL;
@@ -646,7 +632,7 @@ void ScriptCompiler_t::ResolvePrototypes ()
             }
             case ARG_LABEL_IT:
             {
-                long long line = labels_[*(std::string*)i->arg2].line;
+                long long line = labels_[*(std::string*)i->arg2];
                 delete (std::string*)i->arg2;
                 i->arg2 = line;
                 i->flag2 = ARG_LABEL;

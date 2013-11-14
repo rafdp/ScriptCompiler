@@ -118,7 +118,7 @@ FUNCTION_BEGIN(Cmpr, 4, 4, ARG_NUM _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_NU
 FUNCTION_END
 
 FUNCTION_BEGIN(Jmp, 1, 0, ARG_LABEL)
-    $ run_line_ = $ labels_[arg.arg1];
+    $ run_line_ = arg.arg1;
 FUNCTION_END
 
 #define JUMP_AUTOFILL(name, situation) \
@@ -127,7 +127,7 @@ const char error1[] = "Flag not set"; \
 if ($ cmpr_flag_ == FLAG_NOT_SET) \
 return ErrorReturn_t (RET_ERROR_CONTINUE, error1); \
 if (situation) \
-$ run_line_ = $ labels_[arg.arg1]; \
+$ run_line_ = arg.arg1; \
 FUNCTION_END
 
 JUMP_AUTOFILL (Je, $ cmpr_flag_ == FLAG_EQUAL)
@@ -237,7 +237,7 @@ FUNCTION_END
 #undef ASM_CALL_FUNC
 
 #define ARITHMETIC_FUNCTION(name, operator, check0) \
-FUNCTION_BEGIN(name, 2, 3, ARG_VAR _ ARG_REG _ ARG_VAR _ ARG_REG _ ARG_NUM) \
+FUNCTION_BEGIN(name, 3, 4, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_NUM) \
 long long opVal = $ GetVal (arg.flag2, arg.arg2); \
 if (check0 && opVal == 0) \
 { \
@@ -398,15 +398,6 @@ else
 FUNCTION_END
  */
 
-#define ARITHMETIC_FUNCTION(name, operator, check0) \
-FUNCTION_BEGIN(name, 3, 4, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_NUM) \
-long long opVal = $ GetVal (arg.flag2, arg.arg2); \
-if (check0 && opVal == 0) \
-{ \
-return ErrorReturn_t (RET_ERROR_FATAL, "Invalid second operand value (0)"); \
-} \
-$ SetVal (arg.flag1, arg.arg1, $ GetVal (arg.flag1, arg.arg1) operator opVal); \
-FUNCTION_END
 
 ARITHMETIC_FUNCTION(Div, /, true)
 

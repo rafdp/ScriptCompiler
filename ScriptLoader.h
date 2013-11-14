@@ -21,7 +21,6 @@ public:
     std::map<long long, size_t> typeSizes_;
     std::vector<VarData_t>      vars_;
     std::vector<std::string>    userFuncs_;
-    std::vector<long long>      labels_;
     std::vector<char*>          strings_;
     std::vector<Cmd_t>          funcs_;
     std::vector<Arg_t>          args_;
@@ -46,7 +45,6 @@ ScriptLoader_t::ScriptLoader_t (std::string filename, exception_data* expn) :
     typeSizes_ (),
     vars_      (),
     userFuncs_ (),
-    labels_    (),
     strings_   (),
     funcs_     (),
     args_      (),
@@ -108,7 +106,7 @@ ScriptLoader_t::ScriptLoader_t (std::string filename, exception_data* expn) :
     IMPORT_LOOP(typeSizes, {long long code = _load(long long);
                             typeSizes_[code] = _load (size_t);})
 
-    IMPORT_LOOP__(vars, {vars_.reserve (n_vars); for (int i = 0; i < n_vars; i++) vars_.push_back(VarData_t());},
+    IMPORT_LOOP__(vars, {vars_.reserve (n_vars); for (size_t i = 0; i < n_vars; i++) vars_.push_back(VarData_t());},
                   {long long num = _load(long long);
                    long long code = _load(long long);
                    vars_[num] = VarData_t(nullptr, code, _load (size_t));})
@@ -116,8 +114,6 @@ ScriptLoader_t::ScriptLoader_t (std::string filename, exception_data* expn) :
 
     IMPORT_LOOP(userFuncs, {READ_STR(currentStr)
                             userFuncs_.push_back (currentStr);})
-
-    IMPORT_LOOP(labels, labels_.push_back (_load(long long));)
 
     IMPORT_LOOP(strings, {READ_STR(currentStr)
                           strings_.push_back (new char[currentStr.size() > STRING_SIZE ? currentStr.size() + 1 : STRING_SIZE]);
@@ -155,9 +151,6 @@ void ScriptLoader_t::Dump ()
     printf ("userFuncs: %d\n", userFuncs_.size());
     for (auto i = userFuncs_.begin(); i < userFuncs_.end(); i++)
         printf ("  \"%s\"\n", i->c_str());
-    printf ("labels: %d\n", labels_.size());
-    for (auto i = labels_.begin(); i < labels_.end(); i++)
-        printf ("  %lld\n", *i);
     printf ("strings: %d\n", strings_.size());
     for (auto i = strings_.begin(); i < strings_.end(); i++)
         printf ("  \"%s\"\n", *i);

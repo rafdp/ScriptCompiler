@@ -108,7 +108,7 @@ void SetStringBadArg (std::string* errorMessage, Arg_t arg_got, ExpectedArg_t ex
     for (size_t i = 0; i < minSize; i++)
     {
         *errorMessage += "    " + ARG_D[expArg.expFlag1[i]];
-        for (int j = 0; j < LEN - ARG_D[expArg.expFlag1[i]].size(); j++) *errorMessage += ' ';
+        for (size_t j = 0; j < LEN - ARG_D[expArg.expFlag1[i]].size(); j++) *errorMessage += ' ';
         *errorMessage += ARG_D[expArg.expFlag2[i]];
         *errorMessage += '\n';
     }

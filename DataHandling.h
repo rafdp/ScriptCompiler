@@ -155,7 +155,7 @@ public:
         if (int(arg >> 32) == 0) arg_nested_call = callStack_[callStack_.size() - 1].var;
         else arg_nested_call = int(arg >> 32);
         //ErrorPrintfBox("CC called %d\n", arg_nested_call);
-        callStack_.push ({run_line_, arg_nested_call});
+        callStack_.push ({(int)run_line_, arg_nested_call});
         run_line_ = int(arg);
         //ErrorPrintfBox("CC ok\n");
     }
@@ -173,12 +173,14 @@ public:
     {
         if ((flag & char(~ARG_UNREF_MASK)) == ARG_VAR)        return vars_[arg].code;
         if ((flag & char(~ARG_UNREF_MASK)) == ARG_VAR_MEMBER) return MemberVarType (arg);
+        return 0;
     }
 
     size_t GetVarSize (char flag, long long arg)
     {
         if ((flag & char(~ARG_UNREF_MASK)) == ARG_VAR)        return typeSizes_[vars_[arg].code];
         if ((flag & char(~ARG_UNREF_MASK)) == ARG_VAR_MEMBER) return typeSizes_[MemberVarType (arg)];
+        return 0;
     }
 
     size_t GetSize (char flag, long long arg)
@@ -201,7 +203,7 @@ public:
     void* GetPtr (char flag, long long arg)
     {
         void* ret = NULL;
-        if (ret = GetVarPt(flag, arg)) return ret;
+        if ((ret = GetVarPt(flag, arg))) return ret;
         if (isReg (flag)) return GetReg (arg).reg;
         return ret;
     }

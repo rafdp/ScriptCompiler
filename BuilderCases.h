@@ -150,8 +150,8 @@ _BUILD_CASE_FUNC (Import)
         else
             foundIt->second.push_back(DllPair_t (funcName, num));
     }
+
     {
-        auto foundIt = dllFuncsMap_.end();
         if (dllFuncsMap_.find (useName) !=
             dllFuncsMap_.end()) STRING_ERROR(useName)
         dllFuncsMap_[useName] = num;
@@ -226,8 +226,7 @@ _BUILD_CASE_FUNC (PLabel)
     CHECK_ARGS (arg.flag1 != ARG_NAME ||
                 arg.flag2 != ARG_NULL, "plabel")
     CHECK_STD_TOKEN
-    size_t size = labels_.size();
-    labels_[STD_TOK] = {-1, size};
+    labels_[STD_TOK] = -1;
     arg.Clear();
     cmd.Clear();
 _RETURN
@@ -291,16 +290,17 @@ _BUILD_CASE_FUNC (Label)
     CHECK_TOKEN (*(std::string*)cmd.cmd)
     ADD_TOKEN (*(std::string*)cmd.cmd)
     cmd.Clear();
+    return true;
 _RETURN
 
 _BUILD_CASE_FUNC (PLabel)
     CHECK_ARGS (arg.flag1 != ARG_NAME ||
                 arg.flag2 != ARG_NULL, "plabel")
     CHECK_STD_TOKEN
-    size_t size = labels_.size();
-    labels_[STD_TOK] = {-1, size};
+    labels_[STD_TOK] = -1;
     arg.Clear();
     cmd.Clear();
+    return true;
 _RETURN
 
 _BUILD_CASE_FUNC (Extern)
