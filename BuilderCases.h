@@ -22,16 +22,16 @@ CHECK_TOKEN (STD_TOK)
 { \
     char line_ [6] = ""; \
     _itoa (n_line, line_, 10); \
-    static std::string str_error (std::string ("String ") + name + " has already been registered " + "(line " + line_ + ")"); \
-    NAT_EXCEPTION(expn_, str_error.c_str(), ERROR_CONFLICTING_NAMES); \
+    static std::string str_error (std::string ("String ") + name + " has already been registered " + " (line " + line_ + ")"); \
+    NAT_EXCEPTION (expn_, str_error.c_str (), ERROR_CONFLICTING_NAMES); \
 }
 
 #define ADD_TOKEN(name) \
-if (!AddName(name, cmd.flag, cmd.cmd, n_line)) \
+if (!AddName (name, cmd.flag, cmd.cmd, n_line)) \
 STRING_ERROR (name)
 
 #define ADD_TOKEN_(name, val) \
-if (!AddName(name, cmd.flag, val, n_line)) \
+if (!AddName (name, cmd.flag, val, n_line)) \
 STRING_ERROR (name)
 
 #define ADD_STD_TOKEN ADD_TOKEN (STD_TOK)
@@ -43,19 +43,19 @@ STRING_ERROR (name)
     _itoa (n_line, line_, 10); \
     static std::string str_error ("Error occured while parsing file \"" + file_ + \
                                   "\" on line " + line_ + ": " + text); \
-    NAT_EXCEPTION (expn_, str_error.c_str(), code)\
+    NAT_EXCEPTION (expn_, str_error.c_str (), code)\
 }
 
 _BUILD_CASE_FUNC (Null)
-    cmd.Clear();
-    arg.Clear();
+    cmd.Clear ();
+    arg.Clear ();
 _RETURN
 
 _BUILD_CASE_FUNC (Func)
     bool struct_ = structFunc_;
-    if(cmd.cmd == CMD_Ret)
+    if (cmd.cmd == CMD_Ret)
     {
-        if (structFunc_) currFunc_.clear();
+        if (structFunc_) currFunc_.clear ();
         func_level_--;
         ActivateDieRequests (n_line);
         structFunc_ = false;
@@ -66,10 +66,10 @@ _RETURN
 _BUILD_CASE_FUNC (Struct)
     CHECK_ARGS (arg.flag1 != ARG_NAME ||
                 arg.flag2 != ARG_NULL, "struct")
-    cmd.Clear();
+    cmd.Clear ();
     CHECK_STD_TOKEN
-    currStruct_ = regTypes_.AddNewType(STD_TOK);
-    arg.Clear();
+    currStruct_ = regTypes_.AddNewType (STD_TOK);
+    arg.Clear ();
     struct_func_level_ = func_level_;
 _RETURN
 
@@ -97,10 +97,10 @@ _RETURN
 _BUILD_CASE_FUNC (Label)
     CHECK_ARGS (arg.flag1 != ARG_NULL ||
                 arg.flag2 != ARG_NULL, "label")
-    arg.Clear();
+    arg.Clear ();
     CHECK_TOKEN (*(std::string*)cmd.cmd)
     ADD_TOKEN (*(std::string*)cmd.cmd)
-    cmd.Clear();
+    cmd.Clear ();
 _RETURN
 
 _BUILD_CASE_FUNC (Const)
@@ -108,7 +108,7 @@ _BUILD_CASE_FUNC (Const)
     CHECK_ARGS (arg.flag1 != ARG_NAME ||
                 arg.flag2 != ARG_NULL, "const")
     ADD_STD_TOKEN_ (arg.arg2)
-    arg.Clear();
+    arg.Clear ();
 _RETURN
 
 _BUILD_CASE_FUNC (Extern)
@@ -117,7 +117,7 @@ _BUILD_CASE_FUNC (Extern)
                 arg.flag2 != ARG_NULL, "extern")
     CHECK_STD_TOKEN
     ADD_STD_TOKEN
-    arg.Clear();
+    arg.Clear ();
 _RETURN
 
 _BUILD_CASE_FUNC (Import)
@@ -126,7 +126,7 @@ _BUILD_CASE_FUNC (Import)
                 arg.flag2 != ARG_STR, "import")
 
     int num = 0;
-    STL_LOOP (i, dllImportMap_) num += i->second.size();
+    STL_LOOP (i, dllImportMap_) num += i->second.size ();
 
     std::string funcName (strings_[arg.arg2].begin (),
                           strings_[arg.arg2].begin () +
@@ -135,28 +135,28 @@ _BUILD_CASE_FUNC (Import)
                           strings_[arg.arg2].find (' ') + 1,
                           strings_[arg.arg2].end ());
 
-    if (funcName.empty() || useName.empty())
+    if (funcName.empty () || useName.empty ())
         ERROR_EXCEPTION ("Error in import function definition",
                          ERROR_IMPORT_DLL_INVALID_STR)
     {
-        auto foundIt = dllImportMap_.end();
-        if ((foundIt = dllImportMap_.find (strings_[arg.arg1])) ==
-             dllImportMap_.end())
+        auto foundIt = dllImportMap_.end ();
+        if ( (foundIt = dllImportMap_.find (strings_[arg.arg1])) ==
+             dllImportMap_.end ())
         {
             DllVector_t vec;
             vec.push_back (DllPair_t (funcName, num));
             dllImportMap_[strings_[arg.arg1]] = vec;
         }
         else
-            foundIt->second.push_back(DllPair_t (funcName, num));
+            foundIt->second.push_back (DllPair_t (funcName, num));
     }
 
     {
         if (dllFuncsMap_.find (useName) !=
-            dllFuncsMap_.end()) STRING_ERROR(useName)
+            dllFuncsMap_.end ()) STRING_ERROR (useName)
         dllFuncsMap_[useName] = num;
     }
-    arg.Clear();
+    arg.Clear ();
 
 _RETURN
 
@@ -166,16 +166,16 @@ _BUILD_CASE_FUNC (Var)
                (arg.flag2 != ARG_NULL &&
                 arg.flag2 != ARG_NUM) ||
                (arg.flag2 == ARG_NUM &&
-                typeSizes_.find (arg.flag2) == typeSizes_.end()),
+                typeSizes_.find (arg.flag2) == typeSizes_.end ()),
                 "var")
-    auto tempRes = vars_.find(StrTo32Pair_t(STD_TOK, func_level_));
-    if (tempRes != vars_.end() &&
-       ((func_level_ != 0 && tempRes->second.die == -1) ||
+    auto tempRes = vars_.find (StrTo32Pair_t (STD_TOK, func_level_));
+    if (tempRes != vars_.end () &&
+       ( (func_level_ != 0 && tempRes->second.die == -1) ||
          tempRes->second.die > n_line))
         ERROR_EXCEPTION ("Var already exists", ERROR_VAR_ALREADY_EXISTS)
 
         //! Check if this var has already been created
-    if (tempRes != vars_.end() && tempRes->second.die < n_line && tempRes->second.die != -1)
+    if (tempRes != vars_.end () && tempRes->second.die < n_line && tempRes->second.die != -1)
     { //! if yes rebuild the var with new type
         cmd.Set (CMD_Func, CMD_RebuildVar);
         char flag = arg.flag2;
@@ -185,27 +185,27 @@ _BUILD_CASE_FUNC (Var)
         {
             CreateVarDieRequest (tempRes);
         }
-        arg.Clear();
+        arg.Clear ();
         arg.Set (ARG_VAR, tempRes->second.num, flag, type);
     }
     else //! if not create a new one
     {
         CHECK_STD_TOKEN
         ADD_STD_TOKEN
-        auto foundIter = vars_.find (StrTo32Pair_t(STD_TOK, func_level_));
+        auto foundIter = vars_.find (StrTo32Pair_t (STD_TOK, func_level_));
         if (arg.flag2 == ARG_NUM) foundIter->second.typeCode = arg.arg2;
 
         if (func_level_ > 0)
             CreateVarDieRequest (foundIter);
-        cmd.Clear();
-        arg.Clear();
+        cmd.Clear ();
+        arg.Clear ();
     }
 _RETURN
 
 _BUILD_CASE_FUNC (Name)
     ClassifyArg (&arg, true, n_line);
-    auto result = userFuncs_.end();
-    if ((result = userFuncs_.find (*(std::string*)cmd.cmd)) != userFuncs_.end())
+    auto result = userFuncs_.end ();
+    if ( (result = userFuncs_.find (*(std::string*)cmd.cmd)) != userFuncs_.end ())
     {
         cmd.flag = CMD_UFunc;
         cmd.cmd = result->second;
@@ -227,8 +227,8 @@ _BUILD_CASE_FUNC (PLabel)
                 arg.flag2 != ARG_NULL, "plabel")
     CHECK_STD_TOKEN
     labels_[STD_TOK] = -1;
-    arg.Clear();
-    cmd.Clear();
+    arg.Clear ();
+    cmd.Clear ();
 _RETURN
 
 #undef _BUILD_CASE_FUNC
@@ -246,14 +246,14 @@ _BUILD_CASE_FUNC (Var)
                (arg.flag2 != ARG_NULL &&
                 arg.flag2 != ARG_NUM) ||
                (arg.flag2 == ARG_NUM &&
-                typeSizes_.find (arg.flag2) == typeSizes_.end()),
+                typeSizes_.find (arg.flag2) == typeSizes_.end ()),
                 "var")
     CHECK_STD_TOKEN
     bool res = regTypes_.AddVar (STD_TOK, currStruct_,
                                  arg.flag2 == ARG_NULL ? TYPE_QWORD : arg.arg2);
     if (!res)
         ERROR_EXCEPTION ("Struct: error occured while adding variable to struct", ERROR_ADDING_VAR_STRUCT)
-    cmd.Clear();
+    cmd.Clear ();
     arg.Clear ();
     return true;
 _RETURN
@@ -286,10 +286,10 @@ _RETURN
 _BUILD_CASE_FUNC (Label)
     CHECK_ARGS (arg.flag1 != ARG_NULL ||
                 arg.flag2 != ARG_NULL, "label")
-    arg.Clear();
+    arg.Clear ();
     CHECK_TOKEN (*(std::string*)cmd.cmd)
     ADD_TOKEN (*(std::string*)cmd.cmd)
-    cmd.Clear();
+    cmd.Clear ();
     return true;
 _RETURN
 
@@ -298,8 +298,8 @@ _BUILD_CASE_FUNC (PLabel)
                 arg.flag2 != ARG_NULL, "plabel")
     CHECK_STD_TOKEN
     labels_[STD_TOK] = -1;
-    arg.Clear();
-    cmd.Clear();
+    arg.Clear ();
+    cmd.Clear ();
     return true;
 _RETURN
 
@@ -320,14 +320,14 @@ _BUILD_CASE_FUNC (End_Struct)
     CHECK_ARGS (arg.flag1 != ARG_NULL ||
                 arg.flag2 != ARG_NULL,
                 "end_struct")
-    cmd.Clear();
+    cmd.Clear ();
     currStruct_ = 0;
-    arg.Clear();
+    arg.Clear ();
     return false;
 _RETURN
 _BUILD_CASE_FUNC (Null)
-    cmd.Clear();
-    arg.Clear();
+    cmd.Clear ();
+    arg.Clear ();
     return true;
 _RETURN
 
@@ -345,7 +345,7 @@ if (expr) ERROR_EXCEPTION ("Link: invalid args for \"" func "\"", ERROR_PARSER_I
 #define STRING_ERROR(name) \
 { \
     static std::string str_error (std::string ("String ") + name + " has already been registered "); \
-    NAT_EXCEPTION(expn_, str_error.c_str(), ERROR_CONFLICTING_NAMES); \
+    NAT_EXCEPTION (expn_, str_error.c_str (), ERROR_CONFLICTING_NAMES); \
 }
 
 #undef CHECK_TOKEN
@@ -354,12 +354,12 @@ if (!CheckName (tok, 0)) STRING_ERROR (tok)
 
 #undef ADD_TOKEN
 #define ADD_TOKEN(name) \
-if (!AddName(name, cmd.flag, cmd.cmd, 0)) \
+if (!AddName (name, cmd.flag, cmd.cmd, 0)) \
 STRING_ERROR (name)
 
 #undef ADD_TOKEN_
 #define ADD_TOKEN_(name, val) \
-if (!AddName(name, cmd.flag, val, 0)) \
+if (!AddName (name, cmd.flag, val, 0)) \
 STRING_ERROR (name)
 
 #undef ERROR_EXCEPTION
@@ -367,12 +367,12 @@ STRING_ERROR (name)
 { \
     static std::string str_error ("Error occured while parsing file \"" + file_ + \
                                   "\": " + text); \
-    NAT_EXCEPTION (expn_, str_error.c_str(), code)\
+    NAT_EXCEPTION (expn_, str_error.c_str (), code)\
 }
 
 _BUILD_CASE_FUNC (Null)
-    cmd.Clear();
-    arg.Clear();
+    cmd.Clear ();
+    arg.Clear ();
 _RETURN
 
 _BUILD_CASE_FUNC (Link)
@@ -392,7 +392,7 @@ _BUILD_CASE_FUNC (Const)
                 "const")
     CHECK_STD_TOKEN
     ADD_STD_TOKEN_ (arg.arg2)
-    arg.Clear();
+    arg.Clear ();
 _RETURN
 
 _BUILD_CASE_FUNC (Extern)
@@ -402,7 +402,7 @@ _BUILD_CASE_FUNC (Extern)
                 "extern")
     CHECK_STD_TOKEN
     ADD_STD_TOKEN
-    arg.Clear();
+    arg.Clear ();
 _RETURN
 
 

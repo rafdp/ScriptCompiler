@@ -3,29 +3,29 @@
 
 #include "Compiler.h"
 
-ErrorReturn_t printHello (RunInstanceDataHandler_t*, Arg_t, void* pt)
+void printHello (RunInstanceDataHandler_t*, void* pt)
 {
     printf ("__Hello %d__\n", *(int*)pt);
-    return ErrorReturn_t (RET_SUCCESS);
 }
 
 
-int main()
+int main ()
 {
     exception_data ex_data (10, "errors.txt");
     try
     {
         ScriptCompiler_t comp ("test.txt", &ex_data);
-        comp.Save();
-        //comp.Dump();
+        comp.Save ();
+        //comp.Dump ();
         VirtualProcessor_t proc (&ex_data);
         int data = 17;
-        proc.RegFunc (UserFunc_t(printHello, &data), "printhello");
-        proc.RunScript ("test.pcs", MODE_PRINTF, "log.txt");
+        proc.RegFunc (UserFunc_t (printHello, &data), "printhello");
+        //proc.RunScript ("test.pcs", MODE_PRINTF, "log.txt");
+        proc.RunScriptJit ("test.pcs");
     }
     catch (ExceptionHandler& ex)
     {printf ("Exception occurred\nCheck \"errors.txt\"");
-    ex.WriteLog(&ex_data);}
+    ex.WriteLog (&ex_data);}
 }
 
 /**

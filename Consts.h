@@ -3,9 +3,15 @@
 
 //#define nullptr NULL
 
+#define RTLD_LAZY   0
+#define RTLD_NOW    0
 
-#define STL_LOOP(iterator, object) for (auto iterator = (object).begin(); iterator != (object).end(); iterator++)
-#define STL_RLOOP(iterator, object) for (auto iterator = (object).begin(); iterator != (object).end(); iterator++)
+#define RTLD_GLOBAL (1 << 1)
+#define RTLD_LOCAL  (1 << 2)
+
+
+#define STL_LOOP(iterator, object) for (auto iterator = (object).begin (); iterator != (object).end (); iterator++)
+#define STL_RLOOP(iterator, object) for (auto iterator = (object).begin (); iterator != (object).end (); iterator++)
 
 typedef int64_t QWORD;
 typedef std::map<std::string, long long> StrTo64Map_t;
@@ -36,7 +42,7 @@ int ErrorPrintfBox (const char* format, ...)
     int n = _vsnprintf (str, sizeof (str) - 1, format, arg);
     va_end (arg);
 
-    MessageBoxA (GetForegroundWindow(), str, "", 0);
+    MessageBoxA (GetForegroundWindow (), str, "", 0);
     return n;
 }
 

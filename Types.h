@@ -49,7 +49,7 @@ public:
 
     void AddType (std::string name, long long code, size_t size)
     {
-        if (!Ok()) return;
+        if (!Ok ()) return;
         std::string typename_ ("type_");
         typename_ += name;
         (*consts_)[typename_] = code;
@@ -58,7 +58,7 @@ public:
 
     long long AddNewType (std::string name)
     {
-        if (!Ok()) return -1;
+        if (!Ok ()) return -1;
         std::string typename_ ("type_");
         typename_ += name;
         (*consts_)[typename_] = freeCode_;
@@ -69,36 +69,36 @@ public:
 
     bool AddVar (std::string var, long long struct_, long long type)
     {
-        if (!Ok()) return false;
-        if (sizes_->find (struct_) == sizes_->end()) return false;
-        if (mvars_->find (struct_) == mvars_->end() )(*mvars_)[struct_] = std::map<std::string, MemberVarDescriptor_t> ();
-        (*mvars_)[struct_][var] = {(*mvars_)[struct_].size(), (*sizes_)[struct_], type};
+        if (!Ok ()) return false;
+        if (sizes_->find (struct_) == sizes_->end ()) return false;
+        if (mvars_->find (struct_) == mvars_->end () ) (*mvars_)[struct_] = std::map<std::string, MemberVarDescriptor_t> ();
+        (*mvars_)[struct_][var] = { (*mvars_)[struct_].size (), (*sizes_)[struct_], type};
         (*sizes_)[struct_] += (*sizes_)[type];
         return true;
     }
 
     bool AddFunc (std::string func, long long line, long long struct_)
     {
-        if (!Ok()) return false;
-        auto found = memberFuncs_->end();
-        if ((found = memberFuncs_->find(func)) != memberFuncs_->end() &&
+        if (!Ok ()) return false;
+        auto found = memberFuncs_->end ();
+        if ( (found = memberFuncs_->find (func)) != memberFuncs_->end () &&
             found->second.func_ != -1) return false;
-        ((*memberFuncs_)[func]) = {line, struct_};
+        ( (*memberFuncs_)[func]) = {line, struct_};
         return true;
     }
 
     bool ManageStructVar (char* flag, long long* arg, long long struct_ = 0)
     {
-        if (!Ok()) return false;
-        if (((std::string*)(*arg))->find ('.') == ((std::string*)(*arg))->npos && !struct_)
+        if (!Ok ()) return false;
+        if ( ( (std::string*) (*arg))->find ('.') == ( (std::string*) (*arg))->npos && !struct_)
             return false;
         int nested = struct_ ? 1 : 0;
-        long long offset = /*struct_ ? (*mvars_)[struct_][*(std::string*)(*arg)].offset :*/ 0;
+        long long offset = /*struct_ ? (*mvars_)[struct_][*(std::string*) (*arg)].offset :*/ 0;
         long long typeCode = 0;
-        if (struct_ && !mvars_->empty())
+        if (struct_ && !mvars_->empty ())
         {
-            auto varsFnd = (*mvars_)[struct_].end();
-            if ((varsFnd = (*mvars_)[struct_].find(*(std::string*)(*arg))) != (*mvars_)[struct_].end())
+            auto varsFnd = (*mvars_)[struct_].end ();
+            if ( (varsFnd = (*mvars_)[struct_].find (*(std::string*) (*arg))) != (*mvars_)[struct_].end ())
             {
                 typeCode = varsFnd->second.typeCode;
             }
@@ -117,17 +117,17 @@ public:
         {
             pointOld = point;
             if (nested) pointOld++;
-            point = ((std::string*)(*arg))->find ('.', pointOld);
+            point = ( (std::string*) (*arg))->find ('.', pointOld);
             std::string token;
-            if (point == ((std::string*)(*arg))->npos)
+            if (point == ( (std::string*) (*arg))->npos)
             {
                 last = true;
-                point = ((std::string*)(*arg))->size();
+                point = ( (std::string*) (*arg))->size ();
             }
-            for (size_t i = pointOld; i < point; i++) token += (*(std::string*)(*arg))[i];
-            auto varsFound = vars_->end();
+            for (size_t i = pointOld; i < point; i++) token += (*(std::string*) (*arg))[i];
+            auto varsFound = vars_->end ();
             if (!nested &&
-                (varsFound = vars_->find(StrTo32Pair_t(token, *func_level_))) != vars_->end())
+                (varsFound = vars_->find (StrTo32Pair_t (token, *func_level_))) != vars_->end ())
             {
                 varSet = true;
                 varCode = varsFound->second.typeCode;
@@ -135,16 +135,16 @@ public:
             }
             if (nested)
             {
-                auto varsFound1 = (*mvars_)[varCode].end();
-                auto funcFound = memberFuncs_->end();
-                if ((varsFound1 = (*mvars_)[varCode].find(token)) != (*mvars_)[varCode].end())
+                auto varsFound1 = (*mvars_)[varCode].end ();
+                auto funcFound = memberFuncs_->end ();
+                if ( (varsFound1 = (*mvars_)[varCode].find (token)) != (*mvars_)[varCode].end ())
                 {
                     offset += varsFound1->second.offset;
                     typeCode = varsFound1->second.typeCode;
-                    if (!(*sizes_)[varsFound1->second.typeCode]) error = true;
+                    if (! (*sizes_)[varsFound1->second.typeCode]) error = true;
                     //    NAT_EXCEPTION (expn_, "Internal error, size = 0", ERROR_NULL_SIZE_STRUCT)
                 }
-                else if ((funcFound = memberFuncs_->find(token)) != memberFuncs_->end())
+                else if ( (funcFound = memberFuncs_->find (token)) != memberFuncs_->end ())
                 {
                     func = funcFound->second.func_;
                     isFunc = true;
@@ -154,7 +154,7 @@ public:
                     /*static std::string str ("Member \"");
                     str += token;
                     str += "\" not found in structure";
-                    NAT_EXCEPTION (expn_, str.c_str(), ERROR_MEMBER_NOT_FOUND)*/
+                    NAT_EXCEPTION (expn_, str.c_str (), ERROR_MEMBER_NOT_FOUND)*/
                     error = true;
                 }
                 varCode = typeCode;
@@ -178,7 +178,7 @@ public:
                     else NAT_EXCEPTION (expn_, "Invalid use of '*'", ERROR_INVALID_UNREF)
                 }
                 else *flag = ARG_VAR_MEMBER;
-                delete (std::string*)(*arg);
+                delete (std::string*) (*arg);
                 *arg = 0;
                 *arg = short (typeCode);
                 *arg <<= 16;
@@ -195,12 +195,12 @@ public:
                 {
                     *flag = ARG_FUNC_MEMBER_IT;
                     *arg <<= 32;
-                    *arg |= int(struct_);
+                    *arg |= int (struct_);
                 }
                 else
                 {
                     *flag = ARG_FUNC_MEMBER;
-                    delete (std::string*)(*arg);
+                    delete (std::string*) (*arg);
                     *arg = 0;
                     *arg |= int (var + 1);
                     *arg <<= 32;

@@ -75,7 +75,7 @@ enum Cmd_Assembler
     CMD_Lea,                //! 128
     CMD_Sqrt                //! 129
 };
-void SetMapAssembler()
+void SetMapAssembler ()
 {
     static bool set = false;
     if (set)
@@ -173,7 +173,7 @@ enum Registers
     REG_PTDWORD = 0x5B,
     REG_PTQWORD = 0x63
 };
-void SetMapReg()
+void SetMapReg ()
 {
     static bool set = false;
     if (set)
@@ -209,15 +209,15 @@ void SetMapReg()
     set = true;
 }
 
-const int REGISTERS_SIZE = 5 * (1 + 2 + 4 + 8) + 4 * 8;
+const int REGISTERS_SIZE = 5 *(1 + 2 + 4 + 8) + 4 * 8;
 
 class AutoMapValuesInitialisator_t
 {
     public:
     AutoMapValuesInitialisator_t ()
     {
-        SetMapAssembler();
-        SetMapReg();
+        SetMapAssembler ();
+        SetMapReg ();
     }
 };
 AutoMapValuesInitialisator_t AutoMapValuesInitialisator;

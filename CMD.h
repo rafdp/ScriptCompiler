@@ -30,12 +30,12 @@ Cmd_t::Cmd_t (std::string str) :
         flag = cmd_result;
         return;
     }
-    if (*(str.rbegin()) == ':')
+    if (*(str.rbegin ()) == ':')
     {
         cmd = (long long) new std::string (str);
-        ((std::string*)cmd)->erase (((std::string*)cmd)->end() - 1);
+        ( (std::string*)cmd)->erase ( ( (std::string*)cmd)->end () - 1);
         flag = CMD_Label;
-        if (CMD_A[(char*)cmd]) Clear();
+        if (CMD_A[ (char*)cmd]) Clear ();
         return;
     }
 
@@ -66,7 +66,7 @@ void Cmd_t::Clear ()
 
 void Cmd_t::Error ()
 {
-    Clear();
+    Clear ();
     flag = CMD_Error;
 }
 

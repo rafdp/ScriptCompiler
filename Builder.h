@@ -73,7 +73,7 @@ class ScriptCompiler_t
         {
             (*i)->second.die = line;
         }
-        die_requests_.clear();
+        die_requests_.clear ();
     }
 
     bool AddName (std::string name,
@@ -85,7 +85,7 @@ class ScriptCompiler_t
 
     void ParseLinkFile (std::string file);
 
-    void ManageVars(Cmd_t& cmd,
+    void ManageVars (Cmd_t& cmd,
                     Arg_t& arg,
                     int n_line);
 
@@ -173,7 +173,7 @@ ScriptCompiler_t::ScriptCompiler_t (std::string filename, exception_data* expn) 
 {
     FillConstsMap (&consts_);
 
-    FILE* f = fopen (filename.c_str(), "r");
+    FILE* f = fopen (filename.c_str (), "r");
 
     #define CMD_CASE(name) case CMD_##name: name (cmd, arg, n_line); break;
 
@@ -187,13 +187,13 @@ ScriptCompiler_t::ScriptCompiler_t (std::string filename, exception_data* expn) 
             Cmd_t cmd (line.cmd);
             Arg_t arg (line.param1, line.param2);
 
-            //printf ("%s %s %s\n", line.cmd.c_str(), line.param1.c_str(), line.param2.c_str());
+            //printf ("%s %s %s\n", line.cmd.c_str (), line.param1.c_str (), line.param2.c_str ());
             if (line.cmd[0] == ';')
             {
                 cmd.Clear ();
                 arg.Clear ();
             }
-            if (currStruct_ && ManageStruct(cmd, arg, n_line));
+            if (currStruct_ && ManageStruct (cmd, arg, n_line));
             else
             {
                 switch (cmd.flag)
@@ -225,39 +225,39 @@ ScriptCompiler_t::ScriptCompiler_t (std::string filename, exception_data* expn) 
 
 void ScriptCompiler_t::PushData (const Cmd_t& cmd, const Arg_t& arg)
 {
-    funcs_.push_back(cmd);
-    args_.push_back(arg);
+    funcs_.push_back (cmd);
+    args_.push_back (arg);
 }
 
 void ScriptCompiler_t::_in_clsf_arg (char* flag, long long* arg, bool error, int line, bool var, bool struct_)
 {
-    if ((*flag & ARG_NAME) == ARG_NAME)
+    if ( (*flag & ARG_NAME) == ARG_NAME)
     {
-        auto result = consts_.end();
-        auto varResult = vars_.end();
-        auto labResult = labels_.end();
+        auto result = consts_.end ();
+        auto varResult = vars_.end ();
+        auto labResult = labels_.end ();
         #define INVALID_UNREF_CHECK \
             if (*flag & ARG_UNREF_MASK) NAT_EXCEPTION (expn_, "Invalid use of '*'", ERROR_INVALID_UNREF)
         if (var)
-        for (int varLevel = (!struct_ ? func_level_ : struct_func_level_); varLevel >= 0 && varResult == vars_.end(); varLevel--)
+        for (int varLevel = (!struct_ ? func_level_ : struct_func_level_); varLevel >= 0 && varResult == vars_.end (); varLevel--)
         {
-            varResult = vars_.find(StrTo32Pair_t(*(std::string*)(*arg), varLevel));
-            if (varResult != vars_.end() &&
+            varResult = vars_.find (StrTo32Pair_t (*(std::string*) (*arg), varLevel));
+            if (varResult != vars_.end () &&
                 varResult->second.die != -1 &&
                 varResult->second.die < line)
-                varResult = vars_.end();
+                varResult = vars_.end ();
         }
         //!  operator = returns reference to object
         //!  c = b = a;
-        if ((result = consts_.find(*(std::string*)(*arg))) != consts_.end())
+        if ( (result = consts_.find (*(std::string*) (*arg))) != consts_.end ())
         {
             INVALID_UNREF_CHECK
             *flag = ARG_NUM;
-            delete[] (char*)(*arg);
+            delete[] (char*) (*arg);
             *arg = result->second;
         }
         else
-        if (var && varResult != vars_.end())
+        if (var && varResult != vars_.end ())
         {
             if (*flag & ARG_UNREF_MASK)
             {
@@ -265,11 +265,11 @@ void ScriptCompiler_t::_in_clsf_arg (char* flag, long long* arg, bool error, int
                 else INVALID_UNREF_CHECK
             }
             else *flag = ARG_VAR;
-            delete (std::string*)(*arg);
+            delete (std::string*) (*arg);
             *arg = varResult->second.num;
         }
         else
-        if ((labResult = labels_.find(((std::string*)(*arg))->c_str())) != labels_.end())
+        if ( (labResult = labels_.find ( ( (std::string*) (*arg))->c_str ())) != labels_.end ())
         {
             INVALID_UNREF_CHECK
             if (labResult->second == -1)
@@ -279,23 +279,23 @@ void ScriptCompiler_t::_in_clsf_arg (char* flag, long long* arg, bool error, int
             else
             {
                 *flag = ARG_LABEL;
-                delete (std::string*)(*arg);
+                delete (std::string*) (*arg);
                 *arg = labResult->second;
             }
         }
         else
-        if (IsString((std::string*)(*arg)))
+        if (IsString ( (std::string*) (*arg)))
         {
             INVALID_UNREF_CHECK
             *flag = ARG_STR;
-            ((std::string*)(*arg))->erase (((std::string*)(*arg))->begin());
-            ((std::string*)(*arg))->erase (((std::string*)(*arg))->end() - 1);
-            strings_.push_back (*(std::string*)(*arg));
-            delete (std::string*)(*arg);
-            *arg = strings_.size() - 1;
+            ( (std::string*) (*arg))->erase ( ( (std::string*) (*arg))->begin ());
+            ( (std::string*) (*arg))->erase ( ( (std::string*) (*arg))->end () - 1);
+            strings_.push_back (*(std::string*) (*arg));
+            delete (std::string*) (*arg);
+            *arg = strings_.size () - 1;
         }
         else
-        if ((result = createdFuncs_.find (*(std::string*)(*arg))) != createdFuncs_.end())
+        if ( (result = createdFuncs_.find (*(std::string*) (*arg))) != createdFuncs_.end ())
         {
             INVALID_UNREF_CHECK
             if (result->second == -1)
@@ -305,23 +305,23 @@ void ScriptCompiler_t::_in_clsf_arg (char* flag, long long* arg, bool error, int
             else
             {
                 *flag = ARG_FUNC;
-                delete (std::string*)(*arg);
+                delete (std::string*) (*arg);
                 *arg = result->second;
             }
         }
         else
-        if ((result = dllFuncsMap_.find (*(std::string*)(*arg))) != dllFuncsMap_.end())
+        if ( (result = dllFuncsMap_.find (*(std::string*) (*arg))) != dllFuncsMap_.end ())
         {
             INVALID_UNREF_CHECK
             *flag = ARG_DLL_FUNC;
             *arg = result->second;
         }
         else
-        if (regTypes_.ManageStructVar (flag, arg, (structFunc_ && memberFuncs_.size() > 0) ? memberFuncs_.rbegin()->second.struct_ : 0));
+        if (regTypes_.ManageStructVar (flag, arg, (structFunc_ && memberFuncs_.size () > 0) ? memberFuncs_.rbegin ()->second.struct_ : 0));
         else if (error)
         {
             *flag = ARG_ERROR;
-            delete (std::string*)(*arg);
+            delete (std::string*) (*arg);
             *arg = 0;
         }
     }
@@ -336,37 +336,37 @@ void ScriptCompiler_t::ClassifyArg (Arg_t* arg, bool error, int line, bool var, 
 
 void ScriptCompiler_t::Dump ()
 {
-    printf ("file: %s\n", file_.c_str());
+    printf ("file: %s\n", file_.c_str ());
 
     #define PRINT_MAP(name) \
     printf ("%s:\n", #name); \
     STL_LOOP (i, name) \
     { \
-        printf ("  %s %lld\n", i->first.c_str(), i->second); \
+        printf ("  %s %lld\n", i->first.c_str (), i->second); \
     }
-    PRINT_MAP(consts_)
+    PRINT_MAP (consts_)
     printf ("vars_:\n");
     STL_LOOP (i, vars_)
     {
         printf ("  %s %d %lld %d, %lld\n",
-                i->first.first.c_str(),
+                i->first.first.c_str (),
                 i->first.second,
                 i->second.num,
                 i->second.die,
                 i->second.typeCode);
     }
-    PRINT_MAP(userFuncs_)
-    //PRINT_MAP(labels_)
+    PRINT_MAP (userFuncs_)
+    //PRINT_MAP (labels_)
     printf ("labels_:\n");
     STL_LOOP (i, labels_)
     {
-        printf ("  %s %lld\n", i->first.c_str(), i->second);
+        printf ("  %s %lld\n", i->first.c_str (), i->second);
     }
 
     printf ("strings_:\n");
     STL_LOOP (i, strings_)
     {
-        printf ("  %s\n", i->c_str());
+        printf ("  %s\n", i->c_str ());
     }
 
     printf ("funcs_:\n");
@@ -391,13 +391,13 @@ void ScriptCompiler_t::Save ()
     std::string saveFile (file_);
     size_t point = saveFile.rfind (".");
     if (point != saveFile.npos)
-        saveFile.erase (saveFile.begin() + point, saveFile.end());
+        saveFile.erase (saveFile.begin () + point, saveFile.end ());
     saveFile += ".pcs";
 
-    FILE* save = fopen (saveFile.c_str(), "wb");
+    FILE* save = fopen (saveFile.c_str (), "wb");
     if (!save)
     {
-        ExceptionHandler* e = new (expn_) ExceptionHandler (E_NAT((std::string ("Unable to open file: ") + saveFile).c_str(), ERROR_SCRIPT_OPEN_FILE_SAVE));
+        ExceptionHandler* e = new (expn_) ExceptionHandler (E_NAT ( (std::string ("Unable to open file: ") + saveFile).c_str (), ERROR_SCRIPT_OPEN_FILE_SAVE));
         throw *e;
     }
 
@@ -405,11 +405,11 @@ void ScriptCompiler_t::Save ()
     fwrite (&maph, sizeof (MapHeader), 1, save);
 
     #define WRITE_STR(name) \
-        STL_LOOP(i, name) fwrite (&(*i), sizeof (char), 1, save); \
+        STL_LOOP (i, name) fwrite (& (*i), sizeof (char), 1, save); \
         fwrite (&CONTROL_CHARACTER, sizeof (CONTROL_CHARACTER), 1, save);
 
     #define WRITE_SIZE(name) \
-        size_t size_##name = name.size(); \
+        size_t size_##name = name.size (); \
         fwrite (&size_##name, sizeof (size_t), 1, save);
 
 
@@ -421,25 +421,25 @@ void ScriptCompiler_t::Save ()
         WRITE_SIZE (name) \
         STL_LOOP (var, name) { do }
 
-    WRITE_STL_LOOP(dllImportMap_, {WRITE_STR(it->first);
+    WRITE_STL_LOOP (dllImportMap_, {WRITE_STR (it->first);
                                    auto& vec = it->second;
-                                   WRITE_STL_LOOP_(vec, it_,
-                                                   {WRITE_STR(it_->first);
-                                                    fwrite(&(it_->second), sizeof (long long), 1, save);})})
+                                   WRITE_STL_LOOP_ (vec, it_,
+                                                   {WRITE_STR (it_->first);
+                                                    fwrite (& (it_->second), sizeof (long long), 1, save);})})
 
-    WRITE_STL_LOOP(typeSizes_, {fwrite(&(it->first), sizeof (long long), 1, save);
-                                fwrite(&(it->second), sizeof (size_t), 1, save);})
-    WRITE_STL_LOOP(vars_, {fwrite(&(it->second.num), sizeof (long long), 1, save);
-                           fwrite(&(it->second.typeCode), sizeof (long long), 1, save);
-                           fwrite(&(typeSizes_[it->second.typeCode]), sizeof (size_t), 1, save);})
+    WRITE_STL_LOOP (typeSizes_, {fwrite (& (it->first), sizeof (long long), 1, save);
+                                fwrite (& (it->second), sizeof (size_t), 1, save);})
+    WRITE_STL_LOOP (vars_, {fwrite (& (it->second.num), sizeof (long long), 1, save);
+                           fwrite (& (it->second.typeCode), sizeof (long long), 1, save);
+                           fwrite (& (typeSizes_[it->second.typeCode]), sizeof (size_t), 1, save);})
 
 
-    WRITE_STL_LOOP(userFuncs_, WRITE_STR(it->first))
-    WRITE_STL_LOOP(strings_, WRITE_STR((*it)))
-    assert (funcs_.size() == args_.size());
-    auto it1 = args_.begin();
-    WRITE_STL_LOOP(funcs_, {fwrite (&(*it), sizeof (Cmd_t), 1, save);
-                            fwrite (&(*it1), sizeof (Arg_t), 1, save);
+    WRITE_STL_LOOP (userFuncs_, WRITE_STR (it->first))
+    WRITE_STL_LOOP (strings_, WRITE_STR ( (*it)))
+    assert (funcs_.size () == args_.size ());
+    auto it1 = args_.begin ();
+    WRITE_STL_LOOP (funcs_, {fwrite (& (*it), sizeof (Cmd_t), 1, save);
+                            fwrite (& (*it1), sizeof (Arg_t), 1, save);
                             it1++;})
 
     fclose (save);
@@ -453,11 +453,11 @@ void ScriptCompiler_t::Save ()
 
 void ScriptCompiler_t::ParseLinkFile (std::string file)
 {
-    FILE* f = fopen (file.c_str(), "r");
+    FILE* f = fopen (file.c_str (), "r");
     if (!f)
     {
         static std::string str_error (std::string ("Unable to open file: ") + file);
-        NAT_EXCEPTION(expn_, str_error.c_str(), ERROR_CONFLICTING_NAMES);
+        NAT_EXCEPTION (expn_, str_error.c_str (), ERROR_CONFLICTING_NAMES);
     }
 
     while (!feof (f))
@@ -485,14 +485,14 @@ void ScriptCompiler_t::ParseLinkFile (std::string file)
 bool ScriptCompiler_t::CheckName (std::string name, int line)
 {
     bool ok = true;
-    auto varRes = vars_.find (StrTo32Pair_t(name, func_level_));
-    auto fRes = createdFuncs_.end();
-    auto labRes = labels_.end();
-    if (ok && consts_.find (name) != consts_.end()) ok = false;
-    if (ok && varRes != vars_.end() && varRes->second.die > line) ok = false;
-    if (ok && userFuncs_.find (name) != userFuncs_.end()) ok = false;
-    if (ok && ((fRes = createdFuncs_.find (name)) != createdFuncs_.end()) && fRes->second != -1) ok = false;
-    if (ok && ((labRes = labels_.find (name)) != labels_.end()) && labRes->second != -1) ok = false;
+    auto varRes = vars_.find (StrTo32Pair_t (name, func_level_));
+    auto fRes = createdFuncs_.end ();
+    auto labRes = labels_.end ();
+    if (ok && consts_.find (name) != consts_.end ()) ok = false;
+    if (ok && varRes != vars_.end () && varRes->second.die > line) ok = false;
+    if (ok && userFuncs_.find (name) != userFuncs_.end ()) ok = false;
+    if (ok && ( (fRes = createdFuncs_.find (name)) != createdFuncs_.end ()) && fRes->second != -1) ok = false;
+    if (ok && ( (labRes = labels_.find (name)) != labels_.end ()) && labRes->second != -1) ok = false;
     return ok;
 }
 
@@ -509,17 +509,17 @@ bool ScriptCompiler_t::AddName (std::string name, char flag, long long cmd, int 
                 consts_[name] = cmd;
                 break;
             case CMD_Label:
-                if (labels_.find (name) == labels_.end())
+                if (labels_.find (name) == labels_.end ())
                 {
                     labels_[name] = line;
                 }
                 else labels_[name] = line;
                 break;
             case CMD_Extern:
-                userFuncs_[name] = userFuncs_.size() - 1;
+                userFuncs_[name] = userFuncs_.size () - 1;
                 break;
             case CMD_Var:
-                vars_[StrTo32Pair_t(name, func_level_)] = {vars_.size() - 1, -1, TYPE_QWORD};
+                vars_[StrTo32Pair_t (name, func_level_)] = {vars_.size () - 1, -1, TYPE_QWORD};
                 break;
             case CMD_CFunc:
                 createdFuncs_[name] = line;
@@ -563,7 +563,7 @@ void ScriptCompiler_t::ResolvePrototypes ()
         if (i->second == -1)
         {
             static std::string str_err ("Undefined reference to function \"" + i->first + "\"");
-            ERROR_EXCEPTION (str_err.c_str(), ERROR_UNDEFINED_REFERENCE_FUNC)
+            ERROR_EXCEPTION (str_err.c_str (), ERROR_UNDEFINED_REFERENCE_FUNC)
         }
     }
     STL_LOOP (i, labels_)
@@ -571,7 +571,7 @@ void ScriptCompiler_t::ResolvePrototypes ()
         if (i->second == -1)
         {
             static std::string str_err ("Undefined reference to label \"" + i->first + "\"");
-            ERROR_EXCEPTION (str_err.c_str(), ERROR_UNDEFINED_REFERENCE_LABEL)
+            ERROR_EXCEPTION (str_err.c_str (), ERROR_UNDEFINED_REFERENCE_LABEL)
         }
     }
     STL_LOOP (i, memberFuncs_)
@@ -579,7 +579,7 @@ void ScriptCompiler_t::ResolvePrototypes ()
         if (i->second.func_ == -1)
         {
             static std::string str_err ("Undefined reference to member function \"" + i->first + "\"");
-            ERROR_EXCEPTION (str_err.c_str(), ERROR_UNDEFINED_REFERENCE_FUNC)
+            ERROR_EXCEPTION (str_err.c_str (), ERROR_UNDEFINED_REFERENCE_FUNC)
         }
     }
 
@@ -597,9 +597,9 @@ void ScriptCompiler_t::ResolvePrototypes ()
             }
             case ARG_FUNC_MEMBER_IT:
             {
-                auto found = memberFuncs_.find(*(std::string*)(i->arg1 >> 32));
+                auto found = memberFuncs_.find (*(std::string*) (i->arg1 >> 32));
                 i->arg1 = found->second.func_;
-                delete (std::string*)(i->arg1 >> 32);
+                delete (std::string*) (i->arg1 >> 32);
                 i->flag1 = ARG_FUNC_MEMBER;
                 break;
             }
@@ -624,9 +624,9 @@ void ScriptCompiler_t::ResolvePrototypes ()
             }
             case ARG_FUNC_MEMBER_IT:
             {
-                auto found = memberFuncs_.find(*(std::string*)(i->arg2 >> 32));
+                auto found = memberFuncs_.find (*(std::string*) (i->arg2 >> 32));
                 i->arg2 = found->second.func_;
-                delete (std::string*)(i->arg2 >> 32);
+                delete (std::string*) (i->arg2 >> 32);
                 i->flag2 = ARG_FUNC_MEMBER;
                 break;
             }

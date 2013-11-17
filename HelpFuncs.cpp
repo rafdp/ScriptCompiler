@@ -3,13 +3,13 @@
 
 #define NAT_EXCEPTION(data, message, code) \
 { \
-    ExceptionHandler* e_nat = new (data) ExceptionHandler (E_NAT((message), (code))); \
+    ExceptionHandler* e_nat = new (data) ExceptionHandler (E_NAT ( (message), (code))); \
     throw *e_nat; \
 }
 
 #define CONS_EXCEPTION(data, message, code, old) \
 { \
-    ExceptionHandler* ec = new (data) ExceptionHandler (E_CONS((message), (code), (old).pt_)); \
+    ExceptionHandler* ec = new (data) ExceptionHandler (E_CONS ( (message), (code), (old).pt_)); \
     throw *ec; \
 }
 #define CATCH_CONS(data, message, code) \
@@ -38,7 +38,7 @@ bool isNum (std::string* str)
 
 bool IsString (std::string* str)
 {
-    return (*(str->begin()) == '"' && *(str->rbegin()) == '"');
+    return (*(str->begin ()) == '"' && *(str->rbegin ()) == '"');
 }
 
 struct VarDescriptor_t
@@ -67,12 +67,12 @@ struct VarData_t
         size (0)
     {}
 
-    void Free()
+    void Free ()
     {
         if (size > 0) var = new char [size];
     }
 
-    void Delete()
+    void Delete ()
     {
         if (var) delete [] (char*)var;
         var = nullptr;
@@ -80,7 +80,7 @@ struct VarData_t
 
     ~VarData_t ()
     {
-        Delete();
+        Delete ();
     }
 };
 
@@ -100,6 +100,12 @@ struct ErrorReturn_t
 {
     int retVal;
     std::string errorText;
+
+    ErrorReturn_t () :
+        retVal (),
+        errorText ()
+    {}
+
     ErrorReturn_t (int val) :
         retVal (val),
         errorText ()
@@ -130,7 +136,7 @@ char _GetString (FILE* f, std::string* str, char del)
         else if (c == '"') str_ = false;
         if (str_ && c == '\\')
         {
-            switch (c = fgetc(f))
+            switch (c = fgetc (f))
             {
                 case 'n':
                     *str += '\n';
@@ -169,8 +175,8 @@ struct ExpectedArg_t
     ExpectedArg_t (int n_flag1, int n_flag2, ...)
     {
         va_list arg; va_start (arg, n_flag2);
-        for (int i = 0; i < n_flag1; i++) expFlag1.push_back(va_arg (arg, int));
-        for (int i = 0; i < n_flag2; i++) expFlag2.push_back(va_arg (arg, int));
+        for (int i = 0; i < n_flag1; i++) expFlag1.push_back (va_arg (arg, int));
+        for (int i = 0; i < n_flag2; i++) expFlag2.push_back (va_arg (arg, int));
         va_end (arg);
 
         if (n_flag1 == 0) expFlag1.push_back (ARG_NULL);
@@ -178,10 +184,10 @@ struct ExpectedArg_t
     }
 };
 
-template<class T> typename std::vector<T>::const_iterator find(const std::vector<T>& vec, const T& data)
+template<class T> typename std::vector<T>::const_iterator find (const std::vector<T>& vec, const T& data)
 {
     STL_LOOP (i, vec) if (*i == data) return i;
-    return vec.end();
+    return vec.end ();
 }
 
 struct StackData_t
@@ -191,7 +197,7 @@ struct StackData_t
 
     template <typename T>
     StackData_t (T data_ = 0, size_t size_ = 0) :
-        data ((long long) data_),
+        data ( (long long) data_),
         size (size_)
     {}
 
@@ -214,7 +220,7 @@ std::string GetAsmNumString (int val, const char* operand = "dword")
     char val_[MAX_PATH] = "";
     itoa (val, val_, 16);
     std::string val_str;
-    val_str += std::string(operand) + "(0" + val_ + "h)";
+    val_str += std::string (operand) + " (0" + val_ + "h)";
     return val_str;
 }
 
@@ -226,12 +232,12 @@ void PushStackValueJit (const StackData_t& value, JitCompiler_t* comp)
             case sizeof (char):
             case sizeof (short):
             case sizeof (int):
-            comp->push((long)value.data);
+            comp->push ( (long)value.data);
             break;
             case sizeof (long long):
-            /*comp->push (*((int*)(&(value.data)) + 1));
-            comp->push (*((int*)(&(value.data)) + 0));*/
-            comp->push((long long)value.data);
+            /*comp->push (*( (int*) (& (value.data)) + 1));
+            comp->push (*( (int*) (& (value.data)) + 0));*/
+            comp->push ( (long long)value.data);
             break;
             //!default:
             //!NAT_EXCEPTION ()

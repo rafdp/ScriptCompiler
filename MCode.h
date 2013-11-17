@@ -11,6 +11,34 @@ class MCode_t
         buffer_ ()
     {}
 
+    template <typename Strct_Type, typename Ret_Type>
+    void EmitData (Ret_Type (Strct_Type::*val))
+    {
+        for (int i = 0; i < sizeof (Ret_Type (Strct_Type::*)); i++)
+        {
+            buffer_.push_back (uint8_t ((int32_t)(void*)val >> i * 8));
+        }
+    }
+
+    /*template <typename Ret_Type>
+    void EmitData (Ret_Type (*val))
+    {
+        for (int i = 0; i < sizeof (Ret_Type (*)); i++)
+        {
+            buffer_.push_back (uint8_t ((int32_t)val >> i * 8));
+        }
+    }*/
+
+    template <typename T>
+    void EmitData (T* val)
+    {
+        for (int i = 0; i < sizeof (void*); i++)
+        {
+            buffer_.push_back (uint8_t ((int32_t)val >> i * 8));
+
+        }
+    }
+
     template <typename T>
     void EmitData (T val)
     {
@@ -22,16 +50,18 @@ class MCode_t
 
     void AddToTop (uint8_t val)
     {
-        *(buffer_.rbegin()) += val;
+        *(buffer_.rbegin ()) += val;
     }
 
     void BuildAndRun ()
     {
-        unsigned char* func = new unsigned char [buffer_.size() + 1];
-        memcpy (func, buffer_.data(), buffer_.size());
-        //ErrorPrintfBox ("%X", func);
-        VirtualProtect(func, buffer_.size(), PAGE_EXECUTE_READWRITE, nullptr);
-        ((void (*) ())func) ();
+        unsigned char* func = new unsigned char [buffer_.size () + 1];
+        memcpy (func, buffer_.data (), buffer_.size ());
+        ErrorPrintfBox ("%X", func);
+        //VirtualProtect (func, buffer_.size (), PAGE_EXECUTE_READWRITE, nullptr);
+        for (int i = 0; i < buffer_.size (); i++) printf ("%02X ", buffer_[i]);
+        printf ("\n");
+        ( (void (*) ())func) ();
         delete [] func;
         func = nullptr;
     }

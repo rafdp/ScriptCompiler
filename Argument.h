@@ -44,17 +44,17 @@ void Arg_t::SetArg (char* flag, long long* arg, std::string* param)
 {
     *flag = 0;
 
-    if (param->empty())
+    if (param->empty ())
     {
         *flag |= ARG_NULL;
         *arg = 0;
         return;
     }
 
-    if ((*param)[0] == '*') {*flag |= ARG_UNREF_MASK; param->erase (0, 1);}
+    if ( (*param)[0] == '*') {*flag |= ARG_UNREF_MASK; param->erase (0, 1);}
 
     auto reg = CMD_REG.find (*param);
-    if (reg != CMD_REG.end())
+    if (reg != CMD_REG.end ())
     {
         *flag |= ARG_REG;
         *arg = reg->second;
@@ -64,7 +64,7 @@ void Arg_t::SetArg (char* flag, long long* arg, std::string* param)
     if (isNum (param))
     {
         *flag |= ARG_NUM;
-        *arg = atoll (param->c_str());
+        *arg = atoll (param->c_str ());
         return;
     }
     else
@@ -101,14 +101,14 @@ void SetStringBadArg (std::string* errorMessage, Arg_t arg_got, ExpectedArg_t ex
     const int LEN = 15;
     *errorMessage += "Bad argument type:\nexpected:\n";
 
-    size_t minSize = (expArg.expFlag1.size() < expArg.expFlag2.size()) ? expArg.expFlag1.size() : expArg.expFlag2.size();
+    size_t minSize = (expArg.expFlag1.size () < expArg.expFlag2.size ()) ? expArg.expFlag1.size () : expArg.expFlag2.size ();
     int max_num = 1;
-    size_t maxSize = (minSize == expArg.expFlag1.size()) ? expArg.expFlag2.size() : expArg.expFlag1.size();
-    if (maxSize == expArg.expFlag2.size()) max_num++;
+    size_t maxSize = (minSize == expArg.expFlag1.size ()) ? expArg.expFlag2.size () : expArg.expFlag1.size ();
+    if (maxSize == expArg.expFlag2.size ()) max_num++;
     for (size_t i = 0; i < minSize; i++)
     {
         *errorMessage += "    " + ARG_D[expArg.expFlag1[i]];
-        for (size_t j = 0; j < LEN - ARG_D[expArg.expFlag1[i]].size(); j++) *errorMessage += ' ';
+        for (size_t j = 0; j < LEN - ARG_D[expArg.expFlag1[i]].size (); j++) *errorMessage += ' ';
         *errorMessage += ARG_D[expArg.expFlag2[i]];
         *errorMessage += '\n';
     }
@@ -127,7 +127,7 @@ void SetStringBadArg (std::string* errorMessage, Arg_t arg_got, ExpectedArg_t ex
     }
 
     *errorMessage += std::string ("received:\n    ") + ARG_D[arg_got.flag1];
-    int arg1size = ARG_D[arg_got.flag1].size();
+    int arg1size = ARG_D[arg_got.flag1].size ();
     for (int i = 0; i < LEN - arg1size; i++) *errorMessage += ' ';
     *errorMessage += ARG_D[arg_got.flag2];
 }
@@ -142,14 +142,14 @@ struct ManageInputArgs_t
         argsGot (argsGot_),
         error (false)
     {
-        if (find(expArgs.expFlag1, char(argsGot.flag1 & ~char(ARG_UNREF_MASK))) == expArgs.expFlag1.end() ||
-            find(expArgs.expFlag2, char(argsGot.flag2 & ~char(ARG_UNREF_MASK))) == expArgs.expFlag2.end())
+        if (find (expArgs.expFlag1, char (argsGot.flag1 & ~char (ARG_UNREF_MASK))) == expArgs.expFlag1.end () ||
+            find (expArgs.expFlag2, char (argsGot.flag2 & ~char (ARG_UNREF_MASK))) == expArgs.expFlag2.end ())
             error = true;
     }
 
-    ErrorReturn_t CreateError (int val = RET_ERROR_CONTINUE, std::string error = std::string())
+    ErrorReturn_t CreateError (int val = RET_ERROR_CONTINUE, std::string error = std::string ())
     {
-        if (error.empty())
+        if (error.empty ())
             SetStringBadArg (&error, argsGot, expArgs);
         return ErrorReturn_t (val, error);
     }

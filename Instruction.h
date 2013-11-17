@@ -11,14 +11,14 @@ struct CPURegisterInfo_t
 
 uint8_t BuildModRM (const uint8_t mod, uint8_t destination, uint8_t source)
 {
-    return ((mod << 6) |
+    return ( (mod << 6) |
             (source << 3) |
             (destination));
 }
 
 uint8_t BuildSIB (const uint8_t scale, uint8_t destination, uint8_t source)
 {
-    return ((scale << 6) |
+    return ( (scale << 6) |
             (source << 3) |
             (destination));
 }
@@ -52,7 +52,7 @@ class CmdEmitter_t
         mcode_ ()
     {}
 
-    void EmitOpcode(Instruction_t* instr)
+    void EmitOpcode (Instruction_t* instr)
     {
         STL_LOOP (it, instr->opcode)
         {
@@ -60,38 +60,38 @@ class CmdEmitter_t
         }
     }
     template <typename T>
-    void EmitData(T data)
+    void EmitData (T data)
     {
         mcode_.EmitData (data);
     }
 
-    void EmitInstruction(Instruction_t instr,
+    void EmitInstruction (Instruction_t instr,
                          CPURegisterInfo_t regDest,
                          CPURegisterInfo_t regSrc)
     {
         EmitOpcode (&instr);
-        EmitData (BuildModRM(MODE_REGISTER, regDest.reg, regSrc.reg));
+        EmitData (BuildModRM (MODE_REGISTER, regDest.reg, regSrc.reg));
     }
 
-    void EmitInstruction(Instruction_t instr,
+    void EmitInstruction (Instruction_t instr,
                          CPURegisterInfo_t regDest,
                          uint8_t rmData)
     {
         EmitOpcode (&instr);
-        EmitData (BuildModRM(MODE_REGISTER, regDest.reg, rmData));
+        EmitData (BuildModRM (MODE_REGISTER, regDest.reg, rmData));
     }
 
-    void EmitInstruction(Instruction_t instr,
+    void EmitInstruction (Instruction_t instr,
                          uint8_t RMMode,
                          CPURegisterInfo_t reg1,
                          CPURegisterInfo_t reg2)
     {
         EmitOpcode (&instr);
-        EmitData (BuildModRM(RMMode, reg1.reg, reg2.reg));
+        EmitData (BuildModRM (RMMode, reg1.reg, reg2.reg));
     }
 
     template <typename T>
-    void EmitInstructionImmTop(Instruction_t instr, CPURegisterInfo_t regDest, T imm)
+    void EmitInstructionImmTop (Instruction_t instr, CPURegisterInfo_t regDest, T imm)
     {
         EmitOpcode (&instr);
         mcode_.AddToTop (regDest.reg);
@@ -99,13 +99,13 @@ class CmdEmitter_t
     }
 
     template <typename T>
-    void EmitInstruction(Instruction_t instr, T imm)
+    void EmitInstruction (Instruction_t instr, T imm)
     {
         EmitOpcode (&instr);
-        EmitData ((int32_t)imm);
+        EmitData ( (int32_t)imm);
     }
 
-    void EmitInstruction(Instruction_t instr)
+    void EmitInstruction (Instruction_t instr)
     {
         EmitOpcode (&instr);
     }
@@ -137,7 +137,8 @@ class InstructionManager_t
                   inSbb_RM_R,
                   inIMul_R_RM_Imm,
                   inIMul_R_RM,
-                  inIDiv_RM;
+                  inIDiv_RM,
+                  inInc_RM;
 
 public:
     InstructionManager_t () :
@@ -165,7 +166,8 @@ public:
         inSbb_RM_R       ({0x19}),
         inIMul_R_RM_Imm  ({0x69}),
         inIMul_R_RM      ({0x0F, 0xAF}),
-        inIDiv_RM        ({0xF7})
+        inIDiv_RM        ({0xF7}),
+        inInc_RM         ({0xFF})
     {}
 
     void EmitMov (CPURegisterInfo_t regDest, CPURegisterInfo_t regSrc)
@@ -177,8 +179,8 @@ public:
     void EmitMov (T1 ptr, T2 imm)
     {
         emitter_.EmitInstruction (inMov_RM_Imm, MODE_ADDRESS, OFF, 0);
-        emitter_.EmitData((int32_t)ptr);
-        emitter_.EmitData(imm);
+        emitter_.EmitData ( (int32_t)ptr);
+        emitter_.EmitData (imm);
     }
 
     template <typename T>
@@ -191,17 +193,17 @@ public:
     void EmitMov (T* pointer, CPURegisterInfo_t regSrc)
     {
         emitter_.EmitInstruction (inMov_RM_R, MODE_ADDRESS, OFF, regSrc);
-        emitter_.EmitData((uint32_t) pointer);
+        emitter_.EmitData ( (uint32_t) pointer);
     }
 
     template <typename T>
     void EmitMov (CPURegisterInfo_t regDest, T* pointer)
     {
-        //ErrorPrintfBox("POINTER MOV");
-        //emitter_.EmitData((uint8_t) 0xCC);
+        //ErrorPrintfBox ("POINTER MOV");
+        //emitter_.EmitData ( (uint8_t) 0xCC);
         emitter_.EmitInstruction (inMov_R_RM, MODE_ADDRESS, OFF, regDest);
-        emitter_.EmitData((uint32_t) pointer);
-        //emitter_.EmitData((uint8_t) 0xCC);
+        emitter_.EmitData ( (uint32_t) pointer);
+        //emitter_.EmitData ( (uint8_t) 0xCC);
     }
 
     template <typename T>
@@ -219,7 +221,7 @@ public:
 
     void EmitInt ()
     {
-        emitter_.EmitData((uint8_t) 0xCC);
+        emitter_.EmitData ( (uint8_t) 0xCC);
     }
 
     void EmitPop (CPURegisterInfo_t reg)
@@ -237,16 +239,24 @@ public:
         emitter_.EmitInstruction (inCall_RM, reg, 2);
     }
 
+    template <typename T>
+    void EmitCall (T* ptr)
+    {
+        ErrorPrintfBox("Ptr Call");
+        emitter_.EmitInstruction (inCall_RM, MODE_ADDRESS, OFF, 2);
+        emitter_.EmitData ( (int32_t) ptr);
+    }
+
     void EmitRetn ()
     {
-        //emitter_.EmitData((uint8_t) 0xCC);
+        //emitter_.EmitData ( (uint8_t) 0xCC);
         emitter_.EmitInstruction (inRetn);
     }
 
     void SaveData ()
     {
         FILE* f = fopen ("Jit/jittest.bin", "wb");
-        fwrite (emitter_.mcode_.buffer_.data(), 1, emitter_.mcode_.buffer_.size(), f);
+        fwrite (emitter_.mcode_.buffer_.data (), 1, emitter_.mcode_.buffer_.size (), f);
         fclose (f);
     }
 
@@ -254,98 +264,98 @@ public:
     void EmitAdd (CPURegisterInfo_t regDest, T data)
     {
         emitter_.EmitInstruction (inAdd_RM_Imm, regDest, 0);
-        emitter_.EmitData((int32_t) data);
+        emitter_.EmitData ( (int32_t) data);
     }
 
     template <typename T>
     void EmitAdd (CPURegisterInfo_t regDest, T* src)
     {
         emitter_.EmitInstruction (inAdd_R_RM, MODE_ADDRESS, OFF, regDest);
-        emitter_.EmitData((int32_t) src);
+        emitter_.EmitData ( (int32_t) src);
     }
 
     template <typename T>
     void EmitAdd (T* dest, CPURegisterInfo_t regSrc)
     {
         emitter_.EmitInstruction (inAdd_RM_R, MODE_ADDRESS, OFF, regSrc);
-        emitter_.EmitData((int32_t) dest);
+        emitter_.EmitData ( (int32_t) dest);
     }
 
     template <typename T>
     void EmitAdc (CPURegisterInfo_t regDest, T data)
     {
         emitter_.EmitInstruction (inAdc_RM_Imm, regDest, 2);
-        emitter_.EmitData((int32_t) data);
+        emitter_.EmitData ( (int32_t) data);
     }
 
     template <typename T>
     void EmitAdc (CPURegisterInfo_t regDest, T* src)
     {
         emitter_.EmitInstruction (inAdc_R_RM, MODE_ADDRESS, OFF, regDest);
-        emitter_.EmitData((int32_t) src);
+        emitter_.EmitData ( (int32_t) src);
     }
 
     template <typename T>
     void EmitAdc (T* dest, CPURegisterInfo_t regSrc)
     {
         emitter_.EmitInstruction (inAdc_RM_R, MODE_ADDRESS, OFF, regSrc);
-        emitter_.EmitData((int32_t) dest);
+        emitter_.EmitData ( (int32_t) dest);
     }
 
     template <typename T>
     void EmitSub (CPURegisterInfo_t regDest, T data)
     {
         emitter_.EmitInstruction (inSub_RM_Imm, regDest, 5);
-        emitter_.EmitData((int32_t) data);
+        emitter_.EmitData ( (int32_t) data);
     }
 
     template <typename T>
     void EmitSub (CPURegisterInfo_t regDest, T* src)
     {
         emitter_.EmitInstruction (inSub_R_RM, MODE_ADDRESS, OFF, regDest);
-        emitter_.EmitData((int32_t) src);
+        emitter_.EmitData ( (int32_t) src);
     }
 
     template <typename T>
     void EmitSub (T* dest, CPURegisterInfo_t regSrc)
     {
         emitter_.EmitInstruction (inSub_RM_R, MODE_ADDRESS, OFF, regSrc);
-        emitter_.EmitData((int32_t) dest);
+        emitter_.EmitData ( (int32_t) dest);
     }
 
     template <typename T>
     void EmitSbb (CPURegisterInfo_t regDest, T data)
     {
         emitter_.EmitInstruction (inSbb_RM_Imm, regDest, 3);
-        emitter_.EmitData((int32_t) data);
+        emitter_.EmitData ( (int32_t) data);
     }
 
     template <typename T>
     void EmitSbb (CPURegisterInfo_t regDest, T* src)
     {
         emitter_.EmitInstruction (inSbb_R_RM, MODE_ADDRESS, OFF, regDest);
-        emitter_.EmitData((int32_t) src);
+        emitter_.EmitData ( (int32_t) src);
     }
 
     template <typename T>
     void EmitSbb (T* dest, CPURegisterInfo_t regSrc)
     {
         emitter_.EmitInstruction (inSbb_RM_R, MODE_ADDRESS, OFF, regSrc);
-        emitter_.EmitData((int32_t) dest);
+        emitter_.EmitData ( (int32_t) dest);
     }
 
     template <typename T>
     void EmitMul (CPURegisterInfo_t regDest, CPURegisterInfo_t regSrc, T data)
     {
         emitter_.EmitInstruction (inIMul_R_RM_Imm, regDest, regSrc);
-        emitter_.EmitData((int32_t) data);
+        emitter_.EmitData ( (int32_t) data);
     }
 
     template <typename T>
     void EmitMul (CPURegisterInfo_t regDest, T* src)
     {
         emitter_.EmitInstruction (inIMul_R_RM, MODE_ADDRESS, OFF, regDest);
-        emitter_.EmitData((int32_t) src);
+        emitter_.EmitData ( (int32_t) src);
     }
 
     void EmitMul (CPURegisterInfo_t regDest, CPURegisterInfo_t regSrc)
@@ -362,17 +372,30 @@ public:
     void EmitDiv (T* ptr)
     {
         emitter_.EmitInstruction (inIDiv_RM, MODE_ADDRESS, OFF, 7);
-        emitter_.EmitData((int32_t) ptr);
+        emitter_.EmitData ( (int32_t) ptr);
     }
+
+    template <typename T>
+    void EmitInc (T* ptr)
+    {
+        emitter_.EmitInstruction (inInc_RM, MODE_ADDRESS, OFF, 0);
+        emitter_.EmitData ( (int32_t) ptr);
+    }
+
+    void EmitInc (CPURegisterInfo_t regSrc)
+    {
+        emitter_.EmitInstruction (inInc_RM, MODE_REGISTER, regSrc, 0);
+    }
+
 
     void Emit64Prefix ()
     {
-        emitter_.EmitData((int8_t) 0x48);
+        emitter_.EmitData ( (int8_t) 0x48);
     }
 
     void BuildAndRun ()
     {
-        emitter_.mcode_.BuildAndRun();
+        emitter_.mcode_.BuildAndRun ();
     }
 
 };
