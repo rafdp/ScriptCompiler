@@ -20,15 +20,6 @@ class MCode_t
         }
     }
 
-    /*template <typename Ret_Type>
-    void EmitData (Ret_Type (*val))
-    {
-        for (int i = 0; i < sizeof (Ret_Type (*)); i++)
-        {
-            buffer_.push_back (uint8_t ((int32_t)val >> i * 8));
-        }
-    }*/
-
     template <typename T>
     void EmitData (T* val)
     {
@@ -59,11 +50,17 @@ class MCode_t
         memcpy (func, buffer_.data (), buffer_.size ());
         ErrorPrintfBox ("%X", func);
         //VirtualProtect (func, buffer_.size (), PAGE_EXECUTE_READWRITE, nullptr);
-        for (int i = 0; i < buffer_.size (); i++) printf ("%02X ", buffer_[i]);
+        for (size_t i = 0; i < buffer_.size (); i++) printf ("%02X ", buffer_[i]);
         printf ("\n");
-        ( (void (*) ())func) ();
+        ((void (*) ())func) ();
         delete [] func;
         func = nullptr;
+        buffer_.clear ();
+    }
+
+    size_t Size ()
+    {
+        return buffer_.size ();
     }
 };
 #endif // MCODE_H_INCLUDED

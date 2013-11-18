@@ -3,12 +3,6 @@
 
 //#define nullptr NULL
 
-#define RTLD_LAZY   0
-#define RTLD_NOW    0
-
-#define RTLD_GLOBAL (1 << 1)
-#define RTLD_LOCAL  (1 << 2)
-
 
 #define STL_LOOP(iterator, object) for (auto iterator = (object).begin (); iterator != (object).end (); iterator++)
 #define STL_RLOOP(iterator, object) for (auto iterator = (object).begin (); iterator != (object).end (); iterator++)

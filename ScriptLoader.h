@@ -54,12 +54,12 @@ ScriptLoader_t::ScriptLoader_t (std::string filename, exception_data* expn) :
     FILE* script = fopen (filename.c_str (), "rb");
     if (!script)
     {
-        ExceptionHandler* e = new (expn) ExceptionHandler (E_NAT ( (std::string ("Unable to open file: ") + filename).c_str (), ERROR_SCRIPT_OPEN_FILE_CTOR));
+        ExceptionHandler* e = new (expn) ExceptionHandler (E_NAT ((std::string ("Unable to open file: ") + filename).c_str (), ERROR_SCRIPT_OPEN_FILE_CTOR));
         throw *e;
     }
     if (!CheckHeader (script))
     {
-        ExceptionHandler* e = new (expn) ExceptionHandler (E_NAT ( (std::string ("Invalid script file: ") + filename).c_str (), ERROR_INVALID_HEADER));
+        ExceptionHandler* e = new (expn) ExceptionHandler (E_NAT ((std::string ("Invalid script file: ") + filename).c_str (), ERROR_INVALID_HEADER));
         throw *e;
     }
 
@@ -90,7 +90,7 @@ ScriptLoader_t::ScriptLoader_t (std::string filename, exception_data* expn) :
     #define READ_STR(name) \
     std::string name; \
     char c = 0; \
-    while ( (c = _load (char)) != CONTROL_CHARACTER) \
+    while ((c = _load (char)) != CONTROL_CHARACTER) \
         name += c;
 
     IMPORT_LOOP (dllFuncs_,

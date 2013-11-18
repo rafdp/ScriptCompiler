@@ -33,7 +33,7 @@ Cmd_t::Cmd_t (std::string str) :
     if (*(str.rbegin ()) == ':')
     {
         cmd = (long long) new std::string (str);
-        ( (std::string*)cmd)->erase ( ( (std::string*)cmd)->end () - 1);
+        ((std::string*)cmd)->erase (( (std::string*)cmd)->end () - 1);
         flag = CMD_Label;
         if (CMD_A[ (char*)cmd]) Clear ();
         return;

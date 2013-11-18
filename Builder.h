@@ -249,7 +249,7 @@ void ScriptCompiler_t::_in_clsf_arg (char* flag, long long* arg, bool error, int
         }
         //!  operator = returns reference to object
         //!  c = b = a;
-        if ( (result = consts_.find (*(std::string*) (*arg))) != consts_.end ())
+        if ((result = consts_.find (*(std::string*) (*arg))) != consts_.end ())
         {
             INVALID_UNREF_CHECK
             *flag = ARG_NUM;
@@ -269,7 +269,7 @@ void ScriptCompiler_t::_in_clsf_arg (char* flag, long long* arg, bool error, int
             *arg = varResult->second.num;
         }
         else
-        if ( (labResult = labels_.find ( ( (std::string*) (*arg))->c_str ())) != labels_.end ())
+        if ((labResult = labels_.find (( (std::string*) (*arg))->c_str ())) != labels_.end ())
         {
             INVALID_UNREF_CHECK
             if (labResult->second == -1)
@@ -284,18 +284,18 @@ void ScriptCompiler_t::_in_clsf_arg (char* flag, long long* arg, bool error, int
             }
         }
         else
-        if (IsString ( (std::string*) (*arg)))
+        if (IsString ((std::string*) (*arg)))
         {
             INVALID_UNREF_CHECK
             *flag = ARG_STR;
-            ( (std::string*) (*arg))->erase ( ( (std::string*) (*arg))->begin ());
-            ( (std::string*) (*arg))->erase ( ( (std::string*) (*arg))->end () - 1);
+            ((std::string*) (*arg))->erase (( (std::string*) (*arg))->begin ());
+            ((std::string*) (*arg))->erase (( (std::string*) (*arg))->end () - 1);
             strings_.push_back (*(std::string*) (*arg));
             delete (std::string*) (*arg);
             *arg = strings_.size () - 1;
         }
         else
-        if ( (result = createdFuncs_.find (*(std::string*) (*arg))) != createdFuncs_.end ())
+        if ((result = createdFuncs_.find (*(std::string*) (*arg))) != createdFuncs_.end ())
         {
             INVALID_UNREF_CHECK
             if (result->second == -1)
@@ -310,7 +310,7 @@ void ScriptCompiler_t::_in_clsf_arg (char* flag, long long* arg, bool error, int
             }
         }
         else
-        if ( (result = dllFuncsMap_.find (*(std::string*) (*arg))) != dllFuncsMap_.end ())
+        if ((result = dllFuncsMap_.find (*(std::string*) (*arg))) != dllFuncsMap_.end ())
         {
             INVALID_UNREF_CHECK
             *flag = ARG_DLL_FUNC;
@@ -397,7 +397,7 @@ void ScriptCompiler_t::Save ()
     FILE* save = fopen (saveFile.c_str (), "wb");
     if (!save)
     {
-        ExceptionHandler* e = new (expn_) ExceptionHandler (E_NAT ( (std::string ("Unable to open file: ") + saveFile).c_str (), ERROR_SCRIPT_OPEN_FILE_SAVE));
+        ExceptionHandler* e = new (expn_) ExceptionHandler (E_NAT ((std::string ("Unable to open file: ") + saveFile).c_str (), ERROR_SCRIPT_OPEN_FILE_SAVE));
         throw *e;
     }
 
@@ -491,8 +491,8 @@ bool ScriptCompiler_t::CheckName (std::string name, int line)
     if (ok && consts_.find (name) != consts_.end ()) ok = false;
     if (ok && varRes != vars_.end () && varRes->second.die > line) ok = false;
     if (ok && userFuncs_.find (name) != userFuncs_.end ()) ok = false;
-    if (ok && ( (fRes = createdFuncs_.find (name)) != createdFuncs_.end ()) && fRes->second != -1) ok = false;
-    if (ok && ( (labRes = labels_.find (name)) != labels_.end ()) && labRes->second != -1) ok = false;
+    if (ok && ((fRes = createdFuncs_.find (name)) != createdFuncs_.end ()) && fRes->second != -1) ok = false;
+    if (ok && ((labRes = labels_.find (name)) != labels_.end ()) && labRes->second != -1) ok = false;
     return ok;
 }
 

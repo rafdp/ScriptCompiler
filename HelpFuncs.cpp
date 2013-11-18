@@ -3,13 +3,13 @@
 
 #define NAT_EXCEPTION(data, message, code) \
 { \
-    ExceptionHandler* e_nat = new (data) ExceptionHandler (E_NAT ( (message), (code))); \
+    ExceptionHandler* e_nat = new (data) ExceptionHandler (E_NAT ((message), (code))); \
     throw *e_nat; \
 }
 
 #define CONS_EXCEPTION(data, message, code, old) \
 { \
-    ExceptionHandler* ec = new (data) ExceptionHandler (E_CONS ( (message), (code), (old).pt_)); \
+    ExceptionHandler* ec = new (data) ExceptionHandler (E_CONS ((message), (code), (old).pt_)); \
     throw *ec; \
 }
 #define CATCH_CONS(data, message, code) \
@@ -197,7 +197,7 @@ struct StackData_t
 
     template <typename T>
     StackData_t (T data_ = 0, size_t size_ = 0) :
-        data ( (long long) data_),
+        data ((long long) data_),
         size (size_)
     {}
 
@@ -232,12 +232,12 @@ void PushStackValueJit (const StackData_t& value, JitCompiler_t* comp)
             case sizeof (char):
             case sizeof (short):
             case sizeof (int):
-            comp->push ( (long)value.data);
+            comp->push ((long)value.data);
             break;
             case sizeof (long long):
             /*comp->push (*( (int*) (& (value.data)) + 1));
             comp->push (*( (int*) (& (value.data)) + 0));*/
-            comp->push ( (long long)value.data);
+            comp->push ((long long)value.data);
             break;
             //!default:
             //!NAT_EXCEPTION ()

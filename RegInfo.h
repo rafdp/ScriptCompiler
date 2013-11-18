@@ -47,10 +47,10 @@ struct RegInfo_t
 
 /*
     #define TYPED_PTR_REGISTER (register) \
-    register.GetPtr < ( ( (register).size == sizeof (long long)) ? (long long*) : \
-    ( ( (register).size == sizeof (long)) ? (long*) : \
-    ( ( (register).size == sizeof (short)) ? (short*) : \
-    ( ( (register).size == sizeof (char)) ? (char*) : (void*)))))> ()
+    register.GetPtr < (( (register).size == sizeof (long long)) ? (long long*) : \
+    (( (register).size == sizeof (long)) ? (long*) : \
+    (( (register).size == sizeof (short)) ? (short*) : \
+    (( (register).size == sizeof (char)) ? (char*) : (void*)))))> ()
 */
 
     long long Get8byte ()
@@ -93,18 +93,18 @@ struct RegInfo_t
         switch (size)
         {
             case 1:
-                comp->mov ( (char*)reg,      register_);
+                comp->mov ((char*)reg,      register_);
                 break;
             case 2:
-                comp->mov ( (short*)reg,     register_);
+                comp->mov ((short*)reg,     register_);
                 break;
             case 4:
             case 8:
                 *(long*)reg = 0;
-                comp->mov ( (long*)reg,      register_);
+                comp->mov ((long*)reg,      register_);
                 break;
             /*case 8:
-                comp->mov ( (long long*)reg, register_);
+                comp->mov ((long long*)reg, register_);
                 break;*/
         }
     }
@@ -115,8 +115,8 @@ struct RegInfo_t
     {
         if (size == sizeof (long long))
         {
-            comp->mov ( (long*)reg, register1_);
-            comp->mov ( (long*)reg + 1, register2_);
+            comp->mov ((long*)reg, register1_);
+            comp->mov ((long*)reg + 1, register2_);
         }
     }
 };

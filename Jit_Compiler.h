@@ -266,7 +266,62 @@ class JitCompiler_t
         man.EmitInc (regSrc);
     }
 
+    template <typename T>
+    void cmp (T* pointer, CPURegisterInfo_t regSrc)
+    {
+        man.EmitCmp (pointer, regSrc);
+    }
 
+    template <typename T>
+    void cmp (CPURegisterInfo_t regDest, T* pointer)
+    {
+        man.EmitCmp (regDest, pointer);
+    }
+
+    void jmp (int32_t rel)
+    {
+        man.EmitJmp (rel);
+    }
+
+    void jl (int32_t rel)
+    {
+        man.EmitJl (rel);
+    }
+
+    void jge (int32_t rel)
+    {
+        man.EmitJge (rel);
+    }
+
+    void je (int32_t rel)
+    {
+        man.EmitJe (rel);
+    }
+
+    void jne (int32_t rel)
+    {
+        man.EmitJne (rel);
+    }
+
+    void jle (int32_t rel)
+    {
+        man.EmitJle (rel);
+    }
+
+    void jg (int32_t rel)
+    {
+        man.EmitJg (rel);
+    }
+
+    size_t Size ()
+    {
+        return man.Size ();
+    }
+
+    std::vector<uint8_t>* GetData ()
+    {
+        return man.GetData ();
+    }
 
 };
 

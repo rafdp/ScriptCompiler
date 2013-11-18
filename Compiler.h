@@ -19,12 +19,14 @@
 class VirtualProcessor_t
 {
     void FillJitCompiler (JitCompiler_t* compiler, std::string filename);
+    void PatchJmp (RunInstanceDataHandler_t* instance, JitCompiler_t* compiler);
     RunInstanceDataHandler_t* instance_;
     exception_data* expn_;
     int error_mode_;
     FILE* log_;
     std::map<std::string, UserFunc_t>    regFuncs_;
     ErrorReturn_t currentReturn_;
+    std::vector<std::pair<int, int>> patch_jmp_;
 
 public:
 
@@ -95,7 +97,8 @@ VirtualProcessor_t::VirtualProcessor_t (exception_data* expn) :
     error_mode_    (MODE_SILENT),
     log_           (nullptr),
     regFuncs_      (),
-    currentReturn_ ()
+    currentReturn_ (),
+    patch_jmp_     ()
 {}
 
 void VirtualProcessor_t::RunScript (std::string filename, int error_mode, std::string log)
@@ -250,24 +253,23 @@ void VirtualProcessor_t::RunScriptJit (std::string filename)
     delete instance_;
 }
 
+void VirtualProcessor_t::PatchJmp (RunInstanceDataHandler_t* instance, JitCompiler_t* compiler)
+{
+    std::vector<uint8_t>* mcode = compiler->GetData ();
+
+    STL_LOOP (it, patch_jmp_)
+    {
+        ErrorPrintfBox ("%d %d", it->first, (int)instance->func_offsets_[it->second]);
+        int offset = 0 - (it->first - (int)instance->func_offsets_[it->second]) - 5;
+        for (size_t i = 0; i < sizeof (offset); i++)
+        {
+            (*mcode)[it->first + i] = (uint8_t (offset >> i * 8));
+        }
+    }
+}
+
 void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string filename)
 {
-    int four = 4;
-    /*void* (*dlopen)  ( const char *file, int mode );
-    int   (*dlclose) ( void *handle );
-    void* (*dlsym)   ( void *handle, const char *name );
-    ErrorPrintfBox ("Starting");
-    HANDLE libdl = LoadLibrary ("libdl.dll");
-    if (!libdl) ErrorPrintfBox("no libdl");
-    dlopen  = (void* (*) (const char*, int))   GetProcAddress ((HINSTANCE)libdl, "dlopen");
-    if (!libdl) ErrorPrintfBox("no dlopen");
-    dlclose = (int (*) (void*))                GetProcAddress ((HINSTANCE)libdl, "dlclose");
-    if (!libdl) ErrorPrintfBox("no dlclose");
-    dlsym   = (void* (*) (void*, const char*)) GetProcAddress ((HINSTANCE)libdl, "dlsym");
-    if (!libdl) ErrorPrintfBox("no dlsym");
-    FreeLibrary ((HINSTANCE)libdl);
-    void* self = dlopen (NULL, RTLD_NOW | RTLD_GLOBAL);*/
-
     #define FuncCase(name) \
     case CMD_##name:\
     {\
@@ -284,58 +286,81 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
     //((void(*)())&int3)();
     //Print();
     //((void(*)())&int3)();
-/*
-        compiler->mov  (compiler->r_rax, (int32_t)(void*)&VirtualProcessor_t::foo); \
-        compiler->mov  (compiler->r_rcx, (int32_t)(void*)this);\
-        compiler->inc  (&instance_->run_line_);\
-
-        compiler->call (compiler->r_rax);\
-
-
-    compiler->mov  (compiler->r_rax, (int32_t)(void*)&VirtualProcessor_t::name);\
-    compiler->mov  (compiler->r_rcx, (int32_t)(void*)this);\
-
-        /*std::string format ("__ZN18VirtualProcessor_t"); \
-        char len[4] = ""; \
-        itoa (strlen (#name), len, 10); \
-        format += len; \
-        format += #name; \
-        format += "Ev"; \
-        void* func = dlsym (self, format.c_str()); \
-        if (!func) ErrorPrintfBox ("NULL PTR\n"); \
-    */
 
     compiler->int3();
-    /*compiler->push (compiler->r_rbp);
-    compiler->mov (compiler->r_rbp, compiler->r_rsp);*/
+    compiler->push (compiler->r_rbp);
+    compiler->mov (compiler->r_rbp, compiler->r_rsp);
 
     try
     {
         for (size_t i = 0; i < instance_->funcs_.size (); i ++)
         {
+            instance_->func_offsets_[i] = compiler->Size () + 1;
             if (instance_->funcs_[i].flag == CMD_Func)
             {
                 switch (instance_->funcs_[i].cmd)
                 {
                     FuncCase (RebuildVar)
-                    /*case CMD_RebuildVar:
-                        compiler->mov  (compiler->r_rcx, (int*)this);
-                        compiler->mov  (compiler->r_rax, &VirtualProcessor_t::RebuildVar);
-                        compiler->call (compiler->r_rax);
-                        compiler->inc  (&instance_->run_line_);
-                        break;*/
                     FuncCase (Push)
                     FuncCase (Pop)
                     FuncCase (Mov)
                     FuncCase (Print)
                     FuncCase (Cmpr)
-                    FuncCase (Jmp)
-                    FuncCase (Je)
-                    FuncCase (Jne)
-                    FuncCase (Ja)
-                    FuncCase (Jae)
-                    FuncCase (Jb)
-                    FuncCase (Jbe)
+                    case CMD_Jmp:
+                    {
+                        compiler->mov (&instance_->run_line_, instance_->args_[i].arg1);
+                        patch_jmp_.push_back (std::pair <int, int> (compiler->Size() + 1, instance_->args_[i].arg1));
+                        compiler->jmp (0);
+                        break;
+                    }
+                    case CMD_Je:
+                    {
+                        compiler->mov (&instance_->run_line_, instance_->args_[i].arg1);
+                        compiler->cmp (&instance_->cmpr_flag_, 0);
+                        patch_jmp_.push_back (std::pair <int, int> (compiler->Size() + 1, instance_->args_[i].arg1));
+                        compiler->je (0);
+                        break;
+                    }
+                    case CMD_Jne:
+                    {
+                        compiler->mov (&instance_->run_line_, instance_->args_[i].arg1);
+                        compiler->cmp (&instance_->cmpr_flag_, 0);
+                        patch_jmp_.push_back (std::pair <int, int> (compiler->Size() + 1, instance_->args_[i].arg1));
+                        compiler->jne (0);
+                        break;
+                    }
+                    case CMD_Ja:
+                    {
+                        compiler->mov (&instance_->run_line_, instance_->args_[i].arg1);
+                        compiler->cmp (&instance_->cmpr_flag_, 0);
+                        patch_jmp_.push_back (std::pair <int, int> (compiler->Size() + 1, instance_->args_[i].arg1));
+                        compiler->jg (0);
+                        break;
+                    }
+                    case CMD_Jae:
+                    {
+                        compiler->mov (&instance_->run_line_, instance_->args_[i].arg1);
+                        compiler->cmp (&instance_->cmpr_flag_, 0);
+                        patch_jmp_.push_back (std::pair <int, int> (compiler->Size() + 1, instance_->args_[i].arg1));
+                        compiler->jge (0);
+                        break;
+                    }
+                    case CMD_Jb:
+                    {
+                        compiler->mov (&instance_->run_line_, instance_->args_[i].arg1);
+                        compiler->cmp (&instance_->cmpr_flag_, 0);
+                        patch_jmp_.push_back (std::pair <int, int> (compiler->Size() + 1, instance_->args_[i].arg1));
+                        compiler->jl (0);
+                        break;
+                    }
+                    case CMD_Jbe:
+                    {
+                        compiler->mov (&instance_->run_line_, instance_->args_[i].arg1);
+                        compiler->cmp (&instance_->cmpr_flag_, 0);
+                        patch_jmp_.push_back (std::pair <int, int> (compiler->Size() + 1, instance_->args_[i].arg1));
+                        compiler->jle (0);
+                        break;
+                    }
                     FuncCase (Ret)
                     FuncCase (Call)
                     FuncCase (Decr)
@@ -354,6 +379,9 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
                     FuncCase (Divs)
                     FuncCase (Lea)
                     FuncCase (Sqrt)
+                    default:
+                        compiler->inc  (&instance_->run_line_);
+                        break;
                 }
             }
             else
@@ -375,14 +403,18 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
                 }
                 compiler->mov  (&instance_->run_line_, i);
             }
+            else
+                compiler->inc  (&instance_->run_line_);
 
             //printf ("LINE %d\n", i);
         }
     }
     CATCH_CONS (instance_->expn_, "Virtual processor crashed", ERROR_VIRTUAL_PROC_CRASHED)
-    /*compiler->mov (compiler->r_rsp, compiler->r_rbp);
-    compiler->pop (compiler->r_rbp);*/
+    compiler->mov (compiler->r_rsp, compiler->r_rbp);
+    compiler->pop (compiler->r_rbp);
     compiler->retn ();
+
+    PatchJmp (instance_, compiler);
 }
 
 #include "Functions.h"

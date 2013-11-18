@@ -81,7 +81,7 @@ public:
     {
         if (!Ok ()) return false;
         auto found = memberFuncs_->end ();
-        if ( (found = memberFuncs_->find (func)) != memberFuncs_->end () &&
+        if ((found = memberFuncs_->find (func)) != memberFuncs_->end () &&
             found->second.func_ != -1) return false;
         ( (*memberFuncs_)[func]) = {line, struct_};
         return true;
@@ -90,7 +90,7 @@ public:
     bool ManageStructVar (char* flag, long long* arg, long long struct_ = 0)
     {
         if (!Ok ()) return false;
-        if ( ( (std::string*) (*arg))->find ('.') == ( (std::string*) (*arg))->npos && !struct_)
+        if (( (std::string*) (*arg))->find ('.') == ((std::string*) (*arg))->npos && !struct_)
             return false;
         int nested = struct_ ? 1 : 0;
         long long offset = /*struct_ ? (*mvars_)[struct_][*(std::string*) (*arg)].offset :*/ 0;
@@ -98,7 +98,7 @@ public:
         if (struct_ && !mvars_->empty ())
         {
             auto varsFnd = (*mvars_)[struct_].end ();
-            if ( (varsFnd = (*mvars_)[struct_].find (*(std::string*) (*arg))) != (*mvars_)[struct_].end ())
+            if ((varsFnd = (*mvars_)[struct_].find (*(std::string*) (*arg))) != (*mvars_)[struct_].end ())
             {
                 typeCode = varsFnd->second.typeCode;
             }
@@ -117,12 +117,12 @@ public:
         {
             pointOld = point;
             if (nested) pointOld++;
-            point = ( (std::string*) (*arg))->find ('.', pointOld);
+            point = ((std::string*) (*arg))->find ('.', pointOld);
             std::string token;
-            if (point == ( (std::string*) (*arg))->npos)
+            if (point == ((std::string*) (*arg))->npos)
             {
                 last = true;
-                point = ( (std::string*) (*arg))->size ();
+                point = ((std::string*) (*arg))->size ();
             }
             for (size_t i = pointOld; i < point; i++) token += (*(std::string*) (*arg))[i];
             auto varsFound = vars_->end ();
@@ -137,14 +137,14 @@ public:
             {
                 auto varsFound1 = (*mvars_)[varCode].end ();
                 auto funcFound = memberFuncs_->end ();
-                if ( (varsFound1 = (*mvars_)[varCode].find (token)) != (*mvars_)[varCode].end ())
+                if ((varsFound1 = (*mvars_)[varCode].find (token)) != (*mvars_)[varCode].end ())
                 {
                     offset += varsFound1->second.offset;
                     typeCode = varsFound1->second.typeCode;
                     if (! (*sizes_)[varsFound1->second.typeCode]) error = true;
                     //    NAT_EXCEPTION (expn_, "Internal error, size = 0", ERROR_NULL_SIZE_STRUCT)
                 }
-                else if ( (funcFound = memberFuncs_->find (token)) != memberFuncs_->end ())
+                else if ((funcFound = memberFuncs_->find (token)) != memberFuncs_->end ())
                 {
                     func = funcFound->second.func_;
                     isFunc = true;

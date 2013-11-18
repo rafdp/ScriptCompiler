@@ -27,6 +27,7 @@ public:
     std::map<long long,
              UserFunc_t>    callImportFuncs_;
     int                     stackDumpPoint_;
+    int* func_offsets_;
 
     RunInstanceDataHandler_t (std::string filename,
                               exception_data* expn,
@@ -162,22 +163,22 @@ public:
 
     void* GetVarPt (char flag, long long arg)
     {
-        if ( (flag & char (~ARG_UNREF_MASK)) == ARG_VAR)        return vars_[arg].var;
-        if ( (flag & char (~ARG_UNREF_MASK)) == ARG_VAR_MEMBER) return MemberVarPt (arg);
+        if ((flag & char (~ARG_UNREF_MASK)) == ARG_VAR)        return vars_[arg].var;
+        if ((flag & char (~ARG_UNREF_MASK)) == ARG_VAR_MEMBER) return MemberVarPt (arg);
         return NULL;
     }
 
     long long GetVarType (char flag, long long arg)
     {
-        if ( (flag & char (~ARG_UNREF_MASK)) == ARG_VAR)        return vars_[arg].code;
-        if ( (flag & char (~ARG_UNREF_MASK)) == ARG_VAR_MEMBER) return MemberVarType (arg);
+        if ((flag & char (~ARG_UNREF_MASK)) == ARG_VAR)        return vars_[arg].code;
+        if ((flag & char (~ARG_UNREF_MASK)) == ARG_VAR_MEMBER) return MemberVarType (arg);
         return 0;
     }
 
     size_t GetVarSize (char flag, long long arg)
     {
-        if ( (flag & char (~ARG_UNREF_MASK)) == ARG_VAR)        return typeSizes_[vars_[arg].code];
-        if ( (flag & char (~ARG_UNREF_MASK)) == ARG_VAR_MEMBER) return typeSizes_[MemberVarType (arg)];
+        if ((flag & char (~ARG_UNREF_MASK)) == ARG_VAR)        return typeSizes_[vars_[arg].code];
+        if ((flag & char (~ARG_UNREF_MASK)) == ARG_VAR_MEMBER) return typeSizes_[MemberVarType (arg)];
         return 0;
     }
 
@@ -190,18 +191,18 @@ public:
         return 0;
     }
 
-    inline bool isNum  (char flag) {return ( (flag & char (~ARG_UNREF_MASK)) == ARG_NUM  ? true : false);}
-    inline bool isNull (char flag) {return ( (flag & char (~ARG_UNREF_MASK)) == ARG_NULL ? true : false);}
-    inline bool isVar  (char flag) {return ( (flag & char (~ARG_UNREF_MASK)) == ARG_VAR ||
+    inline bool isNum  (char flag) {return ((flag & char (~ARG_UNREF_MASK)) == ARG_NUM  ? true : false);}
+    inline bool isNull (char flag) {return ((flag & char (~ARG_UNREF_MASK)) == ARG_NULL ? true : false);}
+    inline bool isVar  (char flag) {return ((flag & char (~ARG_UNREF_MASK)) == ARG_VAR ||
                                             (flag & char (~ARG_UNREF_MASK)) == ARG_VAR_MEMBER ? true : false);}
-    inline bool isReg  (char flag) {return ( (flag & char (~ARG_UNREF_MASK)) == ARG_REG  ? true : false);}
+    inline bool isReg  (char flag) {return ((flag & char (~ARG_UNREF_MASK)) == ARG_REG  ? true : false);}
     inline bool isData (char flag) {return isVar (flag) || isReg (flag);}
-    inline bool isStr  (char flag) {return ( (flag & char (~ARG_UNREF_MASK)) == ARG_STR  ? true : false);}
+    inline bool isStr  (char flag) {return ((flag & char (~ARG_UNREF_MASK)) == ARG_STR  ? true : false);}
 
     void* GetPtr (char flag, long long arg)
     {
         void* ret = NULL;
-        if ( (ret = GetVarPt (flag, arg))) return ret;
+        if ((ret = GetVarPt (flag, arg))) return ret;
         if (isReg (flag)) return GetReg (arg) .reg;
         return ret;
     }
@@ -229,13 +230,14 @@ RunInstanceDataHandler_t::RunInstanceDataHandler_t (std::string filename,
     run_line_         (0),
     cmpr_flag_        (FLAG_NOT_SET),
     callImportFuncs_  (),
-    stackDumpPoint_   ()
+    stackDumpPoint_   (),
+    func_offsets_     (new int [funcs_.size()])
 {
     STL_LOOP (i, vars_) i->Free ();
     for (size_t i = 0; i < userFuncs_.size (); i++)
     {
         auto found = importUserFuncs.begin ();
-        if ( (found = importUserFuncs.find (userFuncs_[i])) == importUserFuncs.end ())
+        if ((found = importUserFuncs.find (userFuncs_[i])) == importUserFuncs.end ())
         {
             std::string message ("function \"");
             message += userFuncs_[i];
@@ -293,5 +295,7 @@ bool RunInstanceDataHandler_t::SetVal (char arg_flag, long long arg_arg, long lo
 }
 
 RunInstanceDataHandler_t::~RunInstanceDataHandler_t ()
-{}
+{
+    delete [] func_offsets_;
+}
 

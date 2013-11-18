@@ -140,7 +140,7 @@ _BUILD_CASE_FUNC (Import)
                          ERROR_IMPORT_DLL_INVALID_STR)
     {
         auto foundIt = dllImportMap_.end ();
-        if ( (foundIt = dllImportMap_.find (strings_[arg.arg1])) ==
+        if ((foundIt = dllImportMap_.find (strings_[arg.arg1])) ==
              dllImportMap_.end ())
         {
             DllVector_t vec;
@@ -170,7 +170,7 @@ _BUILD_CASE_FUNC (Var)
                 "var")
     auto tempRes = vars_.find (StrTo32Pair_t (STD_TOK, func_level_));
     if (tempRes != vars_.end () &&
-       ( (func_level_ != 0 && tempRes->second.die == -1) ||
+       ((func_level_ != 0 && tempRes->second.die == -1) ||
          tempRes->second.die > n_line))
         ERROR_EXCEPTION ("Var already exists", ERROR_VAR_ALREADY_EXISTS)
 
@@ -205,7 +205,7 @@ _RETURN
 _BUILD_CASE_FUNC (Name)
     ClassifyArg (&arg, true, n_line);
     auto result = userFuncs_.end ();
-    if ( (result = userFuncs_.find (*(std::string*)cmd.cmd)) != userFuncs_.end ())
+    if ((result = userFuncs_.find (*(std::string*)cmd.cmd)) != userFuncs_.end ())
     {
         cmd.flag = CMD_UFunc;
         cmd.cmd = result->second;

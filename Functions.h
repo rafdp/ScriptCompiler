@@ -208,7 +208,7 @@ FUNCTION_BEGIN (JIT_Call_DWord, 1, 3, ARG_DLL_FUNC _ ARG_REG _ ARG_VAR _ ARG_VAR
     comp.mov (comp.r_rax, int32_t ($ dllResolved_[arg.arg1]));
     comp.call (comp.r_rax);
     if (! $ isVar (arg.arg2)) ($ GetReg (arg.arg2)).MovFromReg (&comp, comp.r_rax);
-    else comp.mov ( (DWORD*)$ GetPtr (arg.flag2, arg.arg2), comp.r_rax);
+    else comp.mov ((DWORD*)$ GetPtr (arg.flag2, arg.arg2), comp.r_rax);
     comp.add (comp.r_rsp, $ RspAdd ());
     comp.retn ();
     //comp.mov (ptr, comp.r_rax);
@@ -224,8 +224,8 @@ FUNCTION_BEGIN (JIT_Call_QWord, 1, 3, ARG_DLL_FUNC _ ARG_REG _ ARG_VAR _ ARG_VAR
         PushStackValueJit (*i, &comp);
     comp.mov (comp.r_rax, int32_t ($ dllResolved_[arg.arg1]));
     comp.call (comp.r_rax);
-    comp.mov ( (DWORD*)&res, comp.r_rax);
-    comp.mov ( (DWORD*)&res + 1, comp.r_rdx);
+    comp.mov ((DWORD*)&res, comp.r_rax);
+    comp.mov ((DWORD*)&res + 1, comp.r_rdx);
     comp.add (comp.r_rsp, $ RspAdd ());
     comp.retn ();
     comp.BuildAndRun ();
@@ -248,7 +248,7 @@ FUNCTION_END
 
 #define SIZE_CASE(type) \
 case sizeof (type): \
-    comp.mov ( (type*) $ GetPtr (arg.flag1, arg.arg1), comp.r_rax); \
+    comp.mov ((type*) $ GetPtr (arg.flag1, arg.arg1), comp.r_rax); \
     break;
 
 #define ARG_SIZE_SWITCH_PTR_LONG(num, offset, preEmission, postEmission) \
@@ -376,7 +376,7 @@ else
         comp.mov (comp.r_rdx, (long*) $ GetPtr (arg.flag1, arg.arg1) + 1);
     else
         comp.mov (comp.r_rdx, 0);
-    comp.div ( (long*) $ GetPtr (arg.flag2, arg.arg2));
+    comp.div ((long*) $ GetPtr (arg.flag2, arg.arg2));
     if ($ isReg (arg.flag1)) $ GetReg (arg.arg1) . MovFromReg (&comp, comp.r_rax);
     else
     {
@@ -385,7 +385,7 @@ else
             SIZE_CASE (char)
             SIZE_CASE (short)
             case sizeof (long long):
-            comp.mov ( (long*) $ GetPtr (arg.flag1, arg.arg1) + 1, 0);
+            comp.mov ((long*) $ GetPtr (arg.flag1, arg.arg1) + 1, 0);
             SIZE_CASE (long)
         }
     }
