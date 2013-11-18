@@ -282,6 +282,8 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
 
 
     instance_ = new RunInstanceDataHandler_t (filename, expn_, regFuncs_);
+
+    bool need_realignment = false;
     //short int3 = 0xC3CC;
     //((void(*)())&int3)();
     //Print();
@@ -296,8 +298,11 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
         for (size_t i = 0; i < instance_->funcs_.size (); i ++)
         {
             instance_->func_offsets_[i] = compiler->Size () + 1;
+
             if (instance_->funcs_[i].flag == CMD_Func)
             {
+                if (need_realignment)
+                    compiler->mov (&instance_->run_line_, i);
                 switch (instance_->funcs_[i].cmd)
                 {
                     FuncCase (RebuildVar)
@@ -404,7 +409,8 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
                 compiler->mov  (&instance_->run_line_, i);
             }
             else
-                compiler->inc  (&instance_->run_line_);
+                need_realignment = true;
+                //compiler->inc  (&instance_->run_line_);
 
             //printf ("LINE %d\n", i);
         }
