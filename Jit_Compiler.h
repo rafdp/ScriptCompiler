@@ -71,7 +71,7 @@ class JitCompiler_t
     void mov (T1* ptr, T2 imm)
     {
         CHECK_64 (T1)
-        man.EmitMov (ptr, (int32_t)imm);
+        man.EmitMov ((int32_t*)ptr, (int32_t)imm);
     }
 
     template <typename T>
@@ -257,7 +257,7 @@ class JitCompiler_t
 
     void int3 ()
     {
-        man.EmitInt ();
+        man.EmitInt3 ();
     }
 
     template <typename T>

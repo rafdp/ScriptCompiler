@@ -316,57 +316,77 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
                     FuncCase (Cmpr)
                     case CMD_Jmp:
                     {
-                        compiler->mov (&instance_->run_line_, instance_->args_[i].arg1);
+                        compiler->mov  (compiler->r_rax, (int32_t)(void*)&VirtualProcessor_t::Jmp);
+                        compiler->mov  (compiler->r_rcx, (int32_t)(void*)this);
+                        compiler->call (compiler->r_rax);
                         compiler->jmp (0);
                         patch_jmp_.push_back (std::pair <int, int> (compiler->Size() - 4, instance_->args_[i].arg1));
                         break;
                     }
                     case CMD_Je:
                     {
-                        compiler->mov (&instance_->run_line_, instance_->args_[i].arg1);
+                        compiler->mov  (compiler->r_rax, (int32_t)(void*)&VirtualProcessor_t::Je);
+                        compiler->mov  (compiler->r_rcx, (int32_t)(void*)this);
+                        compiler->call (compiler->r_rax);
                         compiler->cmp (&instance_->cmpr_flag_, 0);
                         compiler->je (0);
                         patch_jmp_.push_back (std::pair <int, int> (compiler->Size() - 4, instance_->args_[i].arg1));
+                        compiler->inc  (&instance_->run_line_);
                         break;
                     }
                     case CMD_Jne:
                     {
-                        compiler->mov (&instance_->run_line_, instance_->args_[i].arg1);
+                        compiler->mov  (compiler->r_rax, (int32_t)(void*)&VirtualProcessor_t::Jne);
+                        compiler->mov  (compiler->r_rcx, (int32_t)(void*)this);
+                        compiler->call (compiler->r_rax);
                         compiler->cmp (&instance_->cmpr_flag_, 0);
                         compiler->jne (0);
                         patch_jmp_.push_back (std::pair <int, int> (compiler->Size() - 4, instance_->args_[i].arg1));
+                        compiler->inc  (&instance_->run_line_);
                         break;
                     }
                     case CMD_Ja:
                     {
-                        compiler->mov (&instance_->run_line_, instance_->args_[i].arg1);
+                        compiler->mov  (compiler->r_rax, (int32_t)(void*)&VirtualProcessor_t::Ja);
+                        compiler->mov  (compiler->r_rcx, (int32_t)(void*)this);
+                        compiler->call (compiler->r_rax);
                         compiler->cmp (&instance_->cmpr_flag_, 0);
                         compiler->jg (0);
                         patch_jmp_.push_back (std::pair <int, int> (compiler->Size() - 4, instance_->args_[i].arg1));
+                        compiler->inc  (&instance_->run_line_);
                         break;
                     }
                     case CMD_Jae:
                     {
-                        compiler->mov (&instance_->run_line_, instance_->args_[i].arg1);
+                        compiler->mov  (compiler->r_rax, (int32_t)(void*)&VirtualProcessor_t::Jae);
+                        compiler->mov  (compiler->r_rcx, (int32_t)(void*)this);
+                        compiler->call (compiler->r_rax);
                         compiler->cmp (&instance_->cmpr_flag_, 0);
                         compiler->jge (0);
                         patch_jmp_.push_back (std::pair <int, int> (compiler->Size() - 4, instance_->args_[i].arg1));
+                        compiler->inc  (&instance_->run_line_);
                         break;
                     }
                     case CMD_Jb:
                     {
-                        compiler->mov (&instance_->run_line_, instance_->args_[i].arg1);
+                        compiler->mov  (compiler->r_rax, (int32_t)(void*)&VirtualProcessor_t::Jb);
+                        compiler->mov  (compiler->r_rcx, (int32_t)(void*)this);
+                        compiler->call (compiler->r_rax);
                         compiler->cmp (&instance_->cmpr_flag_, 0);
                         compiler->jl (0);
                         patch_jmp_.push_back (std::pair <int, int> (compiler->Size() - 4, instance_->args_[i].arg1));
+                        compiler->inc  (&instance_->run_line_);
                         break;
                     }
                     case CMD_Jbe:
                     {
-                        compiler->mov (&instance_->run_line_, instance_->args_[i].arg1);
+                        compiler->mov  (compiler->r_rax, (int32_t)(void*)&VirtualProcessor_t::Jbe);
+                        compiler->mov  (compiler->r_rcx, (int32_t)(void*)this);
+                        compiler->call (compiler->r_rax);
                         compiler->cmp (&instance_->cmpr_flag_, 0);
                         compiler->jle (0);
                         patch_jmp_.push_back (std::pair <int, int> (compiler->Size() - 4, instance_->args_[i].arg1));
+                        compiler->inc  (&instance_->run_line_);
                         break;
                     }
                     case CMD_Ret:

@@ -108,6 +108,8 @@ FUNCTION_BEGIN (Cmpr, 4, 4, ARG_NUM _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_N
     long long val1 = $ GetVal (arg.flag1, arg.arg1),
               val2 = $ GetVal (arg.flag2, arg.arg2);
 
+    ErrorPrintfBox ("CMPR val1 = %x, val2 = %x line %d", $ GetPtr (arg.flag1, arg.arg1), $ GetPtr (arg.flag2, arg.arg2), $ run_line_);
+
     if (val1 > val2)
         $ cmpr_flag_ = FLAG_HIGH;
     if (val1 < val2)
