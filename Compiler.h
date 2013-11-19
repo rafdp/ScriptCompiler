@@ -259,7 +259,7 @@ void VirtualProcessor_t::PatchJmp (RunInstanceDataHandler_t* instance, JitCompil
 
     STL_LOOP (it, patch_jmp_)
     {
-        ErrorPrintfBox ("%d %d", it->first, (int)instance->func_offsets_[it->second]);
+        //ErrorPrintfBox ("%d %d", it->first, (int)instance->func_offsets_[it->second]);
         int offset = 0 - (it->first - (int)instance->func_offsets_[it->second]) - 5;
         for (size_t i = 0; i < sizeof (offset); i++)
         {
@@ -302,7 +302,10 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
             if (instance_->funcs_[i].flag == CMD_Func)
             {
                 if (need_realignment)
+                {
                     compiler->mov (&instance_->run_line_, i);
+                    need_realignment = false;
+                }
                 switch (instance_->funcs_[i].cmd)
                 {
                     FuncCase (RebuildVar)
@@ -314,60 +317,76 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
                     case CMD_Jmp:
                     {
                         compiler->mov (&instance_->run_line_, instance_->args_[i].arg1);
-                        patch_jmp_.push_back (std::pair <int, int> (compiler->Size() + 1, instance_->args_[i].arg1));
                         compiler->jmp (0);
+                        patch_jmp_.push_back (std::pair <int, int> (compiler->Size() - 4, instance_->args_[i].arg1));
                         break;
                     }
                     case CMD_Je:
                     {
                         compiler->mov (&instance_->run_line_, instance_->args_[i].arg1);
                         compiler->cmp (&instance_->cmpr_flag_, 0);
-                        patch_jmp_.push_back (std::pair <int, int> (compiler->Size() + 1, instance_->args_[i].arg1));
                         compiler->je (0);
+                        patch_jmp_.push_back (std::pair <int, int> (compiler->Size() - 4, instance_->args_[i].arg1));
                         break;
                     }
                     case CMD_Jne:
                     {
                         compiler->mov (&instance_->run_line_, instance_->args_[i].arg1);
                         compiler->cmp (&instance_->cmpr_flag_, 0);
-                        patch_jmp_.push_back (std::pair <int, int> (compiler->Size() + 1, instance_->args_[i].arg1));
                         compiler->jne (0);
+                        patch_jmp_.push_back (std::pair <int, int> (compiler->Size() - 4, instance_->args_[i].arg1));
                         break;
                     }
                     case CMD_Ja:
                     {
                         compiler->mov (&instance_->run_line_, instance_->args_[i].arg1);
                         compiler->cmp (&instance_->cmpr_flag_, 0);
-                        patch_jmp_.push_back (std::pair <int, int> (compiler->Size() + 1, instance_->args_[i].arg1));
                         compiler->jg (0);
+                        patch_jmp_.push_back (std::pair <int, int> (compiler->Size() - 4, instance_->args_[i].arg1));
                         break;
                     }
                     case CMD_Jae:
                     {
                         compiler->mov (&instance_->run_line_, instance_->args_[i].arg1);
                         compiler->cmp (&instance_->cmpr_flag_, 0);
-                        patch_jmp_.push_back (std::pair <int, int> (compiler->Size() + 1, instance_->args_[i].arg1));
                         compiler->jge (0);
+                        patch_jmp_.push_back (std::pair <int, int> (compiler->Size() - 4, instance_->args_[i].arg1));
                         break;
                     }
                     case CMD_Jb:
                     {
                         compiler->mov (&instance_->run_line_, instance_->args_[i].arg1);
                         compiler->cmp (&instance_->cmpr_flag_, 0);
-                        patch_jmp_.push_back (std::pair <int, int> (compiler->Size() + 1, instance_->args_[i].arg1));
                         compiler->jl (0);
+                        patch_jmp_.push_back (std::pair <int, int> (compiler->Size() - 4, instance_->args_[i].arg1));
                         break;
                     }
                     case CMD_Jbe:
                     {
                         compiler->mov (&instance_->run_line_, instance_->args_[i].arg1);
                         compiler->cmp (&instance_->cmpr_flag_, 0);
-                        patch_jmp_.push_back (std::pair <int, int> (compiler->Size() + 1, instance_->args_[i].arg1));
                         compiler->jle (0);
+                        patch_jmp_.push_back (std::pair <int, int> (compiler->Size() - 4, instance_->args_[i].arg1));
                         break;
                     }
-                    FuncCase (Ret)
-                    FuncCase (Call)
+                    case CMD_Ret:
+                    {
+                        compiler->mov   (compiler->r_rax, (int32_t)(void*)&VirtualProcessor_t::Ret);
+                        compiler->mov   (compiler->r_rcx, (int32_t)(void*)this);
+                        compiler->call  (compiler->r_rax);
+                        compiler->retn ();
+                        break;
+                    }
+                    case CMD_Call:
+                    {
+                        compiler->mov   (compiler->r_rax, (int32_t)(void*)&VirtualProcessor_t::Call);
+                        compiler->mov   (compiler->r_rcx, (int32_t)(void*)this);
+                        compiler->call  (compiler->r_rax);
+                        compiler->inc  (&instance_->run_line_);
+                        compiler->callr (0);
+                        patch_jmp_.push_back (std::pair <int, int> (compiler->Size() - 4, instance_->args_[i].arg1 + 1));
+                        break;
+                    }
                     FuncCase (Decr)
                     FuncCase (InitStackDumpPoint)
                     FuncCase (JIT_Printf)
@@ -401,12 +420,15 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
             else
             if (instance_->funcs_[i].flag == CMD_CFunc)
             {
-                while (i < instance_->funcs_.size ())
+                size_t j = i;
+                while (j < instance_->funcs_.size ())
                 {
-                    if (instance_->funcs_[i].cmd == CMD_Ret) break;
-                    i++;
+                    if (instance_->funcs_[j].cmd == CMD_Ret) break;
+                    j++;
                 }
-                compiler->mov  (&instance_->run_line_, i);
+                compiler->mov  (&instance_->run_line_, j + 1);
+                patch_jmp_.push_back (std::pair <int, int> (compiler->Size() + 1, j + 1));
+                compiler->jmp (0);
             }
             else
                 need_realignment = true;

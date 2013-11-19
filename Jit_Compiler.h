@@ -64,14 +64,14 @@ class JitCompiler_t
     void mov (CPURegisterInfo_t regDest, T imm)
     {
         CHECK_64 (T)
-        man.EmitMov (regDest, imm);
+        man.EmitMov (regDest, (int32_t)imm);
     }
 
     template <typename T1, typename T2>
     void mov (T1* ptr, T2 imm)
     {
         CHECK_64 (T1)
-        man.EmitMov (ptr, imm);
+        man.EmitMov (ptr, (int32_t)imm);
     }
 
     template <typename T>
@@ -123,6 +123,11 @@ class JitCompiler_t
     void call (T* ptr)
     {
         man.EmitCall (ptr);
+    }
+
+    void callr (int32_t rel)
+    {
+        man.EmitCallr (rel);
     }
 
     template <typename T>
@@ -276,6 +281,13 @@ class JitCompiler_t
     void cmp (CPURegisterInfo_t regDest, T* pointer)
     {
         man.EmitCmp (regDest, pointer);
+    }
+
+    template <typename T1, typename T2>
+    void cmp (T1* ptr, T2 imm)
+    {
+        CHECK_64 (T1)
+        man.EmitCmp (ptr, (int32_t)imm);
     }
 
     void jmp (int32_t rel)

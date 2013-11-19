@@ -70,7 +70,7 @@ FUNCTION_BEGIN (Lea, 2, 4, ARG_VAR _ ARG_VAR_MEMBER _ ARG_VAR _ ARG_VAR_MEMBER _
 FUNCTION_END
 
 FUNCTION_BEGIN (Print, 1, 5, ARG_NUM _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_NUM _ ARG_STR)
-    ErrorPrintfBox ("Called Print\n");
+    //ErrorPrintfBox ("Called Print\n");
     const char error0[] = "Null pointer, cannot print str";
     const char error1[] = "Invalid cmd";
 

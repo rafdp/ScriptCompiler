@@ -1,5 +1,7 @@
-plabel end
-jmp end
+plabel test
+cmpr 1, 0
+ja test
+
 print PRINT_STRING, "Hello World\n"
-end:
+test:
 print PRINT_STRING, "!Hello World\n"

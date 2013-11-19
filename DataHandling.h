@@ -23,7 +23,7 @@ public:
     stack<CallInfo_t>       callStack_;
     char                    registers_[REGISTERS_SIZE];
     size_t                  run_line_;
-    char                    cmpr_flag_;
+    int                     cmpr_flag_;
     std::map<long long,
              UserFunc_t>    callImportFuncs_;
     int                     stackDumpPoint_;
@@ -153,10 +153,8 @@ public:
         int arg_nested_call = 0;
         if (int (arg >> 32) == 0) arg_nested_call = callStack_[callStack_.size () - 1].var;
         else arg_nested_call = int (arg >> 32);
-        //ErrorPrintfBox ("CC called %d\n", arg_nested_call);
         callStack_.push ({ (int)run_line_, arg_nested_call});
         run_line_ = int (arg);
-        //ErrorPrintfBox ("CC ok\n");
     }
 
     ~RunInstanceDataHandler_t ();

@@ -48,10 +48,10 @@ class MCode_t
     {
         unsigned char* func = new unsigned char [buffer_.size () + 1];
         memcpy (func, buffer_.data (), buffer_.size ());
-        ErrorPrintfBox ("%X", func);
+        //ErrorPrintfBox ("%X", func);
         //VirtualProtect (func, buffer_.size (), PAGE_EXECUTE_READWRITE, nullptr);
-        for (size_t i = 0; i < buffer_.size (); i++) printf ("%02X ", buffer_[i]);
-        printf ("\n");
+        //for (size_t i = 0; i < buffer_.size (); i++) printf ("%02X ", buffer_[i]);
+        //printf ("\n");
         ((void (*) ())func) ();
         delete [] func;
         func = nullptr;

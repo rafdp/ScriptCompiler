@@ -4,7 +4,7 @@
 struct CPURegisterInfo_t
 {
     int8_t reg;
-    CPURegisterInfo_t (int8_t reg_) :
+    explicit CPURegisterInfo_t (int8_t reg_) :
         reg (reg_)
     {}
 };
@@ -66,28 +66,52 @@ class CmdEmitter_t
     }
 
     void EmitInstruction (Instruction_t instr,
-                         CPURegisterInfo_t regDest,
-                         CPURegisterInfo_t regSrc)
+                          CPURegisterInfo_t regDest,
+                          CPURegisterInfo_t regSrc)
     {
         EmitOpcode (&instr);
         EmitData (BuildModRM (MODE_REGISTER, regDest.reg, regSrc.reg));
     }
 
     void EmitInstruction (Instruction_t instr,
-                         CPURegisterInfo_t regDest,
-                         uint8_t rmData)
+                          CPURegisterInfo_t regDest,
+                          uint8_t rmData)
     {
         EmitOpcode (&instr);
         EmitData (BuildModRM (MODE_REGISTER, regDest.reg, rmData));
     }
 
     void EmitInstruction (Instruction_t instr,
-                         uint8_t RMMode,
-                         CPURegisterInfo_t reg1,
-                         CPURegisterInfo_t reg2)
+                          uint8_t RMMode,
+                          uint8_t prm1,
+                          uint8_t prm2)
     {
         EmitOpcode (&instr);
-        EmitData (BuildModRM (RMMode, reg1.reg, reg2.reg));
+        EmitData (BuildModRM (RMMode, prm1, prm2));
+    }
+
+    void EmitInstruction (Instruction_t instr,
+                          uint8_t RMMode,
+                          CPURegisterInfo_t reg1,
+                          CPURegisterInfo_t reg2)
+    {
+        EmitInstruction (instr, RMMode, reg1.reg, reg2.reg);
+    }
+
+    void EmitInstruction (Instruction_t instr,
+                          uint8_t RMMode,
+                          uint8_t prm,
+                          CPURegisterInfo_t reg)
+    {
+        EmitInstruction (instr, RMMode, prm, reg.reg);
+    }
+
+    void EmitInstruction (Instruction_t instr,
+                          uint8_t RMMode,
+                          CPURegisterInfo_t reg,
+                          uint8_t prm)
+    {
+        EmitInstruction (instr, RMMode, reg.reg, prm);
     }
 
     template <typename T>
@@ -122,6 +146,7 @@ class InstructionManager_t
                   inPush_RM,
                   inPop_RM,
                   inCall_RM,
+                  inCall_Rel,
                   inRetn,
                   inAdd_RM_Imm,
                   inAdd_R_RM,
@@ -161,6 +186,7 @@ public:
         inPush_RM        ({0xFF}),
         inPop_RM         ({0x8F}),
         inCall_RM        ({0xFF}),
+        inCall_Rel       ({0xE8}),
         inRetn           ({0xC3}),
         inAdd_RM_Imm     ({0x81}),
         inAdd_R_RM       ({0x03}),
@@ -232,7 +258,7 @@ public:
     template <typename T>
     void EmitPush (T* mem)
     {
-        emitter_.EmitInstruction (inPush_RM, MODE_ADDRESS, 6);
+        emitter_.EmitInstruction (inMov_R_RM, MODE_ADDRESS, OFF, 6);
         emitter_.EmitData (mem);
     }
 
@@ -254,6 +280,11 @@ public:
     void EmitCall (CPURegisterInfo_t reg)
     {
         emitter_.EmitInstruction (inCall_RM, reg, 2);
+    }
+
+    void EmitCallr (int32_t rel)
+    {
+        emitter_.EmitInstruction (inCall_Rel, rel);
     }
 
     template <typename T>

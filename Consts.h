@@ -119,10 +119,10 @@ enum ERROR_MODES
 
 enum FLAG_MODES
 {
-    FLAG_NOT_SET  = 0,
-    FLAG_EQUAL, //! 1
-    FLAG_HIGH,  //! 2
-    FLAG_LOW    //! 3
+    FLAG_NOT_SET  = 2,
+    FLAG_EQUAL = 0,
+    FLAG_HIGH = 1,
+    FLAG_LOW = -1
 };
 
 enum FUNC_RETURN_CODES
