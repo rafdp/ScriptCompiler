@@ -9,5 +9,6 @@ mov dat.var1, 127
 mov dat.var2, 13
 add dat.var1, dat.var2
 add dat.var1, 100500
+sub dat.var1, 1000
 
 print PRINT_NUMBER, dat.var1

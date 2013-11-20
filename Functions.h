@@ -406,7 +406,7 @@ FUNCTION_BEGIN (Sqrt, 3, 0, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG)
     long long val = $ GetVal (arg.flag1, arg.arg1);
     if (val < 0)
         currentReturn_ = ErrorReturn_t (RET_ERROR_CONTINUE, "Cannot calculate square root of a negative value");
-    $ SetVal (arg.flag1, arg.arg1, (long long) (sqrt (val)));
+    $ SetVal (arg.flag1, arg.arg1, round (sqrt (val)));
 FUNCTION_END
 
 
@@ -464,7 +464,107 @@ DEFAULT_BODY (Pop)
 FUNCTION_END
 
 FUNCTION_BEGIN (Mov, 3, 5, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_NUM _ ARG_STR)
-DEFAULT_BODY (Mov)
+//DEFAULT_BODY (Mov)
+
+size_t size1 = $ GetSize (arg.flag1, arg.arg1);
+size_t size2 = $ GetSize (arg.flag2, arg.arg2);
+
+if ($ isNum (arg.flag2) || $ isStr (arg.flag2))
+{
+    long long argN = $ isNum (arg.flag2) ? arg.arg2 : (long long) $ strings_[arg.arg2];
+
+    comp->push (arg.arg1);
+    comp->push (arg.flag1);
+    comp->mov (comp->r_rax, (int32_t)(void*)&RunInstanceDataHandler_t::GetPtr);
+    comp->mov (comp->r_rcx, (int32_t)(void*)instance_);
+    comp->call (comp->r_rax);
+
+    switch (size1)
+    {
+        case sizeof (int8_t):
+            comp->mov<int8_t> (&comp->r_rax, (int8_t)argN);
+            break;
+        case sizeof (int16_t):
+            comp->mov<int16_t> (&comp->r_rax, (int16_t)argN);
+            break;
+        case sizeof (int32_t):
+            comp->mov<int32_t> (&comp->r_rax, (int32_t)argN);
+            break;
+        case sizeof (int64_t):
+            comp->mov<int32_t> (comp->r_rbx, comp->r_rax);
+            comp->add<int32_t> (comp->r_rbx, sizeof (int32_t));
+            comp->mov<int32_t> (&comp->r_rax, (int32_t)argN);
+            comp->mov<int32_t> (&comp->r_rbx, (int32_t)(argN >> (sizeof (int32_t)*8)));
+            break;
+    }
+}
+else
+{
+    comp->push (arg.arg1);
+    comp->push (arg.flag1);
+    comp->mov (comp->r_rax, (int32_t)(void*)&RunInstanceDataHandler_t::GetPtr);
+    comp->mov (comp->r_rcx, (int32_t)(void*)instance_);
+    comp->call (comp->r_rax);
+    comp->push<int32_t> (comp->r_rax);
+
+    comp->push (arg.arg2);
+    comp->push (arg.flag2);
+    comp->mov (comp->r_rax, (int32_t)(void*)&RunInstanceDataHandler_t::GetPtr);
+    comp->mov (comp->r_rcx, (int32_t)(void*)instance_);
+    comp->call (comp->r_rax);
+
+    comp->pop<int32_t> (comp->r_rcx);
+
+    if (size1 > sizeof (DWORD) && size2 > sizeof (DWORD))
+    {
+        comp->mov<int32_t> (comp->r_rdx, comp->r_rcx);
+        comp->add<int32_t> (comp->r_rdx, sizeof (int32_t));
+
+        comp->mov<int32_t> (comp->r_rbx, comp->r_rax);
+        comp->add<int32_t> (comp->r_rbx, sizeof (int32_t));
+
+        comp->mov<int32_t> (comp->r_rbx, &comp->r_rbx);
+        comp->mov<int32_t> (&comp->r_rdx, comp->r_rbx);
+    }
+
+    switch (size1)
+    {
+        case sizeof (int8_t):
+            comp->mov<int8_t> (&comp->r_rcx, 0);
+            break;
+        case sizeof (int16_t):
+            comp->mov<int16_t> (&comp->r_rcx, 0);
+            break;
+        case sizeof (int32_t):
+            comp->mov<int32_t> (&comp->r_rcx, 0);
+            break;
+        case sizeof (int64_t):
+            comp->mov<int32_t> (&comp->r_rcx, 0);
+            comp->mov<int32_t> (comp->r_rbx, comp->r_rcx);
+            comp->add<int32_t> (comp->r_rbx, sizeof (int32_t));
+            comp->mov<int32_t> (&comp->r_rbx, 0);
+            break;
+
+    }
+
+    switch (MIN (size1, size2))
+    {
+        case sizeof (int8_t):
+            comp->mov<int8_t> (comp->r_rax, &comp->r_rax);
+            comp->mov<int8_t> (&comp->r_rcx, comp->r_rax);
+            break;
+        case sizeof (int16_t):
+            comp->mov<int16_t> (comp->r_rax, &comp->r_rax);
+            comp->mov<int16_t> (&comp->r_rcx, comp->r_rax);
+            break;
+        case sizeof (int32_t):
+        case sizeof (int64_t):
+            comp->mov<int32_t> (comp->r_rax, &comp->r_rax);
+            comp->mov<int32_t> (&comp->r_rcx, comp->r_rax);
+            break;
+    }
+}
+comp->inc  (&instance_->run_line_);
 FUNCTION_END
 
 FUNCTION_BEGIN (Print, 1, 5, ARG_NUM _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_NUM _ ARG_STR)
@@ -585,9 +685,6 @@ FUNCTION_END
 
 FUNCTION_BEGIN (Add, 3, 4, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_NUM)
 
-static void* var1pt = nullptr;
-static void* var2pt = nullptr;
-
 size_t size1 = $ GetSize (arg.flag1, arg.arg1);
 size_t size2 = $ GetSize (arg.flag2, arg.arg2);
 
@@ -598,6 +695,7 @@ if ($ isNum (arg.flag2))
     comp->mov (comp->r_rax, (int32_t)(void*)&RunInstanceDataHandler_t::GetPtr);
     comp->mov (comp->r_rcx, (int32_t)(void*)instance_);
     comp->call (comp->r_rax);
+
     switch (size1)
     {
         case sizeof (int8_t):
@@ -607,8 +705,13 @@ if ($ isNum (arg.flag2))
             comp->add<int16_t> (&comp->r_rax, (int16_t)arg.arg2);
             break;
         case sizeof (int32_t):
-        case sizeof (int64_t):
             comp->add<int32_t> (&comp->r_rax, (int32_t)arg.arg2);
+            break;
+        case sizeof (int64_t):
+            comp->mov<int32_t> (comp->r_rbx, comp->r_rax);
+            comp->add<int32_t> (comp->r_rbx, sizeof (int32_t));
+            comp->add<int32_t> (&comp->r_rax, (int32_t)arg.arg2);
+            comp->adc<int32_t> (&comp->r_rbx, (int32_t)(arg.arg2 >> (sizeof (int32_t)*8)));
             break;
     }
 }
@@ -619,36 +722,23 @@ else
     comp->mov (comp->r_rax, (int32_t)(void*)&RunInstanceDataHandler_t::GetPtr);
     comp->mov (comp->r_rcx, (int32_t)(void*)instance_);
     comp->call (comp->r_rax);
-    comp->mov (&var1pt, comp->r_rax);
+    comp->push<int32_t> (comp->r_rax);
 
     comp->push (arg.arg2);
     comp->push (arg.flag2);
     comp->mov (comp->r_rax, (int32_t)(void*)&RunInstanceDataHandler_t::GetPtr);
     comp->mov (comp->r_rcx, (int32_t)(void*)instance_);
     comp->call (comp->r_rax);
-    comp->mov (&var2pt, comp->r_rax);
 
-    bool first64 = size1 > sizeof (DWORD);
-    bool second64 = size2 > sizeof (DWORD);
+    comp->pop<int32_t> (comp->r_rcx);
 
-    comp->mov<int32_t> (comp->r_rcx, (int32_t)(&var1pt));
-    comp->mov<int32_t> (comp->r_rcx, &comp->r_rcx);
-
-    comp->mov<int32_t> (comp->r_rax, (int32_t)(&var2pt));
-    comp->mov<int32_t> (comp->r_rax, &comp->r_rax);
-
-    if (second64 && first64)
+    if (size1 > sizeof (DWORD) && size2 > sizeof (DWORD))
     {
-        comp->mov<int32_t> (comp->r_rdx, (int32_t)(&var1pt));
-        comp->mov<int32_t> (comp->r_rdx, &comp->r_rdx);
+        comp->mov<int32_t> (comp->r_rdx, comp->r_rcx);
         comp->add<int32_t> (comp->r_rdx, sizeof (int32_t));
 
-        comp->mov<int32_t> (comp->r_rbx, (int32_t)(&var2pt));
-        comp->mov<int32_t> (comp->r_rbx, &comp->r_rbx);
+        comp->mov<int32_t> (comp->r_rbx, comp->r_rax);
         comp->add<int32_t> (comp->r_rbx, sizeof (int32_t));
-
-        comp->mov<int32_t> (comp->r_rbx, &comp->r_rbx);
-        comp->adc<int32_t> (&comp->r_rdx, comp->r_rbx);
     }
 
     switch (MIN (size1, size2))
@@ -667,12 +757,101 @@ else
             comp->add<int32_t> (&comp->r_rcx, comp->r_rax);
             break;
     }
+
+    if (size1 > sizeof (DWORD) && size2 > sizeof (DWORD))
+    {
+        comp->mov<int32_t> (comp->r_rbx, &comp->r_rbx);
+        comp->adc<int32_t> (&comp->r_rdx, comp->r_rbx);
+    }
+
 }
+comp->inc  (&instance_->run_line_);
 
 FUNCTION_END
 
 FUNCTION_BEGIN (Sub, 3, 4, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_NUM)
-DEFAULT_BODY (Sub)
+
+size_t size1 = $ GetSize (arg.flag1, arg.arg1);
+size_t size2 = $ GetSize (arg.flag2, arg.arg2);
+
+if ($ isNum (arg.flag2))
+{
+    comp->push (arg.arg1);
+    comp->push (arg.flag1);
+    comp->mov (comp->r_rax, (int32_t)(void*)&RunInstanceDataHandler_t::GetPtr);
+    comp->mov (comp->r_rcx, (int32_t)(void*)instance_);
+    comp->call (comp->r_rax);
+
+    switch (size1)
+    {
+        case sizeof (int8_t):
+            comp->sub<int8_t> (&comp->r_rax, (int8_t)arg.arg2);
+            break;
+        case sizeof (int16_t):
+            comp->sub<int16_t> (&comp->r_rax, (int16_t)arg.arg2);
+            break;
+        case sizeof (int32_t):
+            comp->sub<int32_t> (&comp->r_rax, (int32_t)arg.arg2);
+            break;
+        case sizeof (int64_t):
+            comp->mov<int32_t> (comp->r_rbx, comp->r_rax);
+            comp->add<int32_t> (comp->r_rbx, sizeof (int32_t));
+            comp->sub<int32_t> (&comp->r_rax, (int32_t)arg.arg2);
+            comp->sbb<int32_t> (&comp->r_rbx, (int32_t)(arg.arg2 >> (sizeof (int32_t)*8)));
+        break;
+    }
+}
+else
+{
+    comp->push (arg.arg1);
+    comp->push (arg.flag1);
+    comp->mov (comp->r_rax, (int32_t)(void*)&RunInstanceDataHandler_t::GetPtr);
+    comp->mov (comp->r_rcx, (int32_t)(void*)instance_);
+    comp->call (comp->r_rax);
+    comp->push<int32_t> (comp->r_rax);
+
+    comp->push (arg.arg2);
+    comp->push (arg.flag2);
+    comp->mov (comp->r_rax, (int32_t)(void*)&RunInstanceDataHandler_t::GetPtr);
+    comp->mov (comp->r_rcx, (int32_t)(void*)instance_);
+    comp->call (comp->r_rax);
+
+    comp->pop<int32_t> (comp->r_rcx);
+
+    if (size1 > sizeof (DWORD) && size2 > sizeof (DWORD))
+    {
+        comp->mov<int32_t> (comp->r_rdx, comp->r_rcx);
+        comp->add<int32_t> (comp->r_rdx, sizeof (int32_t));
+
+        comp->mov<int32_t> (comp->r_rbx, comp->r_rax);
+        comp->add<int32_t> (comp->r_rbx, sizeof (int32_t));
+    }
+
+    switch (MIN (size1, size2))
+    {
+        case sizeof (int8_t):
+            comp->mov<int8_t> (comp->r_rax, &comp->r_rax);
+            comp->sub<int8_t> (&comp->r_rcx, comp->r_rax);
+            break;
+        case sizeof (int16_t):
+            comp->mov<int16_t> (comp->r_rax, &comp->r_rax);
+            comp->sub<int16_t> (&comp->r_rcx, comp->r_rax);
+            break;
+        case sizeof (int32_t):
+        case sizeof (int64_t):
+            comp->mov<int32_t> (comp->r_rax, &comp->r_rax);
+            comp->sub<int32_t> (&comp->r_rcx, comp->r_rax);
+            break;
+    }
+
+    if (size1 > sizeof (DWORD) && size2 > sizeof (DWORD))
+    {
+        comp->mov<int32_t> (comp->r_rbx, &comp->r_rbx);
+        comp->sbb<int32_t> (&comp->r_rdx, comp->r_rbx);
+    }
+}
+comp->inc  (&instance_->run_line_);
+
 FUNCTION_END
 
 FUNCTION_BEGIN (Mul, 3, 4, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_NUM)

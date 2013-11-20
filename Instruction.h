@@ -327,6 +327,14 @@ public:
     }
 
     template <typename T>
+    void EmitMov (CPURegisterInfo_t* regDest, T imm)
+    {
+        CHECK_SIZE_16 (T)
+        emitter_.EmitInstruction (SIZED_CMD (inMov_RM_Imm), MODE_ADDRESS, *regDest, 0);
+        emitter_.EmitData (imm);
+    }
+
+    template <typename T>
     void EmitMov (T* pointer, CPURegisterInfo_t regSrc)
     {
         CHECK_SIZE_16 (T)
@@ -470,7 +478,7 @@ public:
     void EmitAdc (CPURegisterInfo_t* regDest, T data)
     {
         CHECK_SIZE_16 (T)
-        emitter_.EmitInstruction (SIZED_CMD (inAdc_RM_Imm), MODE_ADDRESS, *regDest, 0);
+        emitter_.EmitInstruction (SIZED_CMD (inAdc_RM_Imm), MODE_ADDRESS, *regDest, 2);
         emitter_.EmitData (data);
     }
 
@@ -524,7 +532,7 @@ public:
     void EmitSub (CPURegisterInfo_t* regDest, T data)
     {
         CHECK_SIZE_16 (T)
-        emitter_.EmitInstruction (SIZED_CMD (inSub_RM_Imm), MODE_ADDRESS, *regDest, 0);
+        emitter_.EmitInstruction (SIZED_CMD (inSub_RM_Imm), MODE_ADDRESS, *regDest, 5);
         emitter_.EmitData (data);
     }
 
@@ -578,7 +586,7 @@ public:
     void EmitSbb (CPURegisterInfo_t* regDest, T data)
     {
         CHECK_SIZE_16 (T)
-        emitter_.EmitInstruction (SIZED_CMD (inSbb_RM_Imm), MODE_ADDRESS, *regDest, 0);
+        emitter_.EmitInstruction (SIZED_CMD (inSbb_RM_Imm), MODE_ADDRESS, *regDest, 3);
         emitter_.EmitData (data);
     }
 

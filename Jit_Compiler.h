@@ -82,6 +82,13 @@ class JitCompiler_t
     }
 
     template <typename T>
+    void mov (CPURegisterInfo_t* regDest, T imm)
+    {
+        CHECK_64 (T)
+        man.EmitMov<T> (regDest, imm);
+    }
+
+    template <typename T>
     void mov (T* ptr, T imm)
     {
         CHECK_64 (T)
