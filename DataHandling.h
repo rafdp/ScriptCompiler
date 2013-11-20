@@ -23,11 +23,11 @@ public:
     stack<CallInfo_t>       callStack_;
     char                    registers_[REGISTERS_SIZE];
     size_t                  run_line_;
-    int                     cmpr_flag_;
+    char                    cmpr_flag_;
     std::map<long long,
              UserFunc_t>    callImportFuncs_;
     int                     stackDumpPoint_;
-    int* func_offsets_;
+    int*                    func_offsets_;
 
     RunInstanceDataHandler_t (std::string filename,
                               exception_data* expn,
@@ -199,9 +199,11 @@ public:
 
     void* GetPtr (char flag, long long arg)
     {
+        //ErrorPrintfBox ("GetPtr\n");
         void* ret = NULL;
-        if ((ret = GetVarPt (flag, arg))) return ret;
-        if (isReg (flag)) return GetReg (arg) .reg;
+        if (isVar (flag) && (ret = GetVarPt (flag, arg))) {/*ErrorPrintfBox ("GetPtr Var\n");*/ return ret;}
+        if (isReg (flag)) {/*ErrorPrintfBox ("GetPtr Reg\n");*/ return GetReg (arg) .reg;}
+        //ErrorPrintfBox ("GetPtr 0\n");
         return ret;
     }
 

@@ -18,8 +18,12 @@
 
 class VirtualProcessor_t
 {
-    void FillJitCompiler (JitCompiler_t* compiler, std::string filename);
-    void PatchJmp (RunInstanceDataHandler_t* instance, JitCompiler_t* compiler);
+    void FillJitCompiler (JitCompiler_t* compiler,
+                          std::string filename,
+                          int error_mode,
+                          std::string log);
+    void PatchJmp (JitCompiler_t* compiler);
+    void JmpPatchRequest (JitCompiler_t* compiler, size_t offset, size_t line);
     RunInstanceDataHandler_t* instance_;
     exception_data* expn_;
     int error_mode_;
@@ -53,9 +57,12 @@ public:
                     int error_mode = MODE_SILENT,
                     std::string log = std::string ());
 
-    void RunScriptJit (std::string filename);
+    void RunScriptJit (std::string filename,
+                       int error_mode = MODE_SILENT,
+                       std::string log = std::string ());
 
-#define FUNC_PRT(name) __attribute__ ((noinline)) void name ();
+#define FUNC_PRT(name) __attribute__ ((noinline)) void name (); \
+                        void Jit_##name (JitCompiler_t* comp, int i);
 
     FUNC_PRT (RebuildVar)
     FUNC_PRT (Push)
@@ -244,23 +251,22 @@ void VirtualProcessor_t::RunScript (std::string filename, int error_mode, std::s
     #undef FuncCase
 }
 
-void VirtualProcessor_t::RunScriptJit (std::string filename)
+void VirtualProcessor_t::RunScriptJit (std::string filename, int error_mode, std::string log)
 {
     JitCompiler_t compiler;
-    FillJitCompiler (&compiler, filename);
+    FillJitCompiler (&compiler, filename, error_mode, log);
     compiler.BuildAndRun ();
 
     delete instance_;
 }
 
-void VirtualProcessor_t::PatchJmp (RunInstanceDataHandler_t* instance, JitCompiler_t* compiler)
+void VirtualProcessor_t::PatchJmp (JitCompiler_t* compiler)
 {
     std::vector<uint8_t>* mcode = compiler->GetData ();
 
     STL_LOOP (it, patch_jmp_)
     {
-        //ErrorPrintfBox ("%d %d", it->first, (int)instance->func_offsets_[it->second]);
-        int offset = 0 - (it->first - (int)instance->func_offsets_[it->second]) - 5;
+        int offset = 0 - (it->first - (int)instance_->func_offsets_[it->second]) - 5;
         for (size_t i = 0; i < sizeof (offset); i++)
         {
             (*mcode)[it->first + i] = (uint8_t (offset >> i * 8));
@@ -268,17 +274,61 @@ void VirtualProcessor_t::PatchJmp (RunInstanceDataHandler_t* instance, JitCompil
     }
 }
 
-void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string filename)
+void VirtualProcessor_t::JmpPatchRequest (JitCompiler_t* compiler, size_t offset, size_t line)
 {
-    #define FuncCase(name) \
-    case CMD_##name:\
-    {\
-        compiler->mov  (compiler->r_rax, (int32_t)(void*)&VirtualProcessor_t::name); \
-        compiler->mov  (compiler->r_rcx, (int32_t)(void*)this);\
-        compiler->call (compiler->r_rax);\
-        compiler->inc  (&instance_->run_line_);\
-        break;\
+    patch_jmp_.push_back (std::pair <int, int> (offset, line));
+}
+
+void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string filename, int error_mode, std::string log)
+{
+    std::map<int, std::string> checkIfError;
+    checkIfError[MODE_LOG] = std::string ("check ") + log;
+    checkIfError[MODE_PRINTF] = "check console or STD_OUTPUT_HANDLE redirection";
+    checkIfError[MODE_MSGBOX] = "check for Win32 message boxes";
+    checkIfError[MODE_SILENT] = "logging disabled";
+
+    #define _PRINTF_TEXT_(funcName) \
+                          "%s occurred in \"%s\" on line %d\nError text:\n\"%s\"\n", \
+                          currentReturn_.retVal == RET_ERROR_FATAL ? "Fatal error" : "Error",\
+                          funcName, \
+                          instance_->run_line_, \
+                          currentReturn_.errorText.c_str ()
+
+    #define CHECK_ERROR(funcName) \
+    if (currentReturn_.retVal != RET_SUCCESS) \
+    { \
+        switch (error_mode_) \
+        { \
+             case MODE_SILENT: \
+                break;\
+             case MODE_PRINTF: \
+                printf (_PRINTF_TEXT_ (funcName)); \
+                break; \
+            case MODE_MSGBOX: \
+                ErrorPrintfBox (GetForegroundWindow (), 0, _PRINTF_TEXT_ (funcName)); \
+                break; \
+            case MODE_LOG: \
+                fprintf (log_, _PRINTF_TEXT_ (funcName)); \
+                break; \
+        }\
+    } \
+    if (currentReturn_.retVal == RET_ERROR_FATAL) \
+    { \
+        static std::string str_error ("Fatal error occurred ("); \
+        str_error += checkIfError[error_mode] + ")"; \
+        NAT_EXCEPTION (instance_->expn_, str_error.c_str (), ERROR_FATAL_RETURN) \
     }
+
+    #define HANDLE_CALL(funcName, expression) \
+    {\
+        expression; \
+        CHECK_ERROR (#funcName) \
+    }
+
+    #define FuncCase(name) \
+    case CMD_##name: \
+        HANDLE_CALL (Jit_##name, Jit_##name (compiler, i)); \
+        break;
 
 
     instance_ = new RunInstanceDataHandler_t (filename, expn_, regFuncs_);
@@ -314,99 +364,15 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
                     FuncCase (Mov)
                     FuncCase (Print)
                     FuncCase (Cmpr)
-                    case CMD_Jmp:
-                    {
-                        compiler->mov  (compiler->r_rax, (int32_t)(void*)&VirtualProcessor_t::Jmp);
-                        compiler->mov  (compiler->r_rcx, (int32_t)(void*)this);
-                        compiler->call (compiler->r_rax);
-                        compiler->jmp (0);
-                        patch_jmp_.push_back (std::pair <int, int> (compiler->Size() - 4, instance_->args_[i].arg1));
-                        break;
-                    }
-                    case CMD_Je:
-                    {
-                        compiler->mov  (compiler->r_rax, (int32_t)(void*)&VirtualProcessor_t::Je);
-                        compiler->mov  (compiler->r_rcx, (int32_t)(void*)this);
-                        compiler->call (compiler->r_rax);
-                        compiler->cmp (&instance_->cmpr_flag_, 0);
-                        compiler->je (0);
-                        patch_jmp_.push_back (std::pair <int, int> (compiler->Size() - 4, instance_->args_[i].arg1));
-                        compiler->inc  (&instance_->run_line_);
-                        break;
-                    }
-                    case CMD_Jne:
-                    {
-                        compiler->mov  (compiler->r_rax, (int32_t)(void*)&VirtualProcessor_t::Jne);
-                        compiler->mov  (compiler->r_rcx, (int32_t)(void*)this);
-                        compiler->call (compiler->r_rax);
-                        compiler->cmp (&instance_->cmpr_flag_, 0);
-                        compiler->jne (0);
-                        patch_jmp_.push_back (std::pair <int, int> (compiler->Size() - 4, instance_->args_[i].arg1));
-                        compiler->inc  (&instance_->run_line_);
-                        break;
-                    }
-                    case CMD_Ja:
-                    {
-                        compiler->mov  (compiler->r_rax, (int32_t)(void*)&VirtualProcessor_t::Ja);
-                        compiler->mov  (compiler->r_rcx, (int32_t)(void*)this);
-                        compiler->call (compiler->r_rax);
-                        compiler->cmp (&instance_->cmpr_flag_, 0);
-                        compiler->jg (0);
-                        patch_jmp_.push_back (std::pair <int, int> (compiler->Size() - 4, instance_->args_[i].arg1));
-                        compiler->inc  (&instance_->run_line_);
-                        break;
-                    }
-                    case CMD_Jae:
-                    {
-                        compiler->mov  (compiler->r_rax, (int32_t)(void*)&VirtualProcessor_t::Jae);
-                        compiler->mov  (compiler->r_rcx, (int32_t)(void*)this);
-                        compiler->call (compiler->r_rax);
-                        compiler->cmp (&instance_->cmpr_flag_, 0);
-                        compiler->jge (0);
-                        patch_jmp_.push_back (std::pair <int, int> (compiler->Size() - 4, instance_->args_[i].arg1));
-                        compiler->inc  (&instance_->run_line_);
-                        break;
-                    }
-                    case CMD_Jb:
-                    {
-                        compiler->mov  (compiler->r_rax, (int32_t)(void*)&VirtualProcessor_t::Jb);
-                        compiler->mov  (compiler->r_rcx, (int32_t)(void*)this);
-                        compiler->call (compiler->r_rax);
-                        compiler->cmp (&instance_->cmpr_flag_, 0);
-                        compiler->jl (0);
-                        patch_jmp_.push_back (std::pair <int, int> (compiler->Size() - 4, instance_->args_[i].arg1));
-                        compiler->inc  (&instance_->run_line_);
-                        break;
-                    }
-                    case CMD_Jbe:
-                    {
-                        compiler->mov  (compiler->r_rax, (int32_t)(void*)&VirtualProcessor_t::Jbe);
-                        compiler->mov  (compiler->r_rcx, (int32_t)(void*)this);
-                        compiler->call (compiler->r_rax);
-                        compiler->cmp (&instance_->cmpr_flag_, 0);
-                        compiler->jle (0);
-                        patch_jmp_.push_back (std::pair <int, int> (compiler->Size() - 4, instance_->args_[i].arg1));
-                        compiler->inc  (&instance_->run_line_);
-                        break;
-                    }
-                    case CMD_Ret:
-                    {
-                        compiler->mov   (compiler->r_rax, (int32_t)(void*)&VirtualProcessor_t::Ret);
-                        compiler->mov   (compiler->r_rcx, (int32_t)(void*)this);
-                        compiler->call  (compiler->r_rax);
-                        compiler->retn ();
-                        break;
-                    }
-                    case CMD_Call:
-                    {
-                        compiler->mov   (compiler->r_rax, (int32_t)(void*)&VirtualProcessor_t::Call);
-                        compiler->mov   (compiler->r_rcx, (int32_t)(void*)this);
-                        compiler->call  (compiler->r_rax);
-                        compiler->inc  (&instance_->run_line_);
-                        compiler->callr (0);
-                        patch_jmp_.push_back (std::pair <int, int> (compiler->Size() - 4, instance_->args_[i].arg1 + 1));
-                        break;
-                    }
+                    FuncCase (Jmp)
+                    FuncCase (Je)
+                    FuncCase (Jne)
+                    FuncCase (Ja)
+                    FuncCase (Jae)
+                    FuncCase (Jb)
+                    FuncCase (Jbe)
+                    FuncCase (Ret)
+                    FuncCase (Call)
                     FuncCase (Decr)
                     FuncCase (InitStackDumpPoint)
                     FuncCase (JIT_Printf)
@@ -462,7 +428,7 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
     compiler->pop (compiler->r_rbp);
     compiler->retn ();
 
-    PatchJmp (instance_, compiler);
+    PatchJmp (compiler);
 }
 
 #include "Functions.h"

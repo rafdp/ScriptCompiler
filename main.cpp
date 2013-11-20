@@ -14,12 +14,15 @@ int main ()
     exception_data ex_data (10, "errors.txt");
     try
     {
-        ScriptCompiler_t comp ("Equation.txt", &ex_data);
+        //ScriptCompiler_t comp ("Equation.txt", &ex_data);
+        ScriptCompiler_t comp ("test.txt", &ex_data);
         comp.Save ();
         VirtualProcessor_t proc (&ex_data);
         int data = 17;
         proc.RegFunc (UserFunc_t (printHello, &data), "printhello");
-        proc.RunScriptJit ("Equation.pcs");
+        //proc.RunScriptJit ("Equation.pcs");
+        proc.RunScriptJit ("test.pcs");
+        //proc.RunScript ("Equation.pcs");
     }
     catch (ExceptionHandler& ex)
     {printf ("Exception occurred\nCheck \"errors.txt\"");

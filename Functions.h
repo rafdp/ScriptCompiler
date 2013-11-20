@@ -108,8 +108,6 @@ FUNCTION_BEGIN (Cmpr, 4, 4, ARG_NUM _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_N
     long long val1 = $ GetVal (arg.flag1, arg.arg1),
               val2 = $ GetVal (arg.flag2, arg.arg2);
 
-    ErrorPrintfBox ("CMPR val1 = %x, val2 = %x line %d", $ GetPtr (arg.flag1, arg.arg1), $ GetPtr (arg.flag2, arg.arg2), $ run_line_);
-
     if (val1 > val2)
         $ cmpr_flag_ = FLAG_HIGH;
     if (val1 < val2)
@@ -421,7 +419,7 @@ FUNCTION_END
 #undef SIZE_CASE
 
 #define STACK_ARITHMETIC_FUNCTION(name, operator, check0) \
-FUNCTION_BEGIN (name, 0, 0, ARG_NULL) \
+FUNCTION_BEGIN (name, 1, 0, ARG_NULL) \
 long long val1 = $ dataStack_.pop (); \
 long long val0 = $ dataStack_.pop (); \
 if (check0 && val1 == 0) \
@@ -440,6 +438,282 @@ STACK_ARITHMETIC_FUNCTION (Divs, /, true)
 
 #undef STACK_ARITHMETIC_FUNCTION
 
+#undef FUNCTION_BEGIN
+#define FUNCTION_BEGIN(name, n_params1, n_params2, params) \
+void VirtualProcessor_t::Jit_##name (JitCompiler_t* comp, int i) \
+{ \
+Arg_t& arg = $ args_[i]; \
+ManageInputArgs_t man (ExpectedArg_t (n_params1, n_params2, params), arg); \
+
+#define DEFAULT_BODY(name) \
+        comp->mov  (comp->r_rax, (int32_t)(void*)&VirtualProcessor_t::name); \
+        comp->mov  (comp->r_rcx, (int32_t)(void*)this);\
+        comp->call (comp->r_rax);\
+        comp->inc  (& $ run_line_);
+
+FUNCTION_BEGIN (RebuildVar, 2, 4, ARG_VAR _ ARG_NULL _ ARG_NUM)
+DEFAULT_BODY (RebuildVar)
+FUNCTION_END
+
+FUNCTION_BEGIN (Push, 5, 0, ARG_NUM _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_STR)
+DEFAULT_BODY (Push)
+FUNCTION_END
+
+FUNCTION_BEGIN (Pop, 4, 0, ARG_NULL _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG)
+DEFAULT_BODY (Pop)
+FUNCTION_END
+
+FUNCTION_BEGIN (Mov, 3, 5, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_NUM _ ARG_STR)
+DEFAULT_BODY (Mov)
+FUNCTION_END
+
+FUNCTION_BEGIN (Print, 1, 5, ARG_NUM _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_NUM _ ARG_STR)
+DEFAULT_BODY (Print)
+FUNCTION_END
+
+FUNCTION_BEGIN (Cmpr, 4, 4, ARG_NUM _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_NUM _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG)
+DEFAULT_BODY (Cmpr)
+FUNCTION_END
+
+FUNCTION_BEGIN (Jmp, 1, 0, ARG_LABEL)
+comp->mov  (comp->r_rax, (int32_t)(void*)&VirtualProcessor_t::Jmp);
+comp->mov  (comp->r_rcx, (int32_t)(void*)this);
+comp->call (comp->r_rax);
+comp->jmp (0);
+JmpPatchRequest (comp, comp->Size() - 4, arg.arg1);
+FUNCTION_END
+
+FUNCTION_BEGIN (Jne, 1, 0, ARG_LABEL)
+comp->mov  (comp->r_rax, (int32_t)(void*)&VirtualProcessor_t::Jne);
+comp->mov  (comp->r_rcx, (int32_t)(void*)this);
+comp->call (comp->r_rax);
+comp->cmp (&instance_->cmpr_flag_, '\0');
+comp->jne (0);
+JmpPatchRequest (comp, comp->Size() - 4, arg.arg1);
+comp->inc  (&instance_->run_line_);
+FUNCTION_END
+
+FUNCTION_BEGIN (Je, 1, 0, ARG_LABEL)
+comp->mov  (comp->r_rax, (int32_t)(void*)&VirtualProcessor_t::Je);
+comp->mov  (comp->r_rcx, (int32_t)(void*)this);
+comp->call (comp->r_rax);
+comp->cmp (&instance_->cmpr_flag_, '\0');
+comp->je (0);
+JmpPatchRequest (comp, comp->Size() - 4, arg.arg1);
+comp->inc  (&instance_->run_line_);
+FUNCTION_END
+
+FUNCTION_BEGIN (Ja, 1, 0, ARG_LABEL)
+comp->mov  (comp->r_rax, (int32_t)(void*)&VirtualProcessor_t::Ja);
+comp->mov  (comp->r_rcx, (int32_t)(void*)this);
+comp->call (comp->r_rax);
+comp->cmp (&instance_->cmpr_flag_, '\0');
+comp->jg (0);
+JmpPatchRequest (comp, comp->Size() - 4, arg.arg1);
+comp->inc  (&instance_->run_line_);
+FUNCTION_END
+
+FUNCTION_BEGIN (Jae, 1, 0, ARG_LABEL)
+comp->mov  (comp->r_rax, (int32_t)(void*)&VirtualProcessor_t::Jae);
+comp->mov  (comp->r_rcx, (int32_t)(void*)this);
+comp->call (comp->r_rax);
+comp->cmp (&instance_->cmpr_flag_, '\0');
+comp->jge (0);
+JmpPatchRequest (comp, comp->Size() - 4, arg.arg1);
+comp->inc  (&instance_->run_line_);
+FUNCTION_END
+
+FUNCTION_BEGIN (Jb, 1, 0, ARG_LABEL)
+comp->mov  (comp->r_rax, (int32_t)(void*)&VirtualProcessor_t::Jb);
+comp->mov  (comp->r_rcx, (int32_t)(void*)this);
+comp->call (comp->r_rax);
+comp->cmp (&instance_->cmpr_flag_, '\0');
+comp->jl (0);
+JmpPatchRequest (comp, comp->Size() - 4, arg.arg1);
+comp->inc  (&instance_->run_line_);
+FUNCTION_END
+
+FUNCTION_BEGIN (Jbe, 1, 0, ARG_LABEL)
+comp->mov  (comp->r_rax, (int32_t)(void*)&VirtualProcessor_t::Jbe);
+comp->mov  (comp->r_rcx, (int32_t)(void*)this);
+comp->call (comp->r_rax);
+comp->cmp (&instance_->cmpr_flag_, '\0');
+comp->jle (0);
+JmpPatchRequest (comp, comp->Size() - 4, arg.arg1);
+comp->inc  (&instance_->run_line_);
+FUNCTION_END
+
+FUNCTION_BEGIN (Ret, 1, 0, ARG_NULL)
+comp->mov   (comp->r_rax, (int32_t)(void*)&VirtualProcessor_t::Ret);
+comp->mov   (comp->r_rcx, (int32_t)(void*)this);
+comp->call  (comp->r_rax);
+comp->retn ();
+FUNCTION_END
+
+FUNCTION_BEGIN (Call, 2, 0, ARG_FUNC _ ARG_FUNC_MEMBER)
+comp->mov   (comp->r_rax, (int32_t)(void*)&VirtualProcessor_t::Call);
+comp->mov   (comp->r_rcx, (int32_t)(void*)this);
+comp->call  (comp->r_rax);
+comp->inc  (&instance_->run_line_);
+comp->callr (0);
+patch_jmp_.push_back (std::pair <int, int> (comp->Size() - 4, arg.arg1 + 1));
+FUNCTION_END
+
+FUNCTION_BEGIN (Decr, 3, 0, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG)
+DEFAULT_BODY (Decr)
+FUNCTION_END
+
+FUNCTION_BEGIN (InitStackDumpPoint, 1, 0, ARG_NULL)
+DEFAULT_BODY (InitStackDumpPoint)
+FUNCTION_END
+
+FUNCTION_BEGIN (JIT_Printf, 1, 0, ARG_NULL)
+DEFAULT_BODY (JIT_Printf)
+FUNCTION_END
+
+FUNCTION_BEGIN (JIT_Call_Void, 1, 0, ARG_DLL_FUNC)
+DEFAULT_BODY (JIT_Call_Void)
+FUNCTION_END
+
+FUNCTION_BEGIN (JIT_Call_DWord, 1, 0, ARG_DLL_FUNC)
+DEFAULT_BODY (JIT_Call_DWord)
+FUNCTION_END
+
+FUNCTION_BEGIN (JIT_Call_QWord, 1, 0, ARG_DLL_FUNC)
+DEFAULT_BODY (JIT_Call_QWord)
+FUNCTION_END
+
+FUNCTION_BEGIN (Add, 3, 4, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_NUM)
+
+static void* var1pt = nullptr;
+static void* var2pt = nullptr;
+
+size_t size1 = $ GetSize (arg.flag1, arg.arg1);
+size_t size2 = $ GetSize (arg.flag2, arg.arg2);
+
+if ($ isNum (arg.flag2))
+{
+    comp->push (arg.arg1);
+    comp->push (arg.flag1);
+    comp->mov (comp->r_rax, (int32_t)(void*)&RunInstanceDataHandler_t::GetPtr);
+    comp->mov (comp->r_rcx, (int32_t)(void*)instance_);
+    comp->call (comp->r_rax);
+    switch (size1)
+    {
+        case sizeof (int8_t):
+            comp->add<int8_t> (&comp->r_rax, (int8_t)arg.arg2);
+            break;
+        case sizeof (int16_t):
+            comp->add<int16_t> (&comp->r_rax, (int16_t)arg.arg2);
+            break;
+        case sizeof (int32_t):
+        case sizeof (int64_t):
+            comp->add<int32_t> (&comp->r_rax, (int32_t)arg.arg2);
+            break;
+    }
+}
+else
+{
+    comp->push (arg.arg1);
+    comp->push (arg.flag1);
+    comp->mov (comp->r_rax, (int32_t)(void*)&RunInstanceDataHandler_t::GetPtr);
+    comp->mov (comp->r_rcx, (int32_t)(void*)instance_);
+    comp->call (comp->r_rax);
+    comp->mov (&var1pt, comp->r_rax);
+
+    comp->push (arg.arg2);
+    comp->push (arg.flag2);
+    comp->mov (comp->r_rax, (int32_t)(void*)&RunInstanceDataHandler_t::GetPtr);
+    comp->mov (comp->r_rcx, (int32_t)(void*)instance_);
+    comp->call (comp->r_rax);
+    comp->mov (&var2pt, comp->r_rax);
+
+    bool first64 = size1 > sizeof (DWORD);
+    bool second64 = size2 > sizeof (DWORD);
+
+    comp->mov<int32_t> (comp->r_rcx, (int32_t)(&var1pt));
+    comp->mov<int32_t> (comp->r_rcx, &comp->r_rcx);
+
+    comp->mov<int32_t> (comp->r_rax, (int32_t)(&var2pt));
+    comp->mov<int32_t> (comp->r_rax, &comp->r_rax);
+
+    if (second64 && first64)
+    {
+        comp->mov<int32_t> (comp->r_rdx, (int32_t)(&var1pt));
+        comp->mov<int32_t> (comp->r_rdx, &comp->r_rdx);
+        comp->add<int32_t> (comp->r_rdx, sizeof (int32_t));
+
+        comp->mov<int32_t> (comp->r_rbx, (int32_t)(&var2pt));
+        comp->mov<int32_t> (comp->r_rbx, &comp->r_rbx);
+        comp->add<int32_t> (comp->r_rbx, sizeof (int32_t));
+
+        comp->mov<int32_t> (comp->r_rbx, &comp->r_rbx);
+        comp->adc<int32_t> (&comp->r_rdx, comp->r_rbx);
+    }
+
+    switch (MIN (size1, size2))
+    {
+        case sizeof (int8_t):
+            comp->mov<int8_t> (comp->r_rax, &comp->r_rax);
+            comp->add<int8_t> (&comp->r_rcx, comp->r_rax);
+            break;
+        case sizeof (int16_t):
+            comp->mov<int16_t> (comp->r_rax, &comp->r_rax);
+            comp->add<int16_t> (&comp->r_rcx, comp->r_rax);
+            break;
+        case sizeof (int32_t):
+        case sizeof (int64_t):
+            comp->mov<int32_t> (comp->r_rax, &comp->r_rax);
+            comp->add<int32_t> (&comp->r_rcx, comp->r_rax);
+            break;
+    }
+}
+
+FUNCTION_END
+
+FUNCTION_BEGIN (Sub, 3, 4, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_NUM)
+DEFAULT_BODY (Sub)
+FUNCTION_END
+
+FUNCTION_BEGIN (Mul, 3, 4, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_NUM)
+DEFAULT_BODY (Mul)
+FUNCTION_END
+
+FUNCTION_BEGIN (Div, 3, 4, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_NUM)
+DEFAULT_BODY (Div)
+FUNCTION_END
+
+FUNCTION_BEGIN (Adds, 1, 0, ARG_NULL)
+DEFAULT_BODY (Adds)
+FUNCTION_END
+
+FUNCTION_BEGIN (Subs, 1, 0, ARG_NULL)
+DEFAULT_BODY (Subs)
+FUNCTION_END
+
+FUNCTION_BEGIN (Muls, 1, 0, ARG_NULL)
+DEFAULT_BODY (Muls)
+FUNCTION_END
+
+FUNCTION_BEGIN (Divs, 1, 0, ARG_NULL)
+DEFAULT_BODY (Muls)
+FUNCTION_END
+
+FUNCTION_BEGIN (Lea, 2, 4, ARG_VAR _ ARG_VAR_MEMBER _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_STR)
+DEFAULT_BODY (Lea)
+FUNCTION_END
+
+FUNCTION_BEGIN (Sqrt, 3, 0, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG)
+DEFAULT_BODY (Sqrt)
+FUNCTION_END
+
+#undef FUNCTION_BEGIN
+#undef FUNCTION_END
+
+#undef ARG_SIZE_SWITCH_PTR_LONG
+#undef ARITHMETIC_FUNCTION_ADD_SUB_64_PART
+#undef ARITHMETIC_FUNCTION_ADD_SUB_MUL_BASE
+
 
 #undef $
 
@@ -447,8 +721,3 @@ STACK_ARITHMETIC_FUNCTION (Divs, /, true)
 
 #undef FUNC_OPEN
 #undef FUNC_CLOSE
-
-
-#undef ARG_SIZE_SWITCH_PTR_LONG
-#undef ARITHMETIC_FUNCTION_ADD_SUB_64_PART
-#undef ARITHMETIC_FUNCTION_ADD_SUB_MUL_BASE

@@ -1,7 +1,13 @@
-plabel test
-cmpr 1, 0
-ja test
 
-print PRINT_STRING, "Hello World\n"
-test:
-print PRINT_STRING, "!Hello World\n"
+struct data
+var var1, type_qword
+var var2, type_byte
+struct_end
+
+var dat, type_data
+mov dat.var1, 127
+mov dat.var2, 13
+add dat.var1, dat.var2
+add dat.var1, 100500
+
+print PRINT_NUMBER, dat.var1
