@@ -1,14 +1,29 @@
+var char, type_byte
+var word, type_word
+var dword, type_dword
+var qword, type_qword
 
-struct data
-var var1, type_qword
-var var2, type_byte
-struct_end
+mov char, 29
+mov word, 664
+mov dword, 607857
+mov qword, 4782568989985
 
-var dat, type_data
-mov dat.var1, 127
-mov dat.var2, 13
-add dat.var1, dat.var2
-add dat.var1, 100500
-sub dat.var1, 1000
+cmpr char, 700
+cmpr word, 700
+cmpr dword, 700
+cmpr qword, 700
 
-print PRINT_NUMBER, dat.var1
+cmpr char, 29
+cmpr word, 664
+cmpr dword, 607857
+cmpr qword, 4782568989985
+
+cmpr char, qword
+cmpr word, dword
+cmpr dword, word
+cmpr qword, char
+
+mov qword, 2
+
+cmpr qword, char
+cmpr char, qword

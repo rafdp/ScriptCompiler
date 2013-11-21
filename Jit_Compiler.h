@@ -123,6 +123,12 @@ class JitCompiler_t
         man.EmitPop<T> (reg);
     }
 
+    template <typename T = int32_t>
+    void popf ()
+    {
+        man.EmitPopf<T> ();
+    }
+
     template <typename T>
     void push (T imm)
     {
@@ -133,6 +139,12 @@ class JitCompiler_t
             man.EmitPush<int32_t> ((int64_t)imm);
         }
         else man.EmitPush<T> (imm);
+    }
+
+    template <typename T = int32_t>
+    void pushf ()
+    {
+        man.EmitPushf<T> ();
     }
 
     void call (CPURegisterInfo_t regDest)
@@ -193,6 +205,12 @@ class JitCompiler_t
         man.EmitAdd<T> (dest, regSrc);
     }
 
+    template <typename T = int>
+    void addf (CPURegisterInfo_t regDest, int8_t data)
+    {
+        man.EmitAddF (regDest, data);
+    }
+
     template <typename T>
     void adc (CPURegisterInfo_t regDest, T* src)
     {
@@ -233,6 +251,12 @@ class JitCompiler_t
     {
         CHECK_64 (T)
         man.EmitAdc<T> (dest, regSrc);
+    }
+
+    template <typename T = int>
+    void adcf (CPURegisterInfo_t regDest, int8_t data)
+    {
+        man.EmitAdcF (regDest, data);
     }
 
     template <typename T>
@@ -277,6 +301,12 @@ class JitCompiler_t
         man.EmitSub<T> (dest, regSrc);
     }
 
+    template <typename T = int>
+    void subf (CPURegisterInfo_t regDest, int8_t data)
+    {
+        man.EmitSubF (regDest, data);
+    }
+
     template <typename T>
     void sbb (CPURegisterInfo_t regDest, T imm)
     {
@@ -317,6 +347,12 @@ class JitCompiler_t
     {
         CHECK_64 (T)
         man.EmitSbb<T> (dest, regSrc);
+    }
+
+    template <typename T = int>
+    void sbbf (CPURegisterInfo_t regDest, int8_t data)
+    {
+        man.EmitSbbF (regDest, data);
     }
 
     template <typename T>
@@ -379,6 +415,12 @@ class JitCompiler_t
     }
 
     template <typename T>
+    void cmp (CPURegisterInfo_t regDest, CPURegisterInfo_t regSrc)
+    {
+        man.EmitCmp<T> (regDest, regSrc);
+    }
+
+    template <typename T>
     void cmp (T* pointer, CPURegisterInfo_t regSrc)
     {
         man.EmitCmp (pointer, regSrc);
@@ -395,6 +437,34 @@ class JitCompiler_t
     {
         CHECK_64 (T)
         man.EmitCmp (ptr, imm);
+    }
+
+    template <typename T>
+    void cmp (CPURegisterInfo_t* reg, T imm)
+    {
+        CHECK_64 (T)
+        man.EmitCmp (reg, imm);
+    }
+
+    template <typename T>
+    void cmp (CPURegisterInfo_t reg, T imm)
+    {
+        CHECK_64 (T)
+        man.EmitCmp (reg, imm);
+    }
+
+    template <typename T>
+    void cmp (CPURegisterInfo_t* regDest, CPURegisterInfo_t regSrc)
+    {
+        CHECK_64 (T)
+        man.EmitCmp<T> (regDest, regSrc);
+    }
+
+    template <typename T>
+    void cmp (CPURegisterInfo_t regDest, CPURegisterInfo_t* regSrc)
+    {
+        CHECK_64 (T)
+        man.EmitCmp<T> (regDest, regSrc);
     }
 
     void jmp (int32_t rel)

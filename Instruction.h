@@ -147,7 +147,9 @@ class InstructionManager_t
                   inPush_Imm_8,
                   inPush_Imm,
                   inPush_RM,
+                  inPushf,
                   inPop_RM,
+                  inPopf,
                   inCall_RM,
                   inCall_Rel,
                   inRetn,
@@ -214,7 +216,9 @@ public:
         inPush_Imm_8      ({0x6A}),
         inPush_Imm        ({0x68}),
         inPush_RM         ({0xFF}),
+        inPushf           ({0x9C}),
         inPop_RM          ({0x8F}),
+        inPopf            ({0x9D}),
         inCall_RM         ({0xFF}),
         inCall_Rel        ({0xE8}),
         inRetn            ({0xC3}),
@@ -293,8 +297,8 @@ public:
         CHECK_SIZE_16 (T)
         emitter_.EmitInstruction (SIZED_CMD (inMov_R_RM),
                                   MODE_ADDRESS,
-                                  regDest,
-                                  *regSrc);
+                                  *regSrc,
+                                  regDest);
     }
 
     template <typename T = int>
@@ -372,6 +376,13 @@ public:
         emitter_.EmitInstruction (inPush_RM, reg, 6);
     }
 
+    template <typename T = int>
+    void EmitPushf ()
+    {
+        CHECK_SIZE_16_NO8 (T)
+        emitter_.EmitInstruction (inPushf);
+    }
+
 
     template <typename T = int>
     void EmitPop (CPURegisterInfo_t reg)
@@ -379,6 +390,14 @@ public:
         CHECK_SIZE_16_NO8 (T)
         emitter_.EmitInstruction (inPop_RM, reg, 0);
     }
+
+    template <typename T = int>
+    void EmitPopf ()
+    {
+        CHECK_SIZE_16_NO8 (T)
+        emitter_.EmitInstruction (inPopf);
+    }
+
 
     template <typename T = int>
     void EmitCall (CPURegisterInfo_t reg)
@@ -682,6 +701,13 @@ public:
     }
 
     template <typename T>
+    void EmitCmp (CPURegisterInfo_t regDest, CPURegisterInfo_t regSrc)
+    {
+        CHECK_SIZE_16 (T)
+        emitter_.EmitInstruction (SIZED_CMD (inCmp_RM_R), MODE_REGISTER, regDest, regSrc);
+    }
+
+    template <typename T>
     void EmitCmp (T* pointer, CPURegisterInfo_t regSrc)
     {
         CHECK_SIZE_16 (T)
@@ -690,11 +716,25 @@ public:
     }
 
     template <typename T>
+    void EmitCmp (CPURegisterInfo_t* regDest, CPURegisterInfo_t regSrc)
+    {
+        CHECK_SIZE_16 (T)
+        emitter_.EmitInstruction (SIZED_CMD (inCmp_RM_R), MODE_ADDRESS, *regDest, regSrc);
+    }
+
+    template <typename T>
     void EmitCmp (CPURegisterInfo_t regDest, T* pointer)
     {
         CHECK_SIZE_16 (T)
         emitter_.EmitInstruction (SIZED_CMD (inCmp_R_RM), MODE_ADDRESS, OFF, regDest);
         emitter_.EmitData ((int32_t) pointer);
+    }
+
+    template <typename T>
+    void EmitCmp (CPURegisterInfo_t regDest, CPURegisterInfo_t* regSrc)
+    {
+        CHECK_SIZE_16 (T)
+        emitter_.EmitInstruction (SIZED_CMD (inCmp_R_RM), MODE_ADDRESS, *regSrc, regDest);
     }
 
     template <typename T>
@@ -707,11 +747,36 @@ public:
     }
 
     template <typename T>
+    void EmitCmp (CPURegisterInfo_t* reg, T imm)
+    {
+        CHECK_SIZE_16 (T)
+        emitter_.EmitInstruction (SIZED_CMD (inCmp_RM_Imm), MODE_ADDRESS, *reg, 7);
+        emitter_.EmitData (imm);
+    }
+
+    template <typename T>
+    void EmitCmp (CPURegisterInfo_t reg, T imm)
+    {
+        CHECK_SIZE_16 (T)
+        emitter_.EmitInstruction (SIZED_CMD (inCmp_RM_Imm), MODE_REGISTER, reg, 7);
+        emitter_.EmitData (imm);
+    }
+
+
+    template <typename T>
     void EmitCmpF (T* ptr, int8_t imm)
     {
         CHECK_SIZE_16 (T)
         emitter_.EmitInstruction (inCmp_RM_ImmF, MODE_ADDRESS, OFF, 7);
         emitter_.EmitData ((int32_t)ptr);
+        emitter_.EmitData (imm);
+    }
+
+    template <typename T>
+    void EmitCmpF (CPURegisterInfo_t* reg, int8_t imm)
+    {
+        CHECK_SIZE_16 (T)
+        emitter_.EmitInstruction (inCmp_RM_ImmF, MODE_ADDRESS, *reg, 7);
         emitter_.EmitData (imm);
     }
 

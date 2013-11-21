@@ -464,7 +464,6 @@ DEFAULT_BODY (Pop)
 FUNCTION_END
 
 FUNCTION_BEGIN (Mov, 3, 5, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_NUM _ ARG_STR)
-//DEFAULT_BODY (Mov)
 
 size_t size1 = $ GetSize (arg.flag1, arg.arg1);
 size_t size2 = $ GetSize (arg.flag2, arg.arg2);
@@ -572,7 +571,278 @@ DEFAULT_BODY (Print)
 FUNCTION_END
 
 FUNCTION_BEGIN (Cmpr, 4, 4, ARG_NUM _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_NUM _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG)
-DEFAULT_BODY (Cmpr)
+size_t size1 = $ GetSize (arg.flag1, arg.arg1);
+size_t size2 = $ GetSize (arg.flag2, arg.arg2);
+
+if ($ isNum (arg.flag2) && ! $ isNum (arg.flag1))
+{
+    comp->push (arg.arg1);
+    comp->push (arg.flag1);
+    comp->mov (comp->r_rax, (int32_t)(void*)&RunInstanceDataHandler_t::GetPtr);
+    comp->mov (comp->r_rcx, (int32_t)(void*)instance_);
+    comp->call (comp->r_rax);
+
+
+    size_t jg_offset = 0;
+    size_t jl_offset = 0;
+    size_t jmp_offset = 0;
+
+
+    comp->mov<int32_t> (comp->r_rcx, 0);
+    comp->mov<int32_t> (comp->r_rdx, 0);
+
+    switch (size1)
+    {
+        case sizeof (int8_t):
+            comp->mov<int8_t> (comp->r_rcx, &comp->r_rax);
+            break;
+        case sizeof (int16_t):
+            comp->mov<int16_t> (comp->r_rcx, &comp->r_rax);
+            break;
+        case sizeof (int32_t):
+            comp->mov<int32_t> (comp->r_rcx, &comp->r_rax);
+            break;
+        case sizeof (int64_t):
+            comp->mov<int32_t> (comp->r_rcx, &comp->r_rax);
+            comp->mov<int32_t> (comp->r_rdx, comp->r_rax);
+            comp->add<int32_t> (comp->r_rdx, sizeof (int32_t));
+            comp->mov<int32_t> (comp->r_rdx, &comp->r_rdx);
+            break;
+    }
+
+    comp->cmp<int32_t> (comp->r_rdx, (int32_t)(arg.arg2 >> (sizeof (int32_t)*8)));
+    comp->je (0);
+    jg_offset = comp->Size() - sizeof (int32_t);
+    comp->jmp (0);
+    jmp_offset = comp->Size() - sizeof (int32_t);
+    JmpPatchRequestOffset (comp, jg_offset, comp->Size() + 1);
+    comp->cmp<int32_t> (comp->r_rcx, (int32_t)arg.arg2);
+
+    JmpPatchRequestOffset (comp, jmp_offset, comp->Size() + 1);
+    jg_offset = 0;
+    jl_offset = 0;
+    jmp_offset = 0;
+
+    comp->jg (0);
+    jg_offset = comp->Size() - sizeof (int32_t);
+
+    comp->jl (0);
+    jl_offset = comp->Size() - sizeof (int32_t);
+
+    comp->mov<int8_t> ((int8_t*)&instance_->cmpr_flag_, (int8_t)FLAG_EQUAL);
+    comp->jmp (0);
+    jmp_offset = comp->Size() - sizeof (int32_t);
+
+
+    JmpPatchRequestOffset (comp, jg_offset, comp->Size() + 1);
+    comp->mov<int8_t> ((int8_t*)&instance_->cmpr_flag_, (int8_t)FLAG_HIGH);
+    comp->jmp (0);
+    jg_offset = comp->Size() - sizeof (int32_t);
+
+    JmpPatchRequestOffset (comp, jl_offset, comp->Size() + 1);
+    comp->mov<int8_t> ((int8_t*)&instance_->cmpr_flag_, (int8_t)FLAG_LOW);
+    comp->jmp (0);
+    jl_offset = comp->Size() - sizeof (int32_t);
+
+    //! finally:
+    JmpPatchRequestOffset (comp, jl_offset, comp->Size() + 1);
+    JmpPatchRequestOffset (comp, jg_offset, comp->Size() + 1);
+    JmpPatchRequestOffset (comp, jmp_offset, comp->Size() + 1);
+
+
+}
+else
+if ($ isNum (arg.flag1) && ! $ isNum (arg.flag2))
+{
+    comp->push (arg.arg2);
+    comp->push (arg.flag2);
+    comp->mov (comp->r_rax, (int32_t)(void*)&RunInstanceDataHandler_t::GetPtr);
+    comp->mov (comp->r_rcx, (int32_t)(void*)instance_);
+    comp->call (comp->r_rax);
+
+
+    size_t jg_offset = 0;
+    size_t jl_offset = 0;
+    size_t jmp_offset = 0;
+
+
+    comp->mov<int32_t> (comp->r_rcx, 0);
+    comp->mov<int32_t> (comp->r_rdx, 0);
+
+    switch (size2)
+    {
+        case sizeof (int8_t):
+            comp->mov<int8_t> (comp->r_rcx, &comp->r_rax);
+            break;
+        case sizeof (int16_t):
+            comp->mov<int16_t> (comp->r_rcx, &comp->r_rax);
+            break;
+        case sizeof (int32_t):
+            comp->mov<int32_t> (comp->r_rcx, &comp->r_rax);
+            break;
+        case sizeof (int64_t):
+            comp->mov<int32_t> (comp->r_rcx, &comp->r_rax);
+            comp->mov<int32_t> (comp->r_rdx, comp->r_rax);
+            comp->add<int32_t> (comp->r_rdx, sizeof (int32_t));
+            comp->mov<int32_t> (comp->r_rdx, &comp->r_rdx);
+            break;
+    }
+
+    comp->cmp<int32_t> (comp->r_rdx, (int32_t)(arg.arg1 >> (sizeof (int32_t)*8)));
+    comp->je (0);
+    jg_offset = comp->Size() - sizeof (int32_t);
+    comp->jmp (0);
+    jmp_offset = comp->Size() - sizeof (int32_t);
+    JmpPatchRequestOffset (comp, jg_offset, comp->Size() + 1);
+    comp->cmp<int32_t> (comp->r_rcx, (int32_t)arg.arg1);
+
+    JmpPatchRequestOffset (comp, jmp_offset, comp->Size() + 1);
+    jg_offset = 0;
+    jl_offset = 0;
+    jmp_offset = 0;
+
+    comp->jg (0);
+    jg_offset = comp->Size() - sizeof (int32_t);
+
+    comp->jl (0);
+    jl_offset = comp->Size() - sizeof (int32_t);
+
+    comp->mov<int8_t> ((int8_t*)&instance_->cmpr_flag_, (int8_t)FLAG_EQUAL);
+    comp->jmp (0);
+    jmp_offset = comp->Size() - sizeof (int32_t);
+
+
+    JmpPatchRequestOffset (comp, jg_offset, comp->Size() + 1);
+    comp->mov<int8_t> ((int8_t*)&instance_->cmpr_flag_, (int8_t)FLAG_LOW);
+    comp->jmp (0);
+    jg_offset = comp->Size() - sizeof (int32_t);
+
+    JmpPatchRequestOffset (comp, jl_offset, comp->Size() + 1);
+    comp->mov<int8_t> ((int8_t*)&instance_->cmpr_flag_, (int8_t)FLAG_HIGH);
+    comp->jmp (0);
+    jl_offset = comp->Size() - sizeof (int32_t);
+
+    //! finally:
+    JmpPatchRequestOffset (comp, jl_offset, comp->Size() + 1);
+    JmpPatchRequestOffset (comp, jg_offset, comp->Size() + 1);
+    JmpPatchRequestOffset (comp, jmp_offset, comp->Size() + 1);
+
+
+}
+else
+{
+    comp->push (arg.arg1);
+    comp->push (arg.flag1);
+    comp->mov (comp->r_rax, (int32_t)(void*)&RunInstanceDataHandler_t::GetPtr);
+    comp->mov (comp->r_rcx, (int32_t)(void*)instance_);
+    comp->call (comp->r_rax);
+    comp->push (comp->r_rax);
+
+    comp->push (arg.arg2);
+    comp->push (arg.flag2);
+    comp->mov (comp->r_rax, (int32_t)(void*)&RunInstanceDataHandler_t::GetPtr);
+    comp->mov (comp->r_rcx, (int32_t)(void*)instance_);
+    comp->call (comp->r_rax);
+
+    comp->pop (comp->r_rcx);
+
+
+    size_t jg_offset = 0;
+    size_t jl_offset = 0;
+    size_t jmp_offset = 0;
+    comp->mov<int32_t> (comp->r_rbx, 0);
+    comp->mov<int32_t> (comp->r_rdx, 0);
+
+    switch (size1)
+    {
+        case sizeof (int8_t):
+            comp->mov<int8_t> (comp->r_rcx, &comp->r_rcx);
+            comp->push<int8_t> (comp->r_rcx);
+            comp->mov<int32_t> (comp->r_rcx, 0);
+            comp->pop<int8_t> (comp->r_rcx);
+            break;
+        case sizeof (int16_t):
+            comp->mov<int16_t> (comp->r_rcx, &comp->r_rcx);
+            comp->push<int16_t> (comp->r_rcx);
+            comp->mov<int32_t> (comp->r_rcx, 0);
+            comp->pop<int16_t> (comp->r_rcx);
+            break;
+        case sizeof (int32_t):
+            comp->mov<int16_t> (comp->r_rcx, &comp->r_rcx);
+            break;
+        case sizeof (int64_t):
+            comp->mov<int32_t> (comp->r_rdx, comp->r_rcx);
+            comp->mov<int32_t> (comp->r_rcx, &comp->r_rcx);
+            comp->add<int32_t> (comp->r_rdx, sizeof (int32_t));
+            comp->mov<int32_t> (comp->r_rdx, &comp->r_rdx);
+            break;
+    }
+
+    switch (size2)
+    {
+        case sizeof (int8_t):
+            comp->mov<int8_t> (comp->r_rax, &comp->r_rax);
+            comp->push<int8_t> (comp->r_rax);
+            comp->mov<int32_t> (comp->r_rax, 0);
+            comp->pop<int8_t> (comp->r_rax);
+            break;
+        case sizeof (int16_t):
+            comp->mov<int16_t> (comp->r_rax, &comp->r_rax);
+            comp->push<int16_t> (comp->r_rax);
+            comp->mov<int32_t> (comp->r_rax, 0);
+            comp->pop<int16_t> (comp->r_rax);
+            break;
+        case sizeof (int32_t):
+            comp->mov<int16_t> (comp->r_rax, &comp->r_rax);
+            break;
+        case sizeof (int64_t):
+            comp->mov<int32_t> (comp->r_rbx, comp->r_rax);
+            comp->mov<int32_t> (comp->r_rax, &comp->r_rax);
+            comp->add<int32_t> (comp->r_rbx, sizeof (int32_t));
+            comp->mov<int32_t> (comp->r_rbx, &comp->r_rbx);
+            break;
+    }
+
+    comp->cmp<int32_t> (comp->r_rdx, comp->r_rbx);
+    comp->je (0);
+    jg_offset = comp->Size() - sizeof (int32_t);
+    comp->jmp (0);
+    jmp_offset = comp->Size() - sizeof (int32_t);
+    JmpPatchRequestOffset (comp, jg_offset, comp->Size() + 1);
+    comp->cmp<int32_t> (comp->r_rcx, comp->r_rax);
+
+    JmpPatchRequestOffset (comp, jmp_offset, comp->Size() + 1);
+    jg_offset = 0;
+    jl_offset = 0;
+    jmp_offset = 0;
+
+    comp->jg (0);
+    jg_offset = comp->Size() - sizeof (int32_t);
+
+    comp->jl (0);
+    jl_offset = comp->Size() - sizeof (int32_t);
+
+    comp->mov<int8_t> ((int8_t*)&instance_->cmpr_flag_, (int8_t)FLAG_EQUAL);
+    comp->jmp (0);
+    jmp_offset = comp->Size() - sizeof (int32_t);
+
+
+    JmpPatchRequestOffset (comp, jg_offset, comp->Size() + 1);
+    comp->mov<int8_t> ((int8_t*)&instance_->cmpr_flag_, (int8_t)FLAG_HIGH);
+    comp->jmp (0);
+    jg_offset = comp->Size() - sizeof (int32_t);
+
+    JmpPatchRequestOffset (comp, jl_offset, comp->Size() + 1);
+    comp->mov<int8_t> ((int8_t*)&instance_->cmpr_flag_, (int8_t)FLAG_LOW);
+    comp->jmp (0);
+    jl_offset = comp->Size() - sizeof (int32_t);
+
+    //! finally:
+    JmpPatchRequestOffset (comp, jl_offset, comp->Size() + 1);
+    JmpPatchRequestOffset (comp, jg_offset, comp->Size() + 1);
+    JmpPatchRequestOffset (comp, jmp_offset, comp->Size() + 1);
+}
+comp->inc  (&instance_->run_line_);
 FUNCTION_END
 
 FUNCTION_BEGIN (Jmp, 1, 0, ARG_LABEL)
@@ -580,7 +850,7 @@ comp->mov  (comp->r_rax, (int32_t)(void*)&VirtualProcessor_t::Jmp);
 comp->mov  (comp->r_rcx, (int32_t)(void*)this);
 comp->call (comp->r_rax);
 comp->jmp (0);
-JmpPatchRequest (comp, comp->Size() - 4, arg.arg1);
+JmpPatchRequestLine (comp, comp->Size() - 4, arg.arg1);
 FUNCTION_END
 
 FUNCTION_BEGIN (Jne, 1, 0, ARG_LABEL)
@@ -589,7 +859,7 @@ comp->mov  (comp->r_rcx, (int32_t)(void*)this);
 comp->call (comp->r_rax);
 comp->cmp (&instance_->cmpr_flag_, '\0');
 comp->jne (0);
-JmpPatchRequest (comp, comp->Size() - 4, arg.arg1);
+JmpPatchRequestLine (comp, comp->Size() - 4, arg.arg1);
 comp->inc  (&instance_->run_line_);
 FUNCTION_END
 
@@ -599,7 +869,7 @@ comp->mov  (comp->r_rcx, (int32_t)(void*)this);
 comp->call (comp->r_rax);
 comp->cmp (&instance_->cmpr_flag_, '\0');
 comp->je (0);
-JmpPatchRequest (comp, comp->Size() - 4, arg.arg1);
+JmpPatchRequestLine (comp, comp->Size() - 4, arg.arg1);
 comp->inc  (&instance_->run_line_);
 FUNCTION_END
 
@@ -609,7 +879,7 @@ comp->mov  (comp->r_rcx, (int32_t)(void*)this);
 comp->call (comp->r_rax);
 comp->cmp (&instance_->cmpr_flag_, '\0');
 comp->jg (0);
-JmpPatchRequest (comp, comp->Size() - 4, arg.arg1);
+JmpPatchRequestLine (comp, comp->Size() - 4, arg.arg1);
 comp->inc  (&instance_->run_line_);
 FUNCTION_END
 
@@ -619,7 +889,7 @@ comp->mov  (comp->r_rcx, (int32_t)(void*)this);
 comp->call (comp->r_rax);
 comp->cmp (&instance_->cmpr_flag_, '\0');
 comp->jge (0);
-JmpPatchRequest (comp, comp->Size() - 4, arg.arg1);
+JmpPatchRequestLine (comp, comp->Size() - 4, arg.arg1);
 comp->inc  (&instance_->run_line_);
 FUNCTION_END
 
@@ -629,7 +899,7 @@ comp->mov  (comp->r_rcx, (int32_t)(void*)this);
 comp->call (comp->r_rax);
 comp->cmp (&instance_->cmpr_flag_, '\0');
 comp->jl (0);
-JmpPatchRequest (comp, comp->Size() - 4, arg.arg1);
+JmpPatchRequestLine (comp, comp->Size() - 4, arg.arg1);
 comp->inc  (&instance_->run_line_);
 FUNCTION_END
 
@@ -639,7 +909,7 @@ comp->mov  (comp->r_rcx, (int32_t)(void*)this);
 comp->call (comp->r_rax);
 comp->cmp (&instance_->cmpr_flag_, '\0');
 comp->jle (0);
-JmpPatchRequest (comp, comp->Size() - 4, arg.arg1);
+JmpPatchRequestLine (comp, comp->Size() - 4, arg.arg1);
 comp->inc  (&instance_->run_line_);
 FUNCTION_END
 
@@ -656,7 +926,7 @@ comp->mov   (comp->r_rcx, (int32_t)(void*)this);
 comp->call  (comp->r_rax);
 comp->inc  (&instance_->run_line_);
 comp->callr (0);
-patch_jmp_.push_back (std::pair <int, int> (comp->Size() - 4, arg.arg1 + 1));
+JmpPatchRequestLine (comp, comp->Size() - 4, arg.arg1 + 1);
 FUNCTION_END
 
 FUNCTION_BEGIN (Decr, 3, 0, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG)

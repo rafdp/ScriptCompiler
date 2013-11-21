@@ -17,6 +17,7 @@ catch (ExceptionHandler& e) \
     CONS_EXCEPTION (expn_, "Parser crashed", ERROR_PARSER_CRASHED, e)
 
 #define MIN(a, b) (((a) > (b)) ? (b) : (a))
+#define MAX(a, b) (((a) < (b)) ? (b) : (a))
 
 
 bool isNum (std::string* str)
@@ -274,5 +275,11 @@ struct CallInfo_t
         output << s.retLine;
         return output;
     }
+};
+
+struct JmpPatchData_t
+{
+    size_t first, second;
+    bool offset;
 };
 

@@ -23,14 +23,15 @@ class VirtualProcessor_t
                           int error_mode,
                           std::string log);
     void PatchJmp (JitCompiler_t* compiler);
-    void JmpPatchRequest (JitCompiler_t* compiler, size_t offset, size_t line);
+    void JmpPatchRequestLine (JitCompiler_t* compiler, size_t offset, size_t line);
+    void JmpPatchRequestOffset (JitCompiler_t* compiler, size_t offset1, size_t offset2);
     RunInstanceDataHandler_t* instance_;
     exception_data* expn_;
     int error_mode_;
     FILE* log_;
     std::map<std::string, UserFunc_t>    regFuncs_;
     ErrorReturn_t currentReturn_;
-    std::vector<std::pair<int, int>> patch_jmp_;
+    std::vector<JmpPatchData_t> patch_jmp_;
 
 public:
 
@@ -266,7 +267,7 @@ void VirtualProcessor_t::PatchJmp (JitCompiler_t* compiler)
 
     STL_LOOP (it, patch_jmp_)
     {
-        int offset = 0 - (it->first - (int)instance_->func_offsets_[it->second]) - 5;
+        int offset = 0 - (it->first - (it->offset ? (it->second) : ((int)instance_->func_offsets_[it->second]))) - 5;
         for (size_t i = 0; i < sizeof (offset); i++)
         {
             (*mcode)[it->first + i] = (uint8_t (offset >> i * 8));
@@ -274,9 +275,14 @@ void VirtualProcessor_t::PatchJmp (JitCompiler_t* compiler)
     }
 }
 
-void VirtualProcessor_t::JmpPatchRequest (JitCompiler_t* compiler, size_t offset, size_t line)
+void VirtualProcessor_t::JmpPatchRequestLine (JitCompiler_t* compiler, size_t offset, size_t line)
 {
-    patch_jmp_.push_back (std::pair <int, int> (offset, line));
+    patch_jmp_.push_back ((JmpPatchData_t){offset, line, false});
+}
+
+void VirtualProcessor_t::JmpPatchRequestOffset (JitCompiler_t* compiler, size_t offset1, size_t offset2)
+{
+    patch_jmp_.push_back ((JmpPatchData_t){offset1, offset2, true});
 }
 
 void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string filename, int error_mode, std::string log)
@@ -413,8 +419,8 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
                     j++;
                 }
                 compiler->mov  (&instance_->run_line_, j + 1);
-                patch_jmp_.push_back (std::pair <int, int> (compiler->Size() + 1, j + 1));
                 compiler->jmp (0);
+                JmpPatchRequestLine (compiler, compiler->Size() - 4, j + 1);
             }
             else
                 need_realignment = true;
