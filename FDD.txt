@@ -4,33 +4,37 @@ Planned features:
 3.  SEH on MSVC or signal handling
 4.  Debug system
 5.  Standalone linker
-6.  Registers and stack on Jit
+6.  Registers on Jit
 7.  Separate compilation
 8.  Jit majority of cmds
 9.  Mingw64
 10. Integrate with Курс Горячево, add some personages
 11. Architecture for adding personages
 12. Integrate with КуМир
+13. Multithread error intersection fix (signal handling global var)
+14. Create different version of parser/runner with all symbols stored
+15. Custom debug window
+16. Stack on Jit
 
                         Risk/Knowledge
          +------------------------------------------>
          |                     |                    |
-         | 8                   | 1, 5, 7, 9, 12     |
-         |                     |                    |
+         | 8, 13, 15           | 1, 5, 7, 9, 12, 14 |
+         |                     | 16                 |
          |                     |                    |
          |                     |                    |
          |                     |                    |
          |                   3 |                  4 |
 Priority |_____________________|____________________|
          |                     |                    |
-         | 2, 4                | 3, 6, 10, 11       |
+         | 2                   | 3, 4, 6, 10, 11    |
          |                     |                    |
          |                     |                    |
          |                     |                    |
          |                     |                    |
          |                   2 |                  1 |
          |_____________________|____________________|
-	 v
+         v
 
 Square 1:
 
@@ -46,15 +50,19 @@ Next feature, based on results from the previous one:
 - Develop the base skeleton to simplify personage adding
 - (Optional) Develop a system of #defines to simplify personage adding even more
 
-3: (The following tips are made just for future redesign of the plan)
-- Check TXLib for clues for signal handling
-- (Alternatives) Evaluate pros and cons about Msvc SEH and Mingw signal handling
-- Change the Environment if needed
+3:
+- Implement custom signal handling functions (display some general info)
+- Register them using 'signal' function (signal.htm)
+- Global variable for more info about code execution
+- Dump function in RunInstanceHandler class to save in file 
 
-4: (The following tips are made just for future redesign of the plan)
-- Specification: step by step debugger, similar to ollydbg
-- (Alternatives) Jit debugging based on Int3 or MessageBox
-- (Alternatives) Debug info displayed in:   - logfile
-					    - Window, editbox with momentaneum changes
-					    - Simple popup window on each step (MessageBox)
+4: 
+- Message box contains line number, command on line with max specs, stack dump
+- Callback from jit to member function with no parameters, which calls MessageBox
+
+6: 
+- Implement proc_reg arg type
+- Implement map for proc regs (std::string -> const) and autofill
+- Implement ProcReg struct (CPURegisterInfo, size)
+- Implement functions using proc_reg (push, pop, ...) with all combinations
 
