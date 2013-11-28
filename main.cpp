@@ -11,7 +11,7 @@ void printHello (RunInstanceDataHandler_t*, void* pt)
 
 int main ()
 {
-    exception_data ex_data (10, "errors.txt");
+    exception_data ex_data (100, "errors.txt");
     try
     {
         ScriptCompiler_t comp ("Equation.txt", &ex_data);
@@ -20,9 +20,9 @@ int main ()
         VirtualProcessor_t proc (&ex_data);
         int data = 17;
         proc.RegFunc (UserFunc_t (printHello, &data), "printhello");
-        proc.RunScriptJit ("Equation.pcs");
+        //proc.RunScriptJit ("Equation.pcs");
         //proc.RunScriptJit ("test.pcs");
-        //proc.RunScript ("Equation.pcs");
+        proc.RunScript ("Equation.pcs");
     }
     catch (ExceptionHandler& ex)
     {printf ("Exception occurred\nCheck \"errors.txt\"");

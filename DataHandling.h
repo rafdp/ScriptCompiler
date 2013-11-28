@@ -242,8 +242,7 @@ RunInstanceDataHandler_t::RunInstanceDataHandler_t (std::string filename,
             std::string message ("function \"");
             message += userFuncs_[i];
             message += "\" has not been registered";
-            ExceptionHandler* e = new (expn) ExceptionHandler (E_NAT (message.c_str (), ERROR_NO_FUNC_IMPORT));
-            throw *e;
+            NAT_EXCEPTION (expn_, message.c_str (), ERROR_NO_FUNC_IMPORT);
         }
         else
         {

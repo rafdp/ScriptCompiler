@@ -397,8 +397,7 @@ void ScriptCompiler_t::Save ()
     FILE* save = fopen (saveFile.c_str (), "wb");
     if (!save)
     {
-        ExceptionHandler* e = new (expn_) ExceptionHandler (E_NAT ((std::string ("Unable to open file: ") + saveFile).c_str (), ERROR_SCRIPT_OPEN_FILE_SAVE));
-        throw *e;
+        NAT_EXCEPTION (expn_, (std::string ("Unable to open file: ") + saveFile).c_str (), ERROR_SCRIPT_OPEN_FILE_SAVE);
     }
 
     MapHeader maph = {KEY, VERSION};

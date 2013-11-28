@@ -54,13 +54,11 @@ ScriptLoader_t::ScriptLoader_t (std::string filename, exception_data* expn) :
     FILE* script = fopen (filename.c_str (), "rb");
     if (!script)
     {
-        ExceptionHandler* e = new (expn) ExceptionHandler (E_NAT ((std::string ("Unable to open file: ") + filename).c_str (), ERROR_SCRIPT_OPEN_FILE_CTOR));
-        throw *e;
+        NAT_EXCEPTION (expn, (std::string ("Unable to open file: ") + filename).c_str (), ERROR_SCRIPT_OPEN_FILE_CTOR);
     }
     if (!CheckHeader (script))
     {
-        ExceptionHandler* e = new (expn) ExceptionHandler (E_NAT ((std::string ("Invalid script file: ") + filename).c_str (), ERROR_INVALID_HEADER));
-        throw *e;
+        NAT_EXCEPTION (expn, (std::string ("Invalid script file: ") + filename).c_str (), ERROR_INVALID_HEADER);
     }
 
     FileHandler_t fileHandler = {script};

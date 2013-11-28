@@ -1,20 +1,9 @@
 
 #define RET_NO_ERRORS ErrorReturn_t (RET_SUCCESS)
 
-#define NAT_EXCEPTION(data, message, code) \
-{ \
-    ExceptionHandler* e_nat = new (data) ExceptionHandler (E_NAT ((message), (code))); \
-    throw *e_nat; \
-}
-
-#define CONS_EXCEPTION(data, message, code, old) \
-{ \
-    ExceptionHandler* ec = new (data) ExceptionHandler (E_CONS ((message), (code), (old).pt_)); \
-    throw *ec; \
-}
 #define CATCH_CONS(data, message, code) \
 catch (ExceptionHandler& e) \
-    CONS_EXCEPTION (expn_, "Parser crashed", ERROR_PARSER_CRASHED, e)
+    CONS_EXCEPTION (expn_, message, code, e)
 
 #define MIN(a, b) (((a) > (b)) ? (b) : (a))
 #define MAX(a, b) (((a) < (b)) ? (b) : (a))

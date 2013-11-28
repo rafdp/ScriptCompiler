@@ -235,7 +235,7 @@ void VirtualProcessor_t::RunScript (std::string filename, int error_mode, std::s
     }
     CATCH_CONS (instance_->expn_, "Virtual processor crashed", ERROR_VIRTUAL_PROC_CRASHED)
 
-    instance_->dataStack_.Dump ();
+    //instance_->dataStack_.Dump ();
 
     if (log_)
     {
