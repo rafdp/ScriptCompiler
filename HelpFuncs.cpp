@@ -9,6 +9,7 @@ catch (ExceptionHandler& e) \
 #define MAX(a, b) (((a) < (b)) ? (b) : (a))
 
 
+
 bool isNum (std::string* str)
 {
     bool first = true;
@@ -211,6 +212,7 @@ std::string GetAsmNumString (int val, const char* operand = "dword")
 {
     char val_[MAX_PATH] = "";
     itoa (val, val_, 16);
+
     std::string val_str;
     val_str += std::string (operand) + " (0" + val_ + "h)";
     return val_str;

@@ -1,6 +1,10 @@
 #ifndef CONSTS_H_INCLUDED
 #define CONSTS_H_INCLUDED
 
+int ErrorPrintfBox (HWND wnd, DWORD flags, const char* format, ...);
+int ErrorPrintfBox (const char* format, ...);
+void FillConstsMap (StrTo64Map_t* map);
+
 //#define nullptr NULL
 
 
@@ -68,7 +72,8 @@ enum ERRORS
     ERROR_INVALID_UNREF,                 //! 27
     ERROR_IMPORT_DLL_INVALID_STR,        //! 28
     ERROR_NOT_FOUND_DLL,                 //! 29
-    ERROR_NOT_FOUND_DLL_FUNC             //! 30
+    ERROR_NOT_FOUND_DLL_FUNC,            //! 30
+    ERROR_SCRIPT_FILE_NOT_FOUND          //! 31
 };
 
 enum PREDEFINED_CONSTS
