@@ -1,29 +1,6 @@
-var char, type_byte
-var word, type_word
-var dword, type_dword
-var qword, type_qword
+import "msvcrt.dll", "scanf _scanf" 
 
-mov char, 29
-mov word, 664
-mov dword, 607857
-mov qword, 4782568989985
-
-cmpr char, 700
-cmpr word, 700
-cmpr dword, 700
-cmpr qword, 700
-
-cmpr char, 29
-cmpr word, 664
-cmpr dword, 607857
-cmpr qword, 4782568989985
-
-cmpr char, qword
-cmpr word, dword
-cmpr dword, word
-cmpr qword, char
-
-mov qword, 2
-
-cmpr qword, char
-cmpr char, qword
+init_stack_dump_point
+push 0
+push "%s"
+jit_call_void _scanf

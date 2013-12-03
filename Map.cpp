@@ -143,6 +143,7 @@ void SetMapAssembler ()
 
 
 std::map<std::string, int> CMD_REG;
+std::map<int, std::string> CMD_REG_D;
 
 enum Registers
 {
@@ -206,6 +207,8 @@ void SetMapReg ()
     CMD_REG["rptrdword"] = REG_PTDWORD;
     CMD_REG["rptrqword"] = REG_PTQWORD;
 
+    STL_LOOP (i, CMD_REG) CMD_REG_D[i->second] = i->first;
+
     set = true;
 }
 
@@ -218,8 +221,10 @@ class AutoMapValuesInitialisator_t
     {
         SetMapAssembler ();
         SetMapReg ();
+        RegisterSignalHandlers ();
     }
 };
+
 AutoMapValuesInitialisator_t AutoMapValuesInitialisator;
 
 #endif

@@ -518,7 +518,7 @@ bool ScriptCompiler_t::AddName (std::string name, char flag, long long cmd, int 
                 userFuncs_[name] = userFuncs_.size () - 1;
                 break;
             case CMD_Var:
-                vars_[StrTo32Pair_t (name, func_level_)] = {vars_.size () - 1, -1, TYPE_QWORD};
+                vars_[StrTo32Pair_t (name, func_level_)] = {vars_.size () - 1, -1, TYPE_QWORD, nullptr};
                 break;
             case CMD_CFunc:
                 createdFuncs_[name] = line;

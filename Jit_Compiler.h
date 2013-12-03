@@ -135,8 +135,8 @@ class JitCompiler_t
         if (sizeof (T) == sizeof (int64_t))
         {
             //ErrorPrintfBox ("%d %s", __LINE__, __PRETTY_FUNCTION__);
-            man.EmitPush<int32_t> ((int64_t)imm >> (sizeof (int32_t)*8));
-            man.EmitPush<int32_t> ((int64_t)imm);
+            man.EmitPush<int32_t> ((int32_t)((int64_t)imm >> (sizeof (int32_t)*8)));
+            man.EmitPush<int32_t> ((int32_t)imm);
         }
         else man.EmitPush<T> (imm);
     }

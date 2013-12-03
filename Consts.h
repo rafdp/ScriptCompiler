@@ -68,7 +68,13 @@ enum ERRORS
     ERROR_INVALID_UNREF,                 //! 27
     ERROR_IMPORT_DLL_INVALID_STR,        //! 28
     ERROR_NOT_FOUND_DLL,                 //! 29
-    ERROR_NOT_FOUND_DLL_FUNC             //! 30
+    ERROR_NOT_FOUND_DLL_FUNC,            //! 30
+    ERROR_SIGNAL_ABORT,                  //! 31
+    ERROR_SIGNAL_FPE,                    //! 32
+    ERROR_SIGNAL_ILL,                    //! 33
+    ERROR_SIGNAL_INT,                    //! 34
+    ERROR_SIGNAL_SEGV,                   //! 35
+    ERROR_SIGNAL_TERM                    //! 36
 };
 
 enum PREDEFINED_CONSTS
@@ -103,9 +109,8 @@ enum ARG_TYPES
     ARG_FUNC_IT,        //! 10
     ARG_FUNC_MEMBER,    //! 11
     ARG_FUNC_MEMBER_IT, //! 12
-    ARG_PTR_UNREF,      //! 13
-    ARG_DLL_FUNC,       //! 14
-    ARG_ERROR,          //! 15
+    ARG_DLL_FUNC,       //! 13
+    ARG_ERROR,          //! 14
     ARG_UNREF_MASK = 0x80
 };
 
@@ -162,8 +167,22 @@ typedef StrTo64Map_t                              DllFuncsMap_t;
 typedef std::map<long long, void*>                ResolvedDllFuncsMap_t;
 
 
+
+void OnSigArgSwitch (std::string* error, char* flag, int64_t* arg);
+void OnSigEmitInfo (std::string* error);
+void OnSigAbort (int);
+void OnSigFpe (int);
+void OnSigIll (int);
+void OnSigInt (int);
+void OnSigSegv (int);
+void OnSigTerm (int);
+void RegisterSignalHandlers ();
+
+
 #include "Types.h"
 #include "Map.cpp"
 #include "RegInfo.h"
+
+
 
 #endif // CONSTS_H_INCLUDED

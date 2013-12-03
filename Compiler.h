@@ -14,7 +14,6 @@
 #include "Argument.h"
 #include "ScriptLoader.h"
 #include "DataHandling.h"
-#include "Consts.h"
 
 class VirtualProcessor_t
 {
@@ -34,6 +33,7 @@ class VirtualProcessor_t
     std::vector<JmpPatchData_t> patch_jmp_;
 
 public:
+    static VirtualProcessor_t* currentlyExecuting_;
 
     void RegFunc (UserFunc_t f, std::string name)
     {
@@ -97,7 +97,18 @@ public:
     FUNC_PRT (Lea)
     FUNC_PRT (Sqrt)
 #undef FUNC_PRT
+
+    friend void OnSigAbort (int);
+    friend void OnSigArgSwitch (std::string* error, char* flag, int64_t* arg);
+    friend void OnSigEmitInfo (std::string* error);
+    friend void OnSigFpe (int);
+    friend void OnSigIll (int);
+    friend void OnSigInt (int);
+    friend void OnSigSegv (int);
+    friend void OnSigTerm (int);
 };
+
+VirtualProcessor_t* VirtualProcessor_t::currentlyExecuting_ = NULL;
 
 VirtualProcessor_t::VirtualProcessor_t (exception_data* expn) :
     instance_      (nullptr),
@@ -111,6 +122,7 @@ VirtualProcessor_t::VirtualProcessor_t (exception_data* expn) :
 
 void VirtualProcessor_t::RunScript (std::string filename, int error_mode, std::string log)
 {
+    currentlyExecuting_ = this;
     std::map<int, std::string> checkIfError;
     checkIfError[MODE_LOG] = std::string ("check ") + log;
     checkIfError[MODE_PRINTF] = "check console or STD_OUTPUT_HANDLE redirection";
@@ -250,15 +262,19 @@ void VirtualProcessor_t::RunScript (std::string filename, int error_mode, std::s
     #undef HANDLE_CALL
 
     #undef FuncCase
+
+    currentlyExecuting_ = nullptr;
 }
 
 void VirtualProcessor_t::RunScriptJit (std::string filename, int error_mode, std::string log)
 {
+    currentlyExecuting_ = this;
     JitCompiler_t compiler;
     FillJitCompiler (&compiler, filename, error_mode, log);
     compiler.BuildAndRun ();
 
     delete instance_;
+    currentlyExecuting_ = nullptr;
 }
 
 void VirtualProcessor_t::PatchJmp (JitCompiler_t* compiler)
@@ -436,5 +452,9 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
 
     PatchJmp (compiler);
 }
+
+
+#include "SignalHandling.cpp"
+
 
 #include "Functions.h"

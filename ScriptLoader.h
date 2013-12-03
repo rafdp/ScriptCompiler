@@ -136,7 +136,7 @@ ScriptLoader_t::ScriptLoader_t (std::string filename, exception_data* expn) :
 bool ScriptLoader_t::CheckHeader (FILE* f)
 {
     static MapHeader headerGood = {KEY, VERSION};
-    MapHeader header = {};
+    MapHeader header = {0, 0};
     fread (&header, sizeof (MapHeader), 1, f);
     if (header != headerGood) return false;
     return true;

@@ -167,8 +167,8 @@ struct ExpectedArg_t
     ExpectedArg_t (int n_flag1, int n_flag2, ...)
     {
         va_list arg; va_start (arg, n_flag2);
-        for (int i = 0; i < n_flag1; i++) expFlag1.push_back (va_arg (arg, int));
-        for (int i = 0; i < n_flag2; i++) expFlag2.push_back (va_arg (arg, int));
+        for (int i = 0; i < n_flag1; i++) expFlag1.push_back (char(va_arg (arg, int)));
+        for (int i = 0; i < n_flag2; i++) expFlag2.push_back (char(va_arg (arg, int)));
         va_end (arg);
 
         if (n_flag1 == 0) expFlag1.push_back (ARG_NULL);
