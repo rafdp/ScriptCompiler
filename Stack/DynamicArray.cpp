@@ -119,7 +119,7 @@ T& Array<T, Size, Allocator>::operator[](int index)
     try
     {
         ok ();
-        return (T&) (Allocator::data[index * sizeof (T)]);
+        return reinterpret_cast<T&> (Allocator::data[index * sizeof (T)]);
     }
     CATCH_IN_FUNC_ERROR (Allocator::expn)
     CATCH_UNKNOWN_ERROR (Allocator::expn)
@@ -135,7 +135,7 @@ T& Array<T, Size, Allocator>::At(int index)
         {
             NAT_EXCEPTION (Allocator::expn, "Access violation: out of array range", Error_AccessViolation)
         }
-        else return (T&)(Allocator::data[index * sizeof (T)]);
+        else return reinterpret_cast<T&>(Allocator::data[index * sizeof (T)]);
     }
     CATCH_IN_FUNC_ERROR (Allocator::expn)
     CATCH_UNKNOWN_ERROR (Allocator::expn)

@@ -301,49 +301,53 @@ public:
     }
 
     //!////////////////////////////////////////////////////////
-    void operator++ ()
+    iterator& operator++ ()
     {
         try
         {
             ok();
             ++currPos_;
             ok();
+            return *this;
         }
         CATCH_IN_FUNC_ERROR (st_->expn)
         CATCH_UNKNOWN_ERROR (st_->expn)
     }
     //!////////////////////////////////////////////////////////
-    void operator++ (int)
+    iterator& operator++ (int)
     {
         try
         {
             ok();
             currPos_++;
             ok();
+            return *this;
         }
         CATCH_IN_FUNC_ERROR (st_->expn)
         CATCH_UNKNOWN_ERROR (st_->expn)
     }
     //!////////////////////////////////////////////////////////
-    void operator-- ()
+    iterator& operator-- ()
     {
         try
         {
             ok();
             --currPos_;
             ok();
+            return *this;
         }
         CATCH_IN_FUNC_ERROR (st_->expn)
         CATCH_UNKNOWN_ERROR (st_->expn)
     }
     //!////////////////////////////////////////////////////////
-    void operator-- (int)
+    iterator& operator-- (int)
     {
         try
         {
             ok();
             currPos_--;
             ok();
+            return *this;
         }
         CATCH_IN_FUNC_ERROR (st_->expn)
         CATCH_UNKNOWN_ERROR (st_->expn)

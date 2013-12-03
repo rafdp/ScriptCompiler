@@ -63,12 +63,12 @@ public:
             NAT_EXCEPTION (expn, "Data = nullptr, currSize != 0", Error_DataNullPtrValidSize)
     }
 
-    DynamicMem (exception_data* ex) :
+    DynamicMem (exception_data* exp) :
         currSize (Size),
         data (NULL),
         temp (NULL),
         maxElements (MaxBytes / sizeof(T)),
-        expn (ex)
+        expn (exp)
     {
         try
         {

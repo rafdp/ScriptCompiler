@@ -36,6 +36,8 @@ private:
     const char* file_;
 
     const ExceptionHandler* cause_;
+
+
 public:
     const ExceptionHandler* pt_;
     ExceptionHandler ();
@@ -50,6 +52,9 @@ public:
                       int                     line,
                       const char*             file);
 
+    ExceptionHandler (const ExceptionHandler& that);
+    ExceptionHandler& operator = (const ExceptionHandler& that);
+
     ~ExceptionHandler ();
     void WriteLog(exception_data* data) const;
     void* operator new(size_t s, exception_data* data);
@@ -57,6 +62,7 @@ public:
 
 class exception_data
 {
+    DISABLE_CLASS_COPY (exception_data)
     public:
         ExceptionHandler* allocatedMem_;
         int usedMem_;
@@ -83,7 +89,7 @@ class exception_data
                 usedMem_++;
                 availableMem_--;
 
-                return (void*)(allocatedMem_ + usedMem_ - 1);
+                return reinterpret_cast<void*>(allocatedMem_ + usedMem_ - 1);
             }
             else
             {
@@ -113,6 +119,27 @@ class exception_data
     }
 
 };
+
+ExceptionHandler::ExceptionHandler (const ExceptionHandler& that) :
+    message_ (that.message_),
+    error_code_ (that.error_code_),
+    line_   (that.line_),
+    file_   (that.file_),
+    cause_     (that.cause_),
+    pt_ (that.pt_)
+{
+}
+
+ExceptionHandler& ExceptionHandler::operator = (const ExceptionHandler& that)
+{
+    message_    = that.message_;
+    error_code_ = that.error_code_;
+    line_       = that.line_;
+    file_       = that.file_;
+    cause_      = that.cause_;
+    pt_         = that.pt_;
+    return *this;
+}
 
 ExceptionHandler::ExceptionHandler () :
     message_ (""),

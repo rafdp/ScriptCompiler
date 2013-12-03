@@ -9,14 +9,29 @@
 #include <assert.h>
 #include <math.h>
 #define nullptr NULL
+
+class NonCopiable_t
+{
+    NonCopiable_t (const NonCopiable_t&);
+    void operator = (const NonCopiable_t&);
+    public:
+    NonCopiable_t () {}
+};
+
+#define DISABLE_CLASS_COPY(type) \
+type (const type&); \
+type& operator = (const type&);
+
 #include "Stack/StackV2.h"
 #include "Consts.h"
 #include "ScriptLine.h"
 #include "CMD.h"
 #include "Argument.h"
 
-class ScriptCompiler_t
+class ScriptCompiler_t// : NonCopiable_t
 {
+    //DISABLE_CLASS_COPY (ScriptCompiler_t)
+
     void _in_clsf_arg (char* flag,
                        long long* arg,
                        bool error,
@@ -25,6 +40,7 @@ class ScriptCompiler_t
                        bool struct_ = false);
     int func_level_;
     int struct_func_level_;
+
     public:
     std::string                      file_;
     StrTo64Map_t                     consts_;
@@ -174,6 +190,14 @@ ScriptCompiler_t::ScriptCompiler_t (std::string filename, exception_data* expn) 
     FillConstsMap (&consts_);
 
     FILE* f = fopen (filename.c_str (), "r");
+
+    if (!f)
+    {
+        static std::string error ("ScriptCompiler_t::ScriptCompiler_t (std::string, exception_data*) File \"");
+        error += filename;
+        error += "\" not found";
+        NAT_EXCEPTION (expn_, error.c_str(), ERROR_SCRIPT_FILE_NOT_FOUND);
+    }
 
     #define CMD_CASE(name) case CMD_##name: name (cmd, arg, n_line); break;
 
