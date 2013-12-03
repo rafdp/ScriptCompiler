@@ -21,14 +21,10 @@ int main ()
         int data = 17;
         proc.RegFunc (UserFunc_t (printHello, &data), "printhello");
         //proc.RunScriptJit ("Equation.pcs");
-<<<<<<< HEAD
         proc.RunScript ("test.pcs");
         //proc.RunScript ("Equation.pcs");
-=======
         //proc.RunScriptJit ("test.pcs");
-        ErrorPrintfBox ("HELLO");
         proc.RunScript ("Equation.pcs");
->>>>>>> 088a638320211ae077108fe24981aee5df13712c
     }
     catch (ExceptionHandler& ex)
     {

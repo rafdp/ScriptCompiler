@@ -3,7 +3,6 @@
 
 int ErrorPrintfBox (HWND wnd, DWORD flags, const char* format, ...);
 int ErrorPrintfBox (const char* format, ...);
-void FillConstsMap (StrTo64Map_t* map);
 
 //#define nullptr NULL
 
@@ -73,16 +72,13 @@ enum ERRORS
     ERROR_IMPORT_DLL_INVALID_STR,        //! 28
     ERROR_NOT_FOUND_DLL,                 //! 29
     ERROR_NOT_FOUND_DLL_FUNC,            //! 30
-<<<<<<< HEAD
     ERROR_SIGNAL_ABORT,                  //! 31
     ERROR_SIGNAL_FPE,                    //! 32
     ERROR_SIGNAL_ILL,                    //! 33
     ERROR_SIGNAL_INT,                    //! 34
     ERROR_SIGNAL_SEGV,                   //! 35
-    ERROR_SIGNAL_TERM                    //! 36
-=======
+    ERROR_SIGNAL_TERM,                    //! 36
     ERROR_SCRIPT_FILE_NOT_FOUND          //! 31
->>>>>>> 088a638320211ae077108fe24981aee5df13712c
 };
 
 enum PREDEFINED_CONSTS
@@ -173,6 +169,9 @@ typedef std::vector<DllPair_t>                    DllVector_t;
 typedef std::map<std::string, DllVector_t>        DllImportMap_t;
 typedef StrTo64Map_t                              DllFuncsMap_t;
 typedef std::map<long long, void*>                ResolvedDllFuncsMap_t;
+
+
+void FillConstsMap (StrTo64Map_t* map);
 
 
 

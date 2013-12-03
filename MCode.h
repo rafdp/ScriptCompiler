@@ -16,7 +16,7 @@ class MCode_t
     {
         for (int i = 0; i < sizeof (Ret_Type (Strct_Type::*)); i++)
         {
-            buffer_.push_back (reinterpret_cast<uint8_t> (reinterpret_cast<int32_t>((reinterpret_cast<void*>(val) >> i * 8))));
+            buffer_.push_back (reinterpret_cast<uint8_t> (reinterpret_cast<int32_t>(reinterpret_cast<void*>(val)) >> i * 8));
         }
     }
 
@@ -25,7 +25,7 @@ class MCode_t
     {
         for (int i = 0; i < sizeof (void*); i++)
         {
-            buffer_.push_back (reinterpret_cast<uint8_t> (reinterpret_cast<int32_t>(val) >> i * 8));
+            buffer_.push_back ((uint8_t)(reinterpret_cast<int32_t>(val) >> i * 8));
 
         }
     }
