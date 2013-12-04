@@ -7,7 +7,8 @@ enum ErrorsArray
     Error_FailedPop,
     Error_EmptyArray,
     Error_AccessViolation,
-    Error_InvalidAllocator
+    Error_InvalidAllocator,
+    Error_ResizeFailed
 };
 
 template <typename T, int Size, class Allocator>
@@ -66,7 +67,10 @@ void Array<T, Size, Allocator>::push_back(const T& elem)
     {
         ok ();
         Allocator::GetMem (1);
-        new (Allocator::data + currSize_ * sizeof (T)) T (elem);
+        if (Allocator::currSize > currSize_)
+            new (Allocator::data + currSize_ * sizeof (T)) T (elem);
+        else
+            NAT_EXCEPTION (Allocator::expn, "Resizing failed", Error_ResizeFailed)
         currSize_++;
         ok ();
     }
@@ -81,7 +85,10 @@ void Array<T, Size, Allocator>::push_back(T* elements, size_t size)
     {
         ok ();
         Allocator::GetMem (size);
-        for (int i = 0; i < size; i ++) new (Allocator::data + (currSize_ + i) * sizeof (T)) T (elements[i]);
+        if (Allocator::currSize > currSize_)
+            for (int i = 0; i < size; i ++) new (Allocator::data + (currSize_ + i) * sizeof (T)) T (elements[i]);
+        else
+            NAT_EXCEPTION (Allocator::expn, "Resizing failed", Error_ResizeFailed)
         currSize_ += size;
         ok ();
     }
@@ -104,6 +111,8 @@ T Array<T, Size, Allocator>::pop()
             ok ();
             T obj = Allocator::data[(currSize_ - 1) * sizeof (T)];
             Allocator::FreeMem(1);
+            if (Allocator::currSize > currSize_)
+                NAT_EXCEPTION (Allocator::expn, "Resizing failed", Error_ResizeFailed)
             currSize_--;
             ok ();
             return obj;

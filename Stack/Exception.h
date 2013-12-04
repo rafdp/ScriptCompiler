@@ -10,6 +10,19 @@
 #include <conio.h>
 #include <new>
 
+class NonCopiable_t
+{
+    NonCopiable_t (const NonCopiable_t&);
+    void operator = (const NonCopiable_t&);
+    public:
+    NonCopiable_t () {}
+};
+
+#define DISABLE_CLASS_COPY(type) \
+type (const type&); \
+type& operator = (const type&);
+
+
 #define E_NAT(message, code) (message), (code), __LINE__, __FILE__
 #define E_CONS(message, code, pt) (message), (code), (pt), __LINE__, __FILE__
 
@@ -67,6 +80,7 @@ class exception_data
         ExceptionHandler* allocatedMem_;
         int usedMem_;
         int availableMem_;
+        std::string filename_;
         FILE* log_;
 
     void* mem_alloc (size_t size = 0)
@@ -103,19 +117,34 @@ class exception_data
         allocatedMem_ (NULL),
         usedMem_      (0),
         availableMem_ (0),
-        log_          (fopen (filename, "w"))
+        filename_     (filename),
+        log_          (nullptr)
     {
         mem_alloc (size);
     }
 
     ~exception_data ()
     {
-        fclose (log_);
-        if (allocatedMem_ == NULL) return;
-        delete[] allocatedMem_;
-        allocatedMem_ = NULL;
+        CloseLog ();
+        if (allocatedMem_ != NULL)
+        {
+            delete[] allocatedMem_;
+            allocatedMem_ = NULL;
+        }
         usedMem_ = 0;
         availableMem_ = 0;
+    }
+
+    void OpenLog ()
+    {
+        if (log_) fclose (log_);
+        log_ = fopen (filename_.c_str(), "w");
+    }
+
+    void CloseLog ()
+    {
+        if (log_) fclose (log_);
+        log_ = nullptr;
     }
 
 };
@@ -185,8 +214,8 @@ void ExceptionHandler::WriteLog(exception_data* data) const
 {
     if (!data->log_)
     {
-        printf ("Log file not initialised\n");
-        return;
+        //printf ("Log file not initialised\n");
+        data->OpenLog ();
     }
     fprintf (data->log_, "Exception with error code %d,\n", error_code_);
     fprintf (data->log_, "error message: \"%s\"\n", message_);
@@ -194,9 +223,9 @@ void ExceptionHandler::WriteLog(exception_data* data) const
     if (cause_ != NULL)
     {
         fprintf (data->log_, "caused by:\n");
-        cause_->WriteLog(data);
+        cause_->WriteLog (data);
     }
-    if (data->log_) fclose(data->log_);
+    if (data->log_) data->CloseLog ();
 }
 
 void* ExceptionHandler::operator new (size_t, exception_data* data)

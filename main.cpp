@@ -24,7 +24,7 @@ int main ()
         proc.RunScript ("test.pcs");
         //proc.RunScript ("Equation.pcs");
         //proc.RunScriptJit ("test.pcs");
-        proc.RunScript ("Equation.pcs");
+        //proc.RunScript ("Equation.pcs");
     }
     catch (ExceptionHandler& ex)
     {

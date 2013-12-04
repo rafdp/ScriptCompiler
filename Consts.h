@@ -22,11 +22,10 @@ int ErrorPrintfBox (HWND wnd, DWORD flags, const char* format, ...)
     char str[MAX_BUFFER] = "";
 
     va_list arg; va_start (arg, format);
-    int n = _vsnprintf (str, sizeof (str) - 1, format, arg);
+    _vsnprintf (str, sizeof (str) - 1, format, arg);
     va_end (arg);
 
-    MessageBoxA (wnd, str, "", flags);
-    return n;
+    return MessageBoxA (wnd, str, "", flags);;
 }
 
 int ErrorPrintfBox (const char* format, ...)
@@ -36,11 +35,10 @@ int ErrorPrintfBox (const char* format, ...)
     char str[MAX_BUFFER] = "";
 
     va_list arg; va_start (arg, format);
-    int n = _vsnprintf (str, sizeof (str) - 1, format, arg);
+    _vsnprintf (str, sizeof (str) - 1, format, arg);
     va_end (arg);
 
-    MessageBoxA (GetForegroundWindow (), str, "", 0);
-    return n;
+    return MessageBoxA (GetForegroundWindow (), str, "", 0);;
 }
 
 
@@ -77,8 +75,9 @@ enum ERRORS
     ERROR_SIGNAL_ILL,                    //! 33
     ERROR_SIGNAL_INT,                    //! 34
     ERROR_SIGNAL_SEGV,                   //! 35
-    ERROR_SIGNAL_TERM,                    //! 36
-    ERROR_SCRIPT_FILE_NOT_FOUND          //! 31
+    ERROR_SIGNAL_TERM,                   //! 36
+    ERROR_FATAL,                         //! 37
+    ERROR_SCRIPT_FILE_NOT_FOUND          //! 38
 };
 
 enum PREDEFINED_CONSTS

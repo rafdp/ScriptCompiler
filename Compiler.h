@@ -188,61 +188,75 @@ void VirtualProcessor_t::RunScript (std::string filename, int error_mode, std::s
         for ( ; instance_->run_line_ < instance_->funcs_.size (); instance_->run_line_ ++)
         {
             //printf ("LINE %d\n", instance_->run_line_);
-            if (instance_->funcs_[instance_->run_line_].flag == CMD_Func)
+            try
             {
-                switch (instance_->funcs_[instance_->run_line_].cmd)
+                if (instance_->funcs_[instance_->run_line_].flag == CMD_Func)
                 {
-                    FuncCase (RebuildVar)
-                    FuncCase (Push)
-                    FuncCase (Pop)
-                    FuncCase (Mov)
-                    FuncCase (Print)
-                    FuncCase (Cmpr)
-                    FuncCase (Jmp)
-                    FuncCase (Je)
-                    FuncCase (Jne)
-                    FuncCase (Ja)
-                    FuncCase (Jae)
-                    FuncCase (Jb)
-                    FuncCase (Jbe)
-                    FuncCase (Ret)
-                    FuncCase (Call)
-                    FuncCase (Decr)
-                    FuncCase (InitStackDumpPoint)
-                    FuncCase (JIT_Printf)
-                    FuncCase (JIT_Call_Void)
-                    FuncCase (JIT_Call_DWord)
-                    FuncCase (JIT_Call_QWord)
-                    FuncCase (Add)
-                    FuncCase (Sub)
-                    FuncCase (Mul)
-                    FuncCase (Div)
-                    FuncCase (Adds)
-                    FuncCase (Subs)
-                    FuncCase (Muls)
-                    FuncCase (Divs)
-                    FuncCase (Lea)
-                    FuncCase (Sqrt)
+                    switch (instance_->funcs_[instance_->run_line_].cmd)
+                    {
+                        FuncCase (RebuildVar)
+                        FuncCase (Push)
+                        FuncCase (Pop)
+                        FuncCase (Mov)
+                        FuncCase (Print)
+                        FuncCase (Cmpr)
+                        FuncCase (Jmp)
+                        FuncCase (Je)
+                        FuncCase (Jne)
+                        FuncCase (Ja)
+                        FuncCase (Jae)
+                        FuncCase (Jb)
+                        FuncCase (Jbe)
+                        FuncCase (Ret)
+                        FuncCase (Call)
+                        FuncCase (Decr)
+                        FuncCase (InitStackDumpPoint)
+                        FuncCase (JIT_Printf)
+                        FuncCase (JIT_Call_Void)
+                        FuncCase (JIT_Call_DWord)
+                        FuncCase (JIT_Call_QWord)
+                        FuncCase (Add)
+                        FuncCase (Sub)
+                        FuncCase (Mul)
+                        FuncCase (Div)
+                        FuncCase (Adds)
+                        FuncCase (Subs)
+                        FuncCase (Muls)
+                        FuncCase (Divs)
+                        FuncCase (Lea)
+                        FuncCase (Sqrt)
+                    }
+                }
+                else
+                if (instance_->funcs_[instance_->run_line_].flag == CMD_UFunc)
+                {
+                    instance_->CallImportFunc (instance_->funcs_[instance_->run_line_].cmd);
+                    CHECK_ERROR (instance_->userFuncs_[instance_->funcs_[instance_->run_line_].cmd].c_str ())
+                }
+                else
+                if (instance_->funcs_[instance_->run_line_].flag == CMD_CFunc)
+                {
+                    while (instance_->run_line_ < instance_->funcs_.size ())
+                    {
+                        if (instance_->funcs_[instance_->run_line_].cmd == CMD_Ret) break;
+                        //if (instance_->run_line_ > 60) ErrorPrintfBox ("%d", instance_->funcs_[instance_->run_line_].cmd);
+                        instance_->run_line_++;
+                    }
                 }
             }
-            else
-            if (instance_->funcs_[instance_->run_line_].flag == CMD_UFunc)
+            catch (ExceptionHandler& ex)
             {
-                instance_->CallImportFunc (instance_->funcs_[instance_->run_line_].cmd);
-                CHECK_ERROR (instance_->userFuncs_[instance_->funcs_[instance_->run_line_].cmd].c_str ())
-            }
-            else
-            if (instance_->funcs_[instance_->run_line_].flag == CMD_CFunc)
-            {
-                while (instance_->run_line_ < instance_->funcs_.size ())
-                {
-                    if (instance_->funcs_[instance_->run_line_].cmd == CMD_Ret) break;
-                    //if (instance_->run_line_ > 60) ErrorPrintfBox ("%d", instance_->funcs_[instance_->run_line_].cmd);
-                    instance_->run_line_++;
-                }
-            }
+                ex.WriteLog (expn_);
 
-            //printf ("LINE %d\n", instance_->run_line_);
+                int res = ErrorPrintfBox (GetForegroundWindow (),
+                                          MB_YESNO,
+                                          "Error occurred. Check %s\nProceed with execution?",
+                                          expn_->filename_.c_str());
+                if (res == IDNO)
+                {
+                    CONS_EXCEPTION (expn_, "Fatal error", ERROR_FATAL, ex)
+                }
+            }
         }
     }
     CATCH_CONS (instance_->expn_, "Virtual processor crashed", ERROR_VIRTUAL_PROC_CRASHED)

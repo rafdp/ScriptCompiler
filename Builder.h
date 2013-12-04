@@ -10,18 +10,6 @@
 #include <math.h>
 #define nullptr NULL
 
-class NonCopiable_t
-{
-    NonCopiable_t (const NonCopiable_t&);
-    void operator = (const NonCopiable_t&);
-    public:
-    NonCopiable_t () {}
-};
-
-#define DISABLE_CLASS_COPY(type) \
-type (const type&); \
-type& operator = (const type&);
-
 #include "Stack/StackV2.h"
 #include "Consts.h"
 #include "ScriptLine.h"
