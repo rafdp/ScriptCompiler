@@ -282,13 +282,18 @@ void VirtualProcessor_t::RunScript (std::string filename, int error_mode, std::s
 
 void VirtualProcessor_t::RunScriptJit (std::string filename, int error_mode, std::string log)
 {
-    currentlyExecuting_ = this;
-    JitCompiler_t compiler;
-    FillJitCompiler (&compiler, filename, error_mode, log);
-    compiler.BuildAndRun ();
+    try
+    {
+        currentlyExecuting_ = this;
+        JitCompiler_t compiler;
+        FillJitCompiler (&compiler, filename, error_mode, log);
+        compiler.BuildAndRun ();
 
-    delete instance_;
-    currentlyExecuting_ = nullptr;
+        delete instance_;
+        currentlyExecuting_ = nullptr;
+
+    }
+    CATCH_CONS (instance_->expn_, "Virtual processor crashed", ERROR_VIRTUAL_PROC_CRASHED)
 }
 
 void VirtualProcessor_t::PatchJmp (JitCompiler_t* compiler)
@@ -379,89 +384,87 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
     compiler->push (compiler->r_rbp);
     compiler->mov (compiler->r_rbp, compiler->r_rsp);
 
-    try
+    for (size_t i = 0; i < instance_->funcs_.size (); i ++)
     {
-        for (size_t i = 0; i < instance_->funcs_.size (); i ++)
+
+        instance_->func_offsets_[i] = compiler->Size () + 1;
+
+        if (instance_->funcs_[i].flag == CMD_Func)
         {
-            instance_->func_offsets_[i] = compiler->Size () + 1;
-
-            if (instance_->funcs_[i].flag == CMD_Func)
+            if (need_realignment)
             {
-                if (need_realignment)
-                {
-                    compiler->mov (&instance_->run_line_, i);
-                    need_realignment = false;
-                }
-                switch (instance_->funcs_[i].cmd)
-                {
-                    FuncCase (RebuildVar)
-                    FuncCase (Push)
-                    FuncCase (Pop)
-                    FuncCase (Mov)
-                    FuncCase (Print)
-                    FuncCase (Cmpr)
-                    FuncCase (Jmp)
-                    FuncCase (Je)
-                    FuncCase (Jne)
-                    FuncCase (Ja)
-                    FuncCase (Jae)
-                    FuncCase (Jb)
-                    FuncCase (Jbe)
-                    FuncCase (Ret)
-                    FuncCase (Call)
-                    FuncCase (Decr)
-                    FuncCase (InitStackDumpPoint)
-                    FuncCase (JIT_Printf)
-                    FuncCase (JIT_Call_Void)
-                    FuncCase (JIT_Call_DWord)
-                    FuncCase (JIT_Call_QWord)
-                    FuncCase (Add)
-                    FuncCase (Sub)
-                    FuncCase (Mul)
-                    FuncCase (Div)
-                    FuncCase (Adds)
-                    FuncCase (Subs)
-                    FuncCase (Muls)
-                    FuncCase (Divs)
-                    FuncCase (Lea)
-                    FuncCase (Sqrt)
-                    default:
-                        compiler->inc  (&instance_->run_line_);
-                        break;
-                }
+                compiler->mov (&instance_->run_line_, i);
+                need_realignment = false;
             }
-            else
-            if (instance_->funcs_[i].flag == CMD_UFunc)
+            switch (instance_->funcs_[i].cmd)
             {
-                compiler->push (instance_->callImportFuncs_[instance_->funcs_[i].cmd].ptr);
-                compiler->push (instance_);
-                compiler->mov  (compiler->r_rax, instance_->callImportFuncs_[instance_->funcs_[i].cmd].func);
-                compiler->call (compiler->r_rax);
-                compiler->inc  (&instance_->run_line_);
+                FuncCase (RebuildVar)
+                FuncCase (Push)
+                FuncCase (Pop)
+                FuncCase (Mov)
+                FuncCase (Print)
+                FuncCase (Cmpr)
+                FuncCase (Jmp)
+                FuncCase (Je)
+                FuncCase (Jne)
+                FuncCase (Ja)
+                FuncCase (Jae)
+                FuncCase (Jb)
+                FuncCase (Jbe)
+                FuncCase (Ret)
+                FuncCase (Call)
+                FuncCase (Decr)
+                FuncCase (InitStackDumpPoint)
+                FuncCase (JIT_Printf)
+                FuncCase (JIT_Call_Void)
+                FuncCase (JIT_Call_DWord)
+                FuncCase (JIT_Call_QWord)
+                FuncCase (Add)
+                FuncCase (Sub)
+                FuncCase (Mul)
+                FuncCase (Div)
+                FuncCase (Adds)
+                FuncCase (Subs)
+                FuncCase (Muls)
+                FuncCase (Divs)
+                FuncCase (Lea)
+                FuncCase (Sqrt)
+                default:
+                    compiler->inc  (&instance_->run_line_);
+                    break;
             }
-            else
-            if (instance_->funcs_[i].flag == CMD_CFunc)
-            {
-                size_t j = i;
-                while (j < instance_->funcs_.size ())
-                {
-                    if (instance_->funcs_[j].cmd == CMD_Ret) break;
-                    j++;
-                }
-                compiler->mov  (&instance_->run_line_, j + 1);
-                compiler->jmp (0);
-                JmpPatchRequestLine (compiler, compiler->Size() - 4, j + 1);
-            }
-            else
-                need_realignment = true;
-                //compiler->inc  (&instance_->run_line_);
-
-            //printf ("LINE %d\n", i);
         }
+        else
+        if (instance_->funcs_[i].flag == CMD_UFunc)
+        {
+            compiler->push (instance_->callImportFuncs_[instance_->funcs_[i].cmd].ptr);
+            compiler->push (instance_);
+            compiler->mov  (compiler->r_rax, instance_->callImportFuncs_[instance_->funcs_[i].cmd].func);
+            compiler->call (compiler->r_rax);
+            compiler->inc  (&instance_->run_line_);
+        }
+        else
+        if (instance_->funcs_[i].flag == CMD_CFunc)
+        {
+            size_t j = i;
+            while (j < instance_->funcs_.size ())
+            {
+                if (instance_->funcs_[j].cmd == CMD_Ret) break;
+                j++;
+            }
+            compiler->mov  (&instance_->run_line_, j + 1);
+            compiler->jmp (0);
+            JmpPatchRequestLine (compiler, compiler->Size() - 4, j + 1);
+        }
+        else
+            need_realignment = true;
+            //compiler->inc  (&instance_->run_line_);
+
+        //printf ("LINE %d\n", i);
     }
-    CATCH_CONS (instance_->expn_, "Virtual processor crashed", ERROR_VIRTUAL_PROC_CRASHED)
     compiler->mov (compiler->r_rsp, compiler->r_rbp);
     compiler->pop (compiler->r_rbp);
+    //compiler->int3();
     compiler->retn ();
 
     PatchJmp (compiler);

@@ -137,6 +137,7 @@ class CmdEmitter_t
 
 class InstructionManager_t
 {
+public:
     CmdEmitter_t emitter_;
     Instruction_t inMov_RM_Imm_8,
                   inMov_RM_Imm,
@@ -204,7 +205,7 @@ class InstructionManager_t
                   inJle_Rel,
                   inJg_Rel;
 
-public:
+
     InstructionManager_t () :
         emitter_          (),
         inMov_RM_Imm_8    ({0xC6}),

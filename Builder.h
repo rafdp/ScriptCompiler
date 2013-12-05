@@ -8,6 +8,8 @@
 #include <vector>
 #include <assert.h>
 #include <math.h>
+#include <stdexcept>
+#include <signal.h>
 #define nullptr NULL
 
 #include "Stack/StackV2.h"

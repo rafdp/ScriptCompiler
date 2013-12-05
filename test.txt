@@ -1,6 +1,4 @@
-import "msvcrt.dll", "scanf _scanf" 
+var hello, type_qword
+var bye, type_dword
 
-init_stack_dump_point
-push 0
-push "%s"
-jit_call_void _scanf
+mov hello, 0

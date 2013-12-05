@@ -127,16 +127,17 @@ void SetMapAssembler ()
 
     STL_LOOP (i, CMD_A) CMD_D[i->second] = i->first;
 
-    ARG_D[ARG_NULL]       = "none";
-    ARG_D[ARG_NUM]        = "num";
-    ARG_D[ARG_REG]        = "reg";
-    ARG_D[ARG_VAR]        = "var";
-    ARG_D[ARG_LABEL]      = "label";
-    ARG_D[ARG_STR]        = "str";
-    ARG_D[ARG_FUNC]       = "func";
-    ARG_D[ARG_ERROR]      = "error";
-    ARG_D[ARG_VAR_MEMBER] = "var_member";
-    ARG_D[ARG_DLL_FUNC]   = "dll_func";
+    ARG_D[ARG_NULL]        = "none";
+    ARG_D[ARG_NUM]         = "num";
+    ARG_D[ARG_REG]         = "reg";
+    ARG_D[ARG_VAR]         = "var";
+    ARG_D[ARG_LABEL]       = "label";
+    ARG_D[ARG_STR]         = "str";
+    ARG_D[ARG_FUNC]        = "func";
+    ARG_D[ARG_FUNC_MEMBER] = "member_func";
+    ARG_D[ARG_ERROR]       = "error";
+    ARG_D[ARG_VAR_MEMBER]  = "var_member";
+    ARG_D[ARG_DLL_FUNC]    = "dll_func";
 
     set = true;
 }

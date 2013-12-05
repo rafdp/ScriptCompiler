@@ -26,9 +26,10 @@ enum RMModes
 
 class JitCompiler_t
 {
+    public:
     InstructionManager_t man;
 
-    public:
+
 
     CPURegisterInfo_t r_rax,
                       r_rcx,

@@ -493,7 +493,7 @@ if ($ isNum (arg.flag2) || $ isStr (arg.flag2))
             comp->mov<int32_t> (comp->r_rbx, comp->r_rax);
             comp->add<int32_t> (comp->r_rbx, sizeof (int32_t));
             comp->mov<int32_t> (&comp->r_rax, (int32_t)argN);
-            comp->mov<int32_t> (&comp->r_rbx, (int32_t)(argN >> (sizeof (int32_t)*8)));
+            //comp->mov<int32_t> (&comp->r_rbx, (int32_t)(argN >> (sizeof (int32_t)*8)));
             break;
     }
 }
@@ -514,6 +514,7 @@ else
 
     comp->pop<int32_t> (comp->r_rcx);
 
+
     if (size1 > sizeof (DWORD) && size2 > sizeof (DWORD))
     {
         comp->mov<int32_t> (comp->r_rdx, comp->r_rcx);
@@ -525,25 +526,26 @@ else
         comp->mov<int32_t> (comp->r_rbx, &comp->r_rbx);
         comp->mov<int32_t> (&comp->r_rdx, comp->r_rbx);
     }
-
-    switch (size1)
+    if (size1 != size2)
     {
-        case sizeof (int8_t):
-            comp->mov<int8_t> (&comp->r_rcx, 0);
-            break;
-        case sizeof (int16_t):
-            comp->mov<int16_t> (&comp->r_rcx, 0);
-            break;
-        case sizeof (int32_t):
-            comp->mov<int32_t> (&comp->r_rcx, 0);
-            break;
-        case sizeof (int64_t):
-            comp->mov<int32_t> (&comp->r_rcx, 0);
-            comp->mov<int32_t> (comp->r_rbx, comp->r_rcx);
-            comp->add<int32_t> (comp->r_rbx, sizeof (int32_t));
-            comp->mov<int32_t> (&comp->r_rbx, 0);
-            break;
-
+        switch (size1)
+        {
+            case sizeof (int8_t):
+                comp->mov<int8_t> (&comp->r_rcx, 0);
+                break;
+            case sizeof (int16_t):
+                comp->mov<int16_t> (&comp->r_rcx, 0);
+                break;
+            case sizeof (int32_t):
+                comp->mov<int32_t> (&comp->r_rcx, 0);
+                break;
+            case sizeof (int64_t):
+                comp->mov<int32_t> (comp->r_rbx, comp->r_rcx);
+                comp->add<int32_t> (comp->r_rbx, sizeof (int32_t));
+                comp->mov<int32_t> (&comp->r_rcx, 0);
+                comp->mov<int32_t> (&comp->r_rbx, 0);
+                break;
+        }
     }
 
     switch (MIN (size1, size2))

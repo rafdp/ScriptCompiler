@@ -41,8 +41,8 @@ class MCode_t
 
     void AddToTop (uint8_t val)
     {
-        //*(buffer_.rbegin ()) += val;
-        *(uint8_t*)(buffer_.data () + buffer_.size () - 1) += val;
+        *(buffer_.rbegin ()) += val;
+        //*(uint8_t*)(buffer_.data () + buffer_.size () - 1) += val;
     }
 
     void BuildAndRun ()
@@ -53,8 +53,11 @@ class MCode_t
         //VirtualProtect (func, buffer_.size (), PAGE_EXECUTE_READWRITE, nullptr);
         //for (size_t i = 0; i < buffer_.size (); i++) printf ("%02X ", buffer_[i]);
         //printf ("\n");
+        //ErrorPrintfBox ("A %x %x\n", this, &buffer_);
         ((void (*) ())func) ();
+        //ErrorPrintfBox ("B %x %x\n", this, &buffer_);
         delete [] func;
+        //ErrorPrintfBox ("C %x %x\n", this, &buffer_);
         func = nullptr;
         buffer_.clear ();
     }

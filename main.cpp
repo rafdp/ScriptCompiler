@@ -21,19 +21,22 @@ int main ()
         int data = 17;
         proc.RegFunc (UserFunc_t (printHello, &data), "printhello");
         //proc.RunScriptJit ("Equation.pcs");
-        proc.RunScript ("test.pcs");
+        //proc.RunScript ("test.pcs");
         //proc.RunScript ("Equation.pcs");
-        //proc.RunScriptJit ("test.pcs");
-        //proc.RunScript ("Equation.pcs");
+        proc.RunScriptJit ("test.pcs");
     }
     catch (ExceptionHandler& ex)
     {
         printf ("Exception occurred\nCheck \"errors.txt\"");
         ex.WriteLog (&ex_data);
     }
-    catch (std::logic_error err)
+    catch (std::exception err)
     {
         printf ("Exception occurred: %s\n", err.what ());
+    }
+    catch (...)
+    {
+        printf ("Exception occurred\n");
     }
 }
 
@@ -76,4 +79,15 @@ push newvar.yo.nigga
 print PRINT_STRING, "\n"
 
 call  newvar.Leave
+
+mov D, B
+    mul D, B
+
+    var temp, type_qword
+
+    mov temp, A
+    mul temp, C
+    mul temp, FOUR
+
+    sub D, temp
 **/
