@@ -126,7 +126,7 @@ _BUILD_CASE_FUNC (Import)
                 arg.flag2 != ARG_STR, "import")
 
     int num = 0;
-    STL_LOOP (i, dllImportMap_) num += i->second.size ();
+    STL_LOOP (i, dllImportMap_) num += (int)i->second.size ();
 
     std::string funcName (strings_[arg.arg2].begin (),
                           strings_[arg.arg2].begin () +

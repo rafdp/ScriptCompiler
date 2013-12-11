@@ -70,7 +70,7 @@ public:
 
     long long GetMemberVar (long long arg)
     {
-        short typeCode = MemberVarType (arg);
+        short typeCode = (short) MemberVarType (arg);
         switch (typeCode)
         {
             case TYPE_BYTE:
@@ -111,7 +111,7 @@ public:
 
     void SetMemberVar (long long arg, long long val)
     {
-        short typeCode = MemberVarType (arg);
+        short typeCode = (short) MemberVarType (arg);
 
         switch (typeCode)
         {

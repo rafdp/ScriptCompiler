@@ -25,7 +25,7 @@ class MCode_t
     {
         for (int i = 0; i < sizeof (void*); i++)
         {
-            buffer_.push_back ((uint8_t)(reinterpret_cast<int32_t>(val) >> i * 8));
+            buffer_.push_back ((uint8_t)((int64_t)(val) >> i * 8));
 
         }
     }
@@ -54,7 +54,7 @@ class MCode_t
         //for (size_t i = 0; i < buffer_.size (); i++) printf ("%02X ", buffer_[i]);
         //printf ("\n");
         //ErrorPrintfBox ("A %x %x\n", this, &buffer_);
-        ((void (*) ())func) ();
+        (reinterpret_cast<void (*)()> (func)) ();
         //ErrorPrintfBox ("B %x %x\n", this, &buffer_);
         delete [] func;
         //ErrorPrintfBox ("C %x %x\n", this, &buffer_);

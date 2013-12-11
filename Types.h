@@ -174,7 +174,7 @@ public:
             {
                 if (*flag & ARG_UNREF_MASK)
                 {
-                    if (typeCode == TYPE_PTR) *flag = ARG_UNREF_MASK | ARG_VAR_MEMBER;
+                    if (typeCode == TYPE_PTR) *flag = (char) (ARG_UNREF_MASK | ARG_VAR_MEMBER);
                     else NAT_EXCEPTION (expn_, "Invalid use of '*'", ERROR_INVALID_UNREF)
                 }
                 else *flag = ARG_VAR_MEMBER;

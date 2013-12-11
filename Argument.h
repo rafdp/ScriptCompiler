@@ -51,7 +51,7 @@ void Arg_t::SetArg (char* flag, long long* arg, std::string* param)
         return;
     }
 
-    if ( (*param)[0] == '*') {*flag |= ARG_UNREF_MASK; param->erase (0, 1);}
+    if ( (*param)[0] == '*') {*flag |= (char) ARG_UNREF_MASK; param->erase (0, 1);}
 
     auto reg = CMD_REG.find (*param);
     if (reg != CMD_REG.end ())
@@ -127,7 +127,7 @@ void SetStringBadArg (std::string* errorMessage, Arg_t arg_got, ExpectedArg_t ex
     }
 
     *errorMessage += std::string ("received:\n    ") + ARG_D[arg_got.flag1];
-    int arg1size = ARG_D[arg_got.flag1].size ();
+    int arg1size = (int) ARG_D[arg_got.flag1].size ();
     for (int i = 0; i < LEN - arg1size; i++) *errorMessage += ' ';
     *errorMessage += ARG_D[arg_got.flag2];
 }

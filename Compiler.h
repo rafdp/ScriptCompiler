@@ -22,8 +22,8 @@ class VirtualProcessor_t
                           int error_mode,
                           std::string log);
     void PatchJmp (JitCompiler_t* compiler);
-    void JmpPatchRequestLine (JitCompiler_t* compiler, size_t offset, size_t line);
-    void JmpPatchRequestOffset (JitCompiler_t* compiler, size_t offset1, size_t offset2);
+    void JmpPatchRequestLine (JitCompiler_t* compiler, int64_t offset, int64_t line);
+    void JmpPatchRequestOffset (JitCompiler_t* compiler, int64_t offset1, int64_t offset2);
     RunInstanceDataHandler_t* instance_;
     exception_data* expn_;
     int error_mode_;
@@ -286,8 +286,11 @@ void VirtualProcessor_t::RunScriptJit (std::string filename, int error_mode, std
     {
         currentlyExecuting_ = this;
         JitCompiler_t compiler;
+        ErrorPrintfBox ("About fill compiler");
         FillJitCompiler (&compiler, filename, error_mode, log);
+        ErrorPrintfBox ("About run");
         compiler.BuildAndRun ();
+        ErrorPrintfBox ("exiting");
 
         delete instance_;
         currentlyExecuting_ = nullptr;
@@ -302,20 +305,21 @@ void VirtualProcessor_t::PatchJmp (JitCompiler_t* compiler)
 
     STL_LOOP (it, patch_jmp_)
     {
-        int offset = 0 - (it->first - (it->offset ? (it->second) : ((int)instance_->func_offsets_[it->second]))) - 5;
+        int64_t offset = (int)(0 - (it->first - (it->offset ? (it->second) : ((int)instance_->func_offsets_[it->second]))) - 9);
         for (size_t i = 0; i < sizeof (offset); i++)
         {
             (*mcode)[it->first + i] = (uint8_t (offset >> i * 8));
         }
     }
+    ErrorPrintfBox ("patch ok");
 }
 
-void VirtualProcessor_t::JmpPatchRequestLine (JitCompiler_t* compiler, size_t offset, size_t line)
+void VirtualProcessor_t::JmpPatchRequestLine (JitCompiler_t* compiler, int64_t offset, int64_t line)
 {
     patch_jmp_.push_back ((JmpPatchData_t){offset, line, false});
 }
 
-void VirtualProcessor_t::JmpPatchRequestOffset (JitCompiler_t* compiler, size_t offset1, size_t offset2)
+void VirtualProcessor_t::JmpPatchRequestOffset (JitCompiler_t* compiler, int64_t offset1, int64_t offset2)
 {
     patch_jmp_.push_back ((JmpPatchData_t){offset1, offset2, true});
 }
@@ -368,7 +372,7 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
 
     #define FuncCase(name) \
     case CMD_##name: \
-        HANDLE_CALL (Jit_##name, Jit_##name (compiler, i)); \
+        HANDLE_CALL (Jit_##name, Jit_##name (compiler, (int)i)); \
         break;
 
 
@@ -380,14 +384,14 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
     //Print();
     //((void(*)())&int3)();
 
-    compiler->int3();
+    //compiler->int3();
     compiler->push (compiler->r_rbp);
     compiler->mov (compiler->r_rbp, compiler->r_rsp);
 
     for (size_t i = 0; i < instance_->funcs_.size (); i ++)
     {
-
-        instance_->func_offsets_[i] = compiler->Size () + 1;
+        //ErrorPrintfBox ("Line %d", i);
+        instance_->func_offsets_[i] = (int) (compiler->Size () + 1);
 
         if (instance_->funcs_[i].flag == CMD_Func)
         {
@@ -466,7 +470,7 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
     compiler->pop (compiler->r_rbp);
     //compiler->int3();
     compiler->retn ();
-
+    ErrorPrintfBox ("About to patch");
     PatchJmp (compiler);
 }
 

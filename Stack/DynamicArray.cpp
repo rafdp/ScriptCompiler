@@ -193,7 +193,7 @@ int Array<T, Size, Allocator>::GetSize()
     try
     {
         ok ();
-        return currSize_;
+        return (int)currSize_;
     }
     CATCH_IN_FUNC_ERROR (Allocator::expn)
     CATCH_UNKNOWN_ERROR (Allocator::expn)

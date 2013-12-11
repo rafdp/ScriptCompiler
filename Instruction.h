@@ -1,5 +1,7 @@
 #ifndef INSTRUCTION_H_INCLUDED
 #define INSTRUCTION_H_INCLUDED
+uint8_t BuildModRM (const uint8_t mod, uint8_t destination, uint8_t source);
+uint8_t BuildSIB (const uint8_t scale, uint8_t destination, uint8_t source);
 
 struct CPURegisterInfo_t
 {
@@ -184,7 +186,6 @@ public:
                   inSbb_RM_R,
                   inIMul_R_RM_Imm_8,
                   inIMul_R_RM_Imm,
-                  inIMul_R_RM_8,
                   inIMul_R_RM,
                   inIDiv_RM_8,
                   inIDiv_RM,
@@ -274,8 +275,11 @@ public:
         inJg_Rel          ({0x0F, 0x8F})
     {}
 
-#define CHECK_SIZE_16(T) if (sizeof (T) == sizeof (short)) Emit66hPrefix ();
-#define CHECK_SIZE_16_NO8(T) if (sizeof (T) == sizeof (short)) Emit66hPrefix ();
+#define CHECK_SIZE_16(T) if (sizeof (T) == sizeof (int16_t)) Emit66hPrefix ();
+
+#define CHECK_SIZE_64(T) if (sizeof (T) == sizeof (int64_t)) EmitRexWPrefix ();
+
+#define CHECK_SIZE_16_NO8(T) if (sizeof (T) == sizeof (int16_t)) Emit66hPrefix ();
 
 /*
 #define CHECK_SIZE_16(T) if (sizeof (T) == sizeof (char)) ErrorPrintfBox ("char in %s", __PRETTY_FUNCTION__);
@@ -287,6 +291,7 @@ public:
     void EmitMov (CPURegisterInfo_t regDest, CPURegisterInfo_t regSrc)
     {
         CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (SIZED_CMD (inMov_RM_R),
                                   regDest,
                                   regSrc);
@@ -296,6 +301,7 @@ public:
     void EmitMov (CPURegisterInfo_t regDest, CPURegisterInfo_t* regSrc)
     {
         CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (SIZED_CMD (inMov_R_RM),
                                   MODE_ADDRESS,
                                   *regSrc,
@@ -306,53 +312,59 @@ public:
     void EmitMov (CPURegisterInfo_t* regDest, CPURegisterInfo_t regSrc)
     {
         CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (SIZED_CMD (inMov_RM_R),
                                   MODE_ADDRESS,
                                   *regDest,
                                   regSrc);
     }
 
-    template <typename T>
-    void EmitMov (T* ptr, T imm)
+    template <typename T_Mem, typename T>
+    void EmitMov (T_Mem* ptr, T imm)
     {
-        CHECK_SIZE_16 (T)
+        CHECK_SIZE_16 (T_Mem)
+        CHECK_SIZE_64 (T_Mem)
         emitter_.EmitInstruction (SIZED_CMD (inMov_RM_Imm),
                                   MODE_ADDRESS,
                                   OFF, 0);
-        emitter_.EmitData ((int32_t) ptr);
-        emitter_.EmitData (imm);
+        emitter_.EmitData (reinterpret_cast<int64_t> (ptr));
+        emitter_.EmitData (sizeof (T_Mem) > sizeof (int32_t) ? (int32_t) imm : (T_Mem) imm);
     }
 
-    template <typename T>
+    template <typename T_Reg, typename T>
     void EmitMov (CPURegisterInfo_t regDest, T imm)
     {
-        CHECK_SIZE_16 (T)
+        CHECK_SIZE_16 (T_Reg)
+        CHECK_SIZE_64 (T_Reg)
         emitter_.EmitInstruction (SIZED_CMD (inMov_RM_Imm), MODE_REGISTER, regDest, 0);
-        emitter_.EmitData (imm);
+        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ? (int32_t) imm : (T_Reg) imm);
     }
 
-    template <typename T>
+    template <typename T_Reg, typename T>
     void EmitMov (CPURegisterInfo_t* regDest, T imm)
     {
-        CHECK_SIZE_16 (T)
+        CHECK_SIZE_16 (T_Reg)
+        CHECK_SIZE_64 (T_Reg)
         emitter_.EmitInstruction (SIZED_CMD (inMov_RM_Imm), MODE_ADDRESS, *regDest, 0);
-        emitter_.EmitData (imm);
+        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ? (int32_t) imm : (T_Reg) imm);
     }
 
     template <typename T>
     void EmitMov (T* pointer, CPURegisterInfo_t regSrc)
     {
         CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (SIZED_CMD (inMov_RM_R), MODE_ADDRESS, OFF, regSrc);
-        emitter_.EmitData ((int32_t) pointer);
+        emitter_.EmitData (reinterpret_cast<int64_t> (pointer));
     }
 
     template <typename T>
     void EmitMov (CPURegisterInfo_t regDest, T* pointer)
     {
         CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (SIZED_CMD (inMov_R_RM), MODE_ADDRESS, OFF, regDest);
-        emitter_.EmitData ((int32_t) pointer);
+        emitter_.EmitData (reinterpret_cast<int64_t> (pointer));
     }
 
     template <typename T>
@@ -367,13 +379,14 @@ public:
     {
         CHECK_SIZE_16_NO8 (T)
         emitter_.EmitInstruction (inPush_RM, MODE_ADDRESS, OFF, 6);
-        emitter_.EmitData ((int32_t) mem);
+        emitter_.EmitData (reinterpret_cast<int32_t> (mem));
     }
 
     template <typename T = int>
     void EmitPush (CPURegisterInfo_t reg)
     {
         CHECK_SIZE_16_NO8 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (inPush_RM, reg, 6);
     }
 
@@ -381,6 +394,7 @@ public:
     void EmitPushf ()
     {
         CHECK_SIZE_16_NO8 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (inPushf);
     }
 
@@ -389,6 +403,7 @@ public:
     void EmitPop (CPURegisterInfo_t reg)
     {
         CHECK_SIZE_16_NO8 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (inPop_RM, reg, 0);
     }
 
@@ -396,6 +411,7 @@ public:
     void EmitPopf ()
     {
         CHECK_SIZE_16_NO8 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (inPopf);
     }
 
@@ -404,10 +420,11 @@ public:
     void EmitCall (CPURegisterInfo_t reg)
     {
         CHECK_SIZE_16_NO8 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (inCall_RM, reg, 2);
     }
 
-    void EmitCallr (int32_t rel)
+    void EmitCallr (int64_t rel)
     {
         emitter_.EmitInstruction (inCall_Rel, rel);
     }
@@ -416,8 +433,9 @@ public:
     void EmitCall (T* ptr)
     {
         CHECK_SIZE_16_NO8 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (inCall_RM, MODE_ADDRESS, OFF, 2);
-        emitter_.EmitData ((int32_t) ptr);
+        emitter_.EmitData (reinterpret_cast<int64_t> (ptr));
     }
 
     void EmitRetn ()
@@ -432,26 +450,29 @@ public:
         fclose (f);
     }
 
-    template <typename T>
+    template <typename T_Reg, typename T>
     void EmitAdd (CPURegisterInfo_t regDest, T data)
     {
-        CHECK_SIZE_16 (T)
+        CHECK_SIZE_16 (T_Reg)
+        CHECK_SIZE_64 (T_Reg)
         emitter_.EmitInstruction (SIZED_CMD (inAdd_RM_Imm), regDest, 0);
-        emitter_.EmitData (data);
+        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ? (int32_t) data : (T_Reg) data);
     }
 
-    template <typename T>
+    template <typename T_Reg, typename T>
     void EmitAdd (CPURegisterInfo_t* regDest, T data)
     {
-        CHECK_SIZE_16 (T)
+        CHECK_SIZE_16 (T_Reg)
+        CHECK_SIZE_64 (T_Reg)
         emitter_.EmitInstruction (SIZED_CMD (inAdd_RM_Imm), MODE_ADDRESS, *regDest, 0);
-        emitter_.EmitData (data);
+        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ? (int32_t) data : (T_Reg) data);
     }
 
     template <typename T = int>
     void EmitAddF (CPURegisterInfo_t regDest, int8_t data)
     {
         CHECK_SIZE_16_NO8 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (inAdd_RM_ImmF, regDest, 0);
         emitter_.EmitData (data);
     }
@@ -460,14 +481,16 @@ public:
     void EmitAdd (CPURegisterInfo_t regDest, T* src)
     {
         CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (SIZED_CMD (inAdd_R_RM), MODE_ADDRESS, OFF, regDest);
-        emitter_.EmitData ((int32_t) src);
+        emitter_.EmitData (reinterpret_cast<int64_t> (src));
     }
 
     template <typename T>
     void EmitAdd (CPURegisterInfo_t regDest, CPURegisterInfo_t* regSrc)
     {
         CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (SIZED_CMD (inAdd_R_RM), MODE_ADDRESS, *regSrc, regDest);
     }
 
@@ -475,6 +498,7 @@ public:
     void EmitAdd (CPURegisterInfo_t* regDest, CPURegisterInfo_t regSrc)
     {
         CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (SIZED_CMD (inAdd_RM_R), MODE_ADDRESS, *regDest, regSrc);
     }
 
@@ -482,30 +506,34 @@ public:
     void EmitAdd (T* dest, CPURegisterInfo_t regSrc)
     {
         CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (SIZED_CMD (inAdd_RM_R), MODE_ADDRESS, OFF, regSrc);
-        emitter_.EmitData ((int32_t) dest);
+        emitter_.EmitData (reinterpret_cast<int64_t> (dest));
     }
 
-    template <typename T>
+    template <typename T_Reg, typename T>
     void EmitAdc (CPURegisterInfo_t regDest, T data)
     {
-        CHECK_SIZE_16 (T)
+        CHECK_SIZE_16 (T_Reg)
+        CHECK_SIZE_64 (T_Reg)
         emitter_.EmitInstruction (SIZED_CMD (inAdc_RM_Imm), regDest, 2);
-        emitter_.EmitData (data);
+        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ? (int32_t) data : (T_Reg) data);
     }
 
-    template <typename T>
+    template <typename T_Reg, typename T>
     void EmitAdc (CPURegisterInfo_t* regDest, T data)
     {
-        CHECK_SIZE_16 (T)
+        CHECK_SIZE_16 (T_Reg)
+        CHECK_SIZE_64 (T_Reg)
         emitter_.EmitInstruction (SIZED_CMD (inAdc_RM_Imm), MODE_ADDRESS, *regDest, 2);
-        emitter_.EmitData (data);
+        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ? (int32_t) data : (T_Reg) data);
     }
 
     template <typename T = int>
     void EmitAdcF (CPURegisterInfo_t regDest, int8_t data)
     {
         CHECK_SIZE_16_NO8 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (inAdc_RM_ImmF, regDest, 2);
         emitter_.EmitData (data);
     }
@@ -514,14 +542,16 @@ public:
     void EmitAdc (CPURegisterInfo_t regDest, T* src)
     {
         CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (SIZED_CMD (inAdc_R_RM), MODE_ADDRESS, OFF, regDest);
-        emitter_.EmitData ((int32_t) src);
+        emitter_.EmitData (reinterpret_cast<int64_t> (src));
     }
 
     template <typename T>
     void EmitAdc (CPURegisterInfo_t regDest, CPURegisterInfo_t* regSrc)
     {
         CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (SIZED_CMD (inAdc_R_RM), MODE_ADDRESS, *regSrc, regDest);
     }
 
@@ -529,6 +559,7 @@ public:
     void EmitAdc (CPURegisterInfo_t* regDest, CPURegisterInfo_t regSrc)
     {
         CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (SIZED_CMD (inAdc_RM_R), MODE_ADDRESS, *regDest, regSrc);
     }
 
@@ -536,46 +567,52 @@ public:
     void EmitAdc (T* dest, CPURegisterInfo_t regSrc)
     {
         CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (SIZED_CMD (inAdc_RM_R), MODE_ADDRESS, OFF, regSrc);
-        emitter_.EmitData ((int32_t) dest);
+        emitter_.EmitData (reinterpret_cast<int64_t> (dest));
     }
 
-    template <typename T>
+    template <typename T_Reg, typename T>
     void EmitSub (CPURegisterInfo_t regDest, T data)
     {
-        CHECK_SIZE_16 (T)
+        CHECK_SIZE_16 (T_Reg)
+        CHECK_SIZE_64 (T_Reg)
         emitter_.EmitInstruction (SIZED_CMD (inSub_RM_Imm), regDest, 5);
-        emitter_.EmitData (data);
+        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ? (int32_t) data : (T_Reg) data);
     }
 
-    template <typename T>
+    template <typename T_Reg, typename T>
     void EmitSub (CPURegisterInfo_t* regDest, T data)
     {
-        CHECK_SIZE_16 (T)
+        CHECK_SIZE_16 (T_Reg)
+        CHECK_SIZE_64 (T_Reg)
         emitter_.EmitInstruction (SIZED_CMD (inSub_RM_Imm), MODE_ADDRESS, *regDest, 5);
-        emitter_.EmitData (data);
+        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ? (int32_t) data : (T_Reg) data);
     }
 
     template <typename T = int>
     void EmitSubF (CPURegisterInfo_t regDest, int8_t data)
     {
         CHECK_SIZE_16_NO8 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (inSub_RM_ImmF, regDest, 5);
-        emitter_.EmitData ((int32_t) data);
+        emitter_.EmitData (data);
     }
 
     template <typename T>
     void EmitSub (CPURegisterInfo_t regDest, T* src)
     {
         CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (SIZED_CMD (inSub_R_RM), MODE_ADDRESS, OFF, regDest);
-        emitter_.EmitData ((int32_t) src);
+        emitter_.EmitData (reinterpret_cast<int64_t> (src));
     }
 
     template <typename T>
     void EmiSub (CPURegisterInfo_t regDest, CPURegisterInfo_t* regSrc)
     {
         CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (SIZED_CMD (inSub_R_RM), MODE_ADDRESS, *regSrc, regDest);
     }
 
@@ -583,6 +620,7 @@ public:
     void EmitSub (CPURegisterInfo_t* regDest, CPURegisterInfo_t regSrc)
     {
         CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (SIZED_CMD (inSub_RM_R), MODE_ADDRESS, *regDest, regSrc);
     }
 
@@ -590,30 +628,34 @@ public:
     void EmitSub (T* dest, CPURegisterInfo_t regSrc)
     {
         CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (SIZED_CMD (inSub_RM_R), MODE_ADDRESS, OFF, regSrc);
-        emitter_.EmitData ((int32_t) dest);
+        emitter_.EmitData (reinterpret_cast<int64_t> (dest));
     }
 
-    template <typename T>
+    template <typename T_Reg, typename T>
     void EmitSbb (CPURegisterInfo_t regDest, T data)
     {
-        CHECK_SIZE_16 (T)
+        CHECK_SIZE_16 (T_Reg)
+        CHECK_SIZE_64 (T_Reg)
         emitter_.EmitInstruction (SIZED_CMD (inSbb_RM_Imm), regDest, 3);
-        emitter_.EmitData (data);
+        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ? (int32_t) data : (T_Reg) data);
     }
 
-    template <typename T>
+    template <typename T_Reg, typename T>
     void EmitSbb (CPURegisterInfo_t* regDest, T data)
     {
-        CHECK_SIZE_16 (T)
+        CHECK_SIZE_16 (T_Reg)
+        CHECK_SIZE_64 (T_Reg)
         emitter_.EmitInstruction (SIZED_CMD (inSbb_RM_Imm), MODE_ADDRESS, *regDest, 3);
-        emitter_.EmitData (data);
+        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ? (int32_t) data : (T_Reg) data);
     }
 
     template <typename T = int>
     void EmitSbbF (CPURegisterInfo_t regDest, int8_t data)
     {
         CHECK_SIZE_16_NO8 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (inSbb_RM_ImmF, regDest, 3);
         emitter_.EmitData (data);
     }
@@ -622,14 +664,16 @@ public:
     void EmitSbb (CPURegisterInfo_t regDest, T* src)
     {
         CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (SIZED_CMD (inSbb_R_RM), MODE_ADDRESS, OFF, regDest);
-        emitter_.EmitData ((int32_t) src);
+        emitter_.EmitData (reinterpret_cast<int64_t> (src));
     }
 
     template <typename T>
     void EmitSbb (CPURegisterInfo_t regDest, CPURegisterInfo_t* regSrc)
     {
         CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (SIZED_CMD (inSbb_R_RM), MODE_ADDRESS, *regSrc, regDest);
     }
 
@@ -637,6 +681,7 @@ public:
     void EmitSbb (CPURegisterInfo_t* regDest, CPURegisterInfo_t regSrc)
     {
         CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (SIZED_CMD (inSbb_RM_R), MODE_ADDRESS, *regDest, regSrc);
     }
 
@@ -644,30 +689,34 @@ public:
     void EmitSbb (T* dest, CPURegisterInfo_t regSrc)
     {
         CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (SIZED_CMD (inSbb_RM_R), MODE_ADDRESS, OFF, regSrc);
-        emitter_.EmitData ((int32_t) dest);
+        emitter_.EmitData (reinterpret_cast<int64_t> (dest));
     }
 
-    template <typename T, typename T_reg>
+    template <typename T_Reg, typename T>
     void EmitMul (CPURegisterInfo_t regDest, CPURegisterInfo_t regSrc, T data)
     {
-        CHECK_SIZE_16 (T_reg)
+        CHECK_SIZE_16 (T_Reg)
+        CHECK_SIZE_64 (T_Reg)
         emitter_.EmitInstruction (SIZED_CMD (inIMul_R_RM_Imm), regDest, regSrc);
-        emitter_.EmitData ((int32_t) data);
+        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ? (int32_t) data : (T_Reg) data);
     }
 
     template <typename T>
     void EmitMul (CPURegisterInfo_t regDest, T* src)
     {
         CHECK_SIZE_16_NO8 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (inIMul_R_RM, MODE_ADDRESS, OFF, regDest);
-        emitter_.EmitData ((int32_t) src);
+        emitter_.EmitData (reinterpret_cast<int64_t> (src));
     }
 
     template <typename T = int>
     void EmitMul (CPURegisterInfo_t regDest, CPURegisterInfo_t regSrc)
     {
         CHECK_SIZE_16_NO8 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (inIMul_R_RM, regDest, regSrc);
     }
 
@@ -675,6 +724,7 @@ public:
     void EmitDiv (CPURegisterInfo_t regSrc)
     {
         CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (SIZED_CMD (inIDiv_RM), regSrc, 7);
     }
 
@@ -682,22 +732,25 @@ public:
     void EmitDiv (T* ptr)
     {
         CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (SIZED_CMD (inIDiv_RM), MODE_ADDRESS, OFF, 7);
-        emitter_.EmitData ((int32_t) ptr);
+        emitter_.EmitData (reinterpret_cast<int64_t> (ptr));
     }
 
     template <typename T>
     void EmitInc (T* ptr)
     {
         CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (SIZED_CMD (inInc_RM), MODE_ADDRESS, OFF, 0);
-        emitter_.EmitData ((int32_t) ptr);
+        emitter_.EmitData (reinterpret_cast<int64_t> (ptr));
     }
 
     template <typename T = int>
     void EmitInc (CPURegisterInfo_t regSrc)
     {
         CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (SIZED_CMD (inInc_RM), MODE_REGISTER, regSrc, 0);
     }
 
@@ -705,6 +758,7 @@ public:
     void EmitCmp (CPURegisterInfo_t regDest, CPURegisterInfo_t regSrc)
     {
         CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (SIZED_CMD (inCmp_RM_R), MODE_REGISTER, regDest, regSrc);
     }
 
@@ -712,14 +766,16 @@ public:
     void EmitCmp (T* pointer, CPURegisterInfo_t regSrc)
     {
         CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (SIZED_CMD (inCmp_RM_R), MODE_ADDRESS, OFF, regSrc);
-        emitter_.EmitData ((int32_t) pointer);
+        emitter_.EmitData (reinterpret_cast<int64_t> (pointer));
     }
 
     template <typename T>
     void EmitCmp (CPURegisterInfo_t* regDest, CPURegisterInfo_t regSrc)
     {
         CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (SIZED_CMD (inCmp_RM_R), MODE_ADDRESS, *regDest, regSrc);
     }
 
@@ -727,40 +783,45 @@ public:
     void EmitCmp (CPURegisterInfo_t regDest, T* pointer)
     {
         CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (SIZED_CMD (inCmp_R_RM), MODE_ADDRESS, OFF, regDest);
-        emitter_.EmitData ((int32_t) pointer);
+        emitter_.EmitData (reinterpret_cast<int64_t> (pointer));
     }
 
     template <typename T>
     void EmitCmp (CPURegisterInfo_t regDest, CPURegisterInfo_t* regSrc)
     {
         CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (SIZED_CMD (inCmp_R_RM), MODE_ADDRESS, *regSrc, regDest);
     }
 
-    template <typename T>
-    void EmitCmp (T* ptr, T imm)
+    template <typename T_Mem, typename T>
+    void EmitCmp (T_Mem* ptr, T imm)
     {
-        CHECK_SIZE_16 (T)
+        CHECK_SIZE_16 (T_Mem)
+        CHECK_SIZE_64 (T_Mem)
         emitter_.EmitInstruction (SIZED_CMD (inCmp_RM_Imm), MODE_ADDRESS, OFF, 7);
-        emitter_.EmitData ((int32_t)ptr);
-        emitter_.EmitData (imm);
+        emitter_.EmitData (reinterpret_cast<int64_t> (ptr));
+        emitter_.EmitData (sizeof (T_Mem) > sizeof (int32_t) ? (int32_t) imm : (T_Mem) imm);
     }
 
-    template <typename T>
+    template <typename T_Reg, typename T>
     void EmitCmp (CPURegisterInfo_t* reg, T imm)
     {
-        CHECK_SIZE_16 (T)
+        CHECK_SIZE_16 (T_Reg)
+        CHECK_SIZE_64 (T_Reg)
         emitter_.EmitInstruction (SIZED_CMD (inCmp_RM_Imm), MODE_ADDRESS, *reg, 7);
-        emitter_.EmitData (imm);
+        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ? (int32_t) imm : (T_Reg) imm);
     }
 
-    template <typename T>
+    template <typename T_Reg, typename T>
     void EmitCmp (CPURegisterInfo_t reg, T imm)
     {
-        CHECK_SIZE_16 (T)
+        CHECK_SIZE_16 (T_Reg)
+        CHECK_SIZE_64 (T_Reg)
         emitter_.EmitInstruction (SIZED_CMD (inCmp_RM_Imm), MODE_REGISTER, reg, 7);
-        emitter_.EmitData (imm);
+        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ? (int32_t) imm : (T_Reg) imm);
     }
 
 
@@ -768,8 +829,9 @@ public:
     void EmitCmpF (T* ptr, int8_t imm)
     {
         CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (inCmp_RM_ImmF, MODE_ADDRESS, OFF, 7);
-        emitter_.EmitData ((int32_t)ptr);
+        emitter_.EmitData (reinterpret_cast<int64_t> (ptr));
         emitter_.EmitData (imm);
     }
 
@@ -777,59 +839,60 @@ public:
     void EmitCmpF (CPURegisterInfo_t* reg, int8_t imm)
     {
         CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (inCmp_RM_ImmF, MODE_ADDRESS, *reg, 7);
         emitter_.EmitData (imm);
     }
 
 
-    void EmitJmp (int32_t rel)
+    void EmitJmp (int64_t rel)
     {
         emitter_.EmitInstruction (inJmp_Rel, rel);
     }
 
-    void EmitJl (int32_t rel)
+    void EmitJl (int64_t rel)
     {
         emitter_.EmitInstruction (inJl_Rel, rel);
     }
 
-    void EmitJge (int32_t rel)
+    void EmitJge (int64_t rel)
     {
         emitter_.EmitInstruction (inJge_Rel, rel);
     }
 
-    void EmitJe (int32_t rel)
+    void EmitJe (int64_t rel)
     {
         emitter_.EmitInstruction (inJe_Rel, rel);
     }
 
-    void EmitJne (int32_t rel)
+    void EmitJne (int64_t rel)
     {
         emitter_.EmitInstruction (inJne_Rel, rel);
     }
 
-    void EmitJle (int32_t rel)
+    void EmitJle (int64_t rel)
     {
         emitter_.EmitInstruction (inJle_Rel, rel);
     }
 
-    void EmitJg (int32_t rel)
+    void EmitJg (int64_t rel)
     {
         emitter_.EmitInstruction (inJg_Rel, rel);
     }
 
-    void EmitRexW ()
+    void EmitRexWPrefix ()
     {
-        emitter_.EmitData ((int8_t) 0x48);
+        emitter_.EmitData ('\x48');
     }
 
     void Emit66hPrefix ()
     {
-        emitter_.EmitData ((int8_t) 0x66);
+        emitter_.EmitData ('\x66');
     }
 
     void EmitInt3 ()
     {
-        emitter_.EmitData ((uint8_t) 0xCC);
+        emitter_.EmitData ('\xCC');
     }
 
     void BuildAndRun ()

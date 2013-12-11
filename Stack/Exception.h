@@ -89,7 +89,7 @@ class exception_data
         {
             allocatedMem_ = new ExceptionHandler [size];
             usedMem_ = 0;
-            availableMem_ = size;
+            availableMem_ = (int)size;
         }
         else
         {

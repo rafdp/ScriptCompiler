@@ -19,7 +19,7 @@ currentReturn_ = RET_NO_ERRORS; \
 FUNCTION_BEGIN (RebuildVar, 2, 4, ARG_VAR _ ARG_NULL _ ARG_NUM)
     VarData_t& var = $ vars_[arg.arg1];
     var.Delete ();
-    var.code = $ isNum (arg.arg2) ? arg.arg2 : TYPE_QWORD;
+    var.code = ($ isNum (arg.flag2) ? arg.arg2 : TYPE_QWORD);
     var.size = $ typeSizes_[var.code];
     var.Free ();
 FUNCTION_END
@@ -153,7 +153,7 @@ FUNCTION_BEGIN (Call, 2, 0, ARG_FUNC _ ARG_FUNC_MEMBER)
         $ ComplexCall (arg.arg1);
     else
     {
-        $ callStack_.push (CallInfo_t ($ run_line_));
+        $ callStack_.push (CallInfo_t ((int)$ run_line_));
         //$ callStack_.Dump ();
         //ErrorPrintfBox ("Call from line %d", $ run_line_);
         $ run_line_ = arg.arg1;
@@ -169,12 +169,12 @@ FUNCTION_BEGIN (InitStackDumpPoint, 1, 0, ARG_NULL)
 FUNCTION_END
 
 FUNCTION_BEGIN (JIT_Printf, 1, 0, ARG_NULL)
-    std::string code;
+    /*std::string code;
     for (stack<StackData_t>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpPoint_]); i < $ dataStack_.end (); i++)
         code += "push " + GetAsmNumString (*i) + "\n";
-    code += "mov eax, " + GetAsmNumString (int (printf)) + "\ncall eax\n";
+    code += "mov eax, " + GetAsmNumString (int64_t (printf)) + "\ncall eax\n";
     code += "add esp, " + GetAsmNumString ( ($ dataStack_.size ()) * 4, "") + "\nretn\n";
-    //RunAsm (code);
+    //RunAsm (code);*/
 FUNCTION_END
 
 #define ASM_FILL_STACK(str) \
@@ -190,7 +190,7 @@ FUNCTION_BEGIN (JIT_Call_Void, 1, 0, ARG_DLL_FUNC)
     JitCompiler_t comp;
     for (stack<StackData_t>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpPoint_]); i < $ dataStack_.end (); i++)
         PushStackValueJit (*i, &comp);
-    comp.mov (comp.r_rax, int32_t ($ dllResolved_[arg.arg1]));
+    comp.mov (comp.r_rax, int64_t ($ dllResolved_[arg.arg1]));
     comp.call (comp.r_rax);
     comp.add (comp.r_rsp, (long) $ RspAdd ());
     comp.retn ();
@@ -205,9 +205,9 @@ FUNCTION_BEGIN (JIT_Call_DWord, 1, 3, ARG_DLL_FUNC _ ARG_REG _ ARG_VAR _ ARG_VAR
 
     for (stack<StackData_t>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpPoint_]); i < $ dataStack_.end (); i++)
         PushStackValueJit (*i, &comp);
-    comp.mov (comp.r_rax, int32_t ($ dllResolved_[arg.arg1]));
+    comp.mov (comp.r_rax, int64_t ($ dllResolved_[arg.arg1]));
     comp.call (comp.r_rax);
-    if (! $ isVar (arg.arg2)) ($ GetReg (arg.arg2)).MovFromReg (&comp, comp.r_rax);
+    if (! $ isVar (arg.flag2)) ($ GetReg (arg.arg2)).MovFromReg (&comp, comp.r_rax);
     else comp.mov ((DWORD*)$ GetPtr (arg.flag2, arg.arg2), comp.r_rax);
     comp.add (comp.r_rsp, $ RspAdd ());
     comp.retn ();
@@ -222,14 +222,14 @@ FUNCTION_BEGIN (JIT_Call_QWord, 1, 3, ARG_DLL_FUNC _ ARG_REG _ ARG_VAR _ ARG_VAR
     JitCompiler_t comp;
     for (stack<StackData_t>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpPoint_]); i < $ dataStack_.end (); i++)
         PushStackValueJit (*i, &comp);
-    comp.mov (comp.r_rax, int32_t ($ dllResolved_[arg.arg1]));
+    comp.mov (comp.r_rax, int64_t ($ dllResolved_[arg.arg1]));
     comp.call (comp.r_rax);
     comp.mov ((DWORD*)&res, comp.r_rax);
     comp.mov ((DWORD*)&res + 1, comp.r_rdx);
     comp.add (comp.r_rsp, $ RspAdd ());
     comp.retn ();
     comp.BuildAndRun ();
-    if (! $ isVar (arg.arg2)) ($ GetReg (arg.arg2)).Set (res);
+    if (! $ isVar (arg.flag2)) ($ GetReg (arg.arg2)).Set (res);
     else *(QWORD*)$ GetPtr (arg.flag2, arg.arg2) = res;
 FUNCTION_END
 
@@ -404,9 +404,11 @@ ARITHMETIC_FUNCTION (Div, /, true)
 
 FUNCTION_BEGIN (Sqrt, 3, 0, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG)
     long long val = $ GetVal (arg.flag1, arg.arg1);
+    /*
     if (val < 0)
         currentReturn_ = ErrorReturn_t (RET_ERROR_CONTINUE, "Cannot calculate square root of a negative value");
-    $ SetVal (arg.flag1, arg.arg1, round (sqrt (val)));
+        */
+    $ SetVal (arg.flag1, arg.arg1, (int64_t)round (sqrt ((double)val)));
 FUNCTION_END
 
 
@@ -446,8 +448,8 @@ Arg_t& arg = $ args_[i]; \
 ManageInputArgs_t man (ExpectedArg_t (n_params1, n_params2, params), arg); \
 
 #define DEFAULT_BODY(name) \
-        comp->mov  (comp->r_rax, (int32_t)(void*)&VirtualProcessor_t::name); \
-        comp->mov  (comp->r_rcx, (int32_t)(void*)this);\
+        comp->mov  (comp->r_rax, (int64_t)(void*)&VirtualProcessor_t::name); \
+        comp->mov  (comp->r_rcx, (int64_t)(void*)this);\
         comp->call (comp->r_rax);\
         comp->inc  (& $ run_line_);
 
@@ -474,8 +476,8 @@ if ($ isNum (arg.flag2) || $ isStr (arg.flag2))
 
     comp->push (arg.arg1);
     comp->push (arg.flag1);
-    comp->mov (comp->r_rax, (int32_t)(void*)&RunInstanceDataHandler_t::GetPtr);
-    comp->mov (comp->r_rcx, (int32_t)(void*)instance_);
+    comp->mov (comp->r_rax, (int64_t)(void*)&RunInstanceDataHandler_t::GetPtr);
+    comp->mov (comp->r_rcx, (int64_t)(void*)instance_);
     comp->call (comp->r_rax);
 
     switch (size1)
@@ -493,7 +495,7 @@ if ($ isNum (arg.flag2) || $ isStr (arg.flag2))
             comp->mov<int32_t> (comp->r_rbx, comp->r_rax);
             comp->add<int32_t> (comp->r_rbx, sizeof (int32_t));
             comp->mov<int32_t> (&comp->r_rax, (int32_t)argN);
-            //comp->mov<int32_t> (&comp->r_rbx, (int32_t)(argN >> (sizeof (int32_t)*8)));
+            comp->mov<int32_t> (&comp->r_rbx, (int32_t)(argN >> (sizeof (int32_t)*8)));
             break;
     }
 }
@@ -501,15 +503,15 @@ else
 {
     comp->push (arg.arg1);
     comp->push (arg.flag1);
-    comp->mov (comp->r_rax, (int32_t)(void*)&RunInstanceDataHandler_t::GetPtr);
-    comp->mov (comp->r_rcx, (int32_t)(void*)instance_);
+    comp->mov (comp->r_rax, (int64_t)(void*)&RunInstanceDataHandler_t::GetPtr);
+    comp->mov (comp->r_rcx, (int64_t)(void*)instance_);
     comp->call (comp->r_rax);
     comp->push<int32_t> (comp->r_rax);
 
     comp->push (arg.arg2);
     comp->push (arg.flag2);
-    comp->mov (comp->r_rax, (int32_t)(void*)&RunInstanceDataHandler_t::GetPtr);
-    comp->mov (comp->r_rcx, (int32_t)(void*)instance_);
+    comp->mov (comp->r_rax, (int64_t)(void*)&RunInstanceDataHandler_t::GetPtr);
+    comp->mov (comp->r_rcx, (int64_t)(void*)instance_);
     comp->call (comp->r_rax);
 
     comp->pop<int32_t> (comp->r_rcx);
@@ -580,8 +582,8 @@ if ($ isNum (arg.flag2) && ! $ isNum (arg.flag1))
 {
     comp->push (arg.arg1);
     comp->push (arg.flag1);
-    comp->mov (comp->r_rax, (int32_t)(void*)&RunInstanceDataHandler_t::GetPtr);
-    comp->mov (comp->r_rcx, (int32_t)(void*)instance_);
+    comp->mov (comp->r_rax, (int64_t)(void*)&RunInstanceDataHandler_t::GetPtr);
+    comp->mov (comp->r_rcx, (int64_t)(void*)instance_);
     comp->call (comp->r_rax);
 
 
@@ -658,8 +660,8 @@ if ($ isNum (arg.flag1) && ! $ isNum (arg.flag2))
 {
     comp->push (arg.arg2);
     comp->push (arg.flag2);
-    comp->mov (comp->r_rax, (int32_t)(void*)&RunInstanceDataHandler_t::GetPtr);
-    comp->mov (comp->r_rcx, (int32_t)(void*)instance_);
+    comp->mov (comp->r_rax, (int64_t)(void*)&RunInstanceDataHandler_t::GetPtr);
+    comp->mov (comp->r_rcx, (int64_t)(void*)instance_);
     comp->call (comp->r_rax);
 
 
@@ -735,15 +737,15 @@ else
 {
     comp->push (arg.arg1);
     comp->push (arg.flag1);
-    comp->mov (comp->r_rax, (int32_t)(void*)&RunInstanceDataHandler_t::GetPtr);
-    comp->mov (comp->r_rcx, (int32_t)(void*)instance_);
+    comp->mov (comp->r_rax, (int64_t)(void*)&RunInstanceDataHandler_t::GetPtr);
+    comp->mov (comp->r_rcx, (int64_t)(void*)instance_);
     comp->call (comp->r_rax);
     comp->push (comp->r_rax);
 
     comp->push (arg.arg2);
     comp->push (arg.flag2);
-    comp->mov (comp->r_rax, (int32_t)(void*)&RunInstanceDataHandler_t::GetPtr);
-    comp->mov (comp->r_rcx, (int32_t)(void*)instance_);
+    comp->mov (comp->r_rax, (int64_t)(void*)&RunInstanceDataHandler_t::GetPtr);
+    comp->mov (comp->r_rcx, (int64_t)(void*)instance_);
     comp->call (comp->r_rax);
 
     comp->pop (comp->r_rcx);
@@ -848,87 +850,87 @@ comp->inc  (&instance_->run_line_);
 FUNCTION_END
 
 FUNCTION_BEGIN (Jmp, 1, 0, ARG_LABEL)
-comp->mov  (comp->r_rax, (int32_t)(void*)&VirtualProcessor_t::Jmp);
-comp->mov  (comp->r_rcx, (int32_t)(void*)this);
+comp->mov  (comp->r_rax, (int64_t)(void*)&VirtualProcessor_t::Jmp);
+comp->mov  (comp->r_rcx, (int64_t)(void*)this);
 comp->call (comp->r_rax);
 comp->jmp (0);
-JmpPatchRequestLine (comp, (int64_t)(comp->Size() - 4), arg.arg1);
+JmpPatchRequestLine (comp, (int64_t)(comp->Size() - 8), arg.arg1);
 FUNCTION_END
 
 FUNCTION_BEGIN (Jne, 1, 0, ARG_LABEL)
-comp->mov  (comp->r_rax, (int32_t)(void*)&VirtualProcessor_t::Jne);
-comp->mov  (comp->r_rcx, (int32_t)(void*)this);
+comp->mov  (comp->r_rax, (int64_t)(void*)&VirtualProcessor_t::Jne);
+comp->mov  (comp->r_rcx, (int64_t)(void*)this);
 comp->call (comp->r_rax);
 comp->cmp (&instance_->cmpr_flag_, '\0');
 comp->jne (0);
-JmpPatchRequestLine (comp, (int64_t)(comp->Size() - 4), arg.arg1);
+JmpPatchRequestLine (comp, (int64_t)(comp->Size() - 8), arg.arg1);
 comp->inc  (&instance_->run_line_);
 FUNCTION_END
 
 FUNCTION_BEGIN (Je, 1, 0, ARG_LABEL)
-comp->mov  (comp->r_rax, (int32_t)(void*)&VirtualProcessor_t::Je);
-comp->mov  (comp->r_rcx, (int32_t)(void*)this);
+comp->mov  (comp->r_rax, (int64_t)(void*)&VirtualProcessor_t::Je);
+comp->mov  (comp->r_rcx, (int64_t)(void*)this);
 comp->call (comp->r_rax);
 comp->cmp (&instance_->cmpr_flag_, '\0');
 comp->je (0);
-JmpPatchRequestLine (comp, (int64_t)(comp->Size() - 4), arg.arg1);
+JmpPatchRequestLine (comp, (int64_t)(comp->Size() - 8), arg.arg1);
 comp->inc  (&instance_->run_line_);
 FUNCTION_END
 
 FUNCTION_BEGIN (Ja, 1, 0, ARG_LABEL)
-comp->mov  (comp->r_rax, (int32_t)(void*)&VirtualProcessor_t::Ja);
-comp->mov  (comp->r_rcx, (int32_t)(void*)this);
+comp->mov  (comp->r_rax, (int64_t)(void*)&VirtualProcessor_t::Ja);
+comp->mov  (comp->r_rcx, (int64_t)(void*)this);
 comp->call (comp->r_rax);
 comp->cmp (&instance_->cmpr_flag_, '\0');
 comp->jg (0);
-JmpPatchRequestLine (comp, (int64_t)(comp->Size() - 4), arg.arg1);
+JmpPatchRequestLine (comp, (int64_t)(comp->Size() - 8), arg.arg1);
 comp->inc  (&instance_->run_line_);
 FUNCTION_END
 
 FUNCTION_BEGIN (Jae, 1, 0, ARG_LABEL)
-comp->mov  (comp->r_rax, (int32_t)(void*)&VirtualProcessor_t::Jae);
-comp->mov  (comp->r_rcx, (int32_t)(void*)this);
+comp->mov  (comp->r_rax, (int64_t)(void*)&VirtualProcessor_t::Jae);
+comp->mov  (comp->r_rcx, (int64_t)(void*)this);
 comp->call (comp->r_rax);
 comp->cmp (&instance_->cmpr_flag_, '\0');
 comp->jge (0);
-JmpPatchRequestLine (comp, (int64_t)(comp->Size() - 4), arg.arg1);
+JmpPatchRequestLine (comp, (int64_t)(comp->Size() - 8), arg.arg1);
 comp->inc  (&instance_->run_line_);
 FUNCTION_END
 
 FUNCTION_BEGIN (Jb, 1, 0, ARG_LABEL)
-comp->mov  (comp->r_rax, (int32_t)(void*)&VirtualProcessor_t::Jb);
-comp->mov  (comp->r_rcx, (int32_t)(void*)this);
+comp->mov  (comp->r_rax, (int64_t)(void*)&VirtualProcessor_t::Jb);
+comp->mov  (comp->r_rcx, (int64_t)(void*)this);
 comp->call (comp->r_rax);
 comp->cmp (&instance_->cmpr_flag_, '\0');
 comp->jl (0);
-JmpPatchRequestLine (comp, (int64_t)(comp->Size() - 4), arg.arg1);
+JmpPatchRequestLine (comp, (int64_t)(comp->Size() - 8), arg.arg1);
 comp->inc  (&instance_->run_line_);
 FUNCTION_END
 
 FUNCTION_BEGIN (Jbe, 1, 0, ARG_LABEL)
-comp->mov  (comp->r_rax, (int32_t)(void*)&VirtualProcessor_t::Jbe);
-comp->mov  (comp->r_rcx, (int32_t)(void*)this);
+comp->mov  (comp->r_rax, (int64_t)(void*)&VirtualProcessor_t::Jbe);
+comp->mov  (comp->r_rcx, (int64_t)(void*)this);
 comp->call (comp->r_rax);
 comp->cmp (&instance_->cmpr_flag_, '\0');
 comp->jle (0);
-JmpPatchRequestLine (comp, (int64_t)(comp->Size() - 4), arg.arg1);
+JmpPatchRequestLine (comp, (int64_t)(comp->Size() - 8), arg.arg1);
 comp->inc  (&instance_->run_line_);
 FUNCTION_END
 
 FUNCTION_BEGIN (Ret, 1, 0, ARG_NULL)
-comp->mov   (comp->r_rax, (int32_t)(void*)&VirtualProcessor_t::Ret);
-comp->mov   (comp->r_rcx, (int32_t)(void*)this);
+comp->mov   (comp->r_rax, (int64_t)(void*)&VirtualProcessor_t::Ret);
+comp->mov   (comp->r_rcx, (int64_t)(void*)this);
 comp->call  (comp->r_rax);
 comp->retn ();
 FUNCTION_END
 
 FUNCTION_BEGIN (Call, 2, 0, ARG_FUNC _ ARG_FUNC_MEMBER)
-comp->mov   (comp->r_rax, (int32_t)(void*)&VirtualProcessor_t::Call);
-comp->mov   (comp->r_rcx, (int32_t)(void*)this);
+comp->mov   (comp->r_rax, (int64_t)(void*)&VirtualProcessor_t::Call);
+comp->mov   (comp->r_rcx, (int64_t)(void*)this);
 comp->call  (comp->r_rax);
 comp->inc  (&instance_->run_line_);
 comp->callr (0);
-JmpPatchRequestLine (comp, (int64_t)(comp->Size() - 4), arg.arg1 + 1);
+JmpPatchRequestLine (comp, (int64_t)(comp->Size() - 8), arg.arg1 + 1);
 FUNCTION_END
 
 FUNCTION_BEGIN (Decr, 3, 0, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG)
@@ -964,8 +966,8 @@ if ($ isNum (arg.flag2))
 {
     comp->push (arg.arg1);
     comp->push (arg.flag1);
-    comp->mov (comp->r_rax, (int32_t)(void*)&RunInstanceDataHandler_t::GetPtr);
-    comp->mov (comp->r_rcx, (int32_t)(void*)instance_);
+    comp->mov (comp->r_rax, (int64_t)(void*)&RunInstanceDataHandler_t::GetPtr);
+    comp->mov (comp->r_rcx, (int64_t)(void*)instance_);
     comp->call (comp->r_rax);
 
     switch (size1)
@@ -991,15 +993,15 @@ else
 {
     comp->push (arg.arg1);
     comp->push (arg.flag1);
-    comp->mov (comp->r_rax, (int32_t)(void*)&RunInstanceDataHandler_t::GetPtr);
-    comp->mov (comp->r_rcx, (int32_t)(void*)instance_);
+    comp->mov (comp->r_rax, (int64_t)(void*)&RunInstanceDataHandler_t::GetPtr);
+    comp->mov (comp->r_rcx, (int64_t)(void*)instance_);
     comp->call (comp->r_rax);
     comp->push<int32_t> (comp->r_rax);
 
     comp->push (arg.arg2);
     comp->push (arg.flag2);
-    comp->mov (comp->r_rax, (int32_t)(void*)&RunInstanceDataHandler_t::GetPtr);
-    comp->mov (comp->r_rcx, (int32_t)(void*)instance_);
+    comp->mov (comp->r_rax, (int64_t)(void*)&RunInstanceDataHandler_t::GetPtr);
+    comp->mov (comp->r_rcx, (int64_t)(void*)instance_);
     comp->call (comp->r_rax);
 
     comp->pop<int32_t> (comp->r_rcx);
@@ -1050,8 +1052,8 @@ if ($ isNum (arg.flag2))
 {
     comp->push (arg.arg1);
     comp->push (arg.flag1);
-    comp->mov (comp->r_rax, (int32_t)(void*)&RunInstanceDataHandler_t::GetPtr);
-    comp->mov (comp->r_rcx, (int32_t)(void*)instance_);
+    comp->mov (comp->r_rax, (int64_t)(void*)&RunInstanceDataHandler_t::GetPtr);
+    comp->mov (comp->r_rcx, (int64_t)(void*)instance_);
     comp->call (comp->r_rax);
 
     switch (size1)
@@ -1077,15 +1079,15 @@ else
 {
     comp->push (arg.arg1);
     comp->push (arg.flag1);
-    comp->mov (comp->r_rax, (int32_t)(void*)&RunInstanceDataHandler_t::GetPtr);
-    comp->mov (comp->r_rcx, (int32_t)(void*)instance_);
+    comp->mov (comp->r_rax, (int64_t)(void*)&RunInstanceDataHandler_t::GetPtr);
+    comp->mov (comp->r_rcx, (int64_t)(void*)instance_);
     comp->call (comp->r_rax);
     comp->push<int32_t> (comp->r_rax);
 
     comp->push (arg.arg2);
     comp->push (arg.flag2);
-    comp->mov (comp->r_rax, (int32_t)(void*)&RunInstanceDataHandler_t::GetPtr);
-    comp->mov (comp->r_rcx, (int32_t)(void*)instance_);
+    comp->mov (comp->r_rax, (int64_t)(void*)&RunInstanceDataHandler_t::GetPtr);
+    comp->mov (comp->r_rcx, (int64_t)(void*)instance_);
     comp->call (comp->r_rax);
 
     comp->pop<int32_t> (comp->r_rcx);

@@ -118,7 +118,7 @@ char _GetString (FILE* f, std::string* str, char del)
     char c = ' ';
     bool str_ = false;
     bool str_found = false;
-    while (c == ' ') c = fgetc (f);
+    while (c == ' ') c = (char)fgetc (f);
     int iteration = 0;
     while (c != '\n'          &&
            c != EOF           &&
@@ -129,7 +129,7 @@ char _GetString (FILE* f, std::string* str, char del)
         else if (c == '"') str_ = false;
         if (str_ && c == '\\')
         {
-            switch (c = fgetc (f))
+            switch (c = (char)fgetc (f))
             {
                 case 'n':
                     *str += '\n';
@@ -154,7 +154,7 @@ char _GetString (FILE* f, std::string* str, char del)
         {
             *str += c;
         }
-        c = fgetc (f);
+        c = (char)fgetc (f);
         iteration++;
     }
     return c;
@@ -256,7 +256,7 @@ struct CallInfo_t
 {
     int retLine;
     int var;
-    CallInfo_t (int retLine_ = 0, long long var_ = 0) :
+    CallInfo_t (int retLine_ = 0, int var_ = 0) :
         retLine (retLine_),
         var (var_)
     {}
@@ -270,7 +270,7 @@ struct CallInfo_t
 
 struct JmpPatchData_t
 {
-    size_t first, second;
+    int64_t first, second;
     bool offset;
 };
 

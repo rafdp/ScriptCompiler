@@ -77,7 +77,7 @@ class ScriptCompiler_t// : NonCopiable_t
     {
         STL_LOOP (i, die_requests_)
         {
-            (*i)->second.die = line;
+            (*i)->second.die = (short)line;
         }
         die_requests_.clear ();
     }
@@ -275,7 +275,7 @@ void ScriptCompiler_t::_in_clsf_arg (char* flag, long long* arg, bool error, int
         {
             if (*flag & ARG_UNREF_MASK)
             {
-                if (varResult->second.typeCode == TYPE_PTR) *flag = ARG_VAR | ARG_UNREF_MASK;
+                if (varResult->second.typeCode == TYPE_PTR) *flag = (char) (ARG_VAR | ARG_UNREF_MASK);
                 else INVALID_UNREF_CHECK
             }
             else *flag = ARG_VAR;
@@ -532,7 +532,7 @@ bool ScriptCompiler_t::AddName (std::string name, char flag, long long cmd, int 
                 userFuncs_[name] = userFuncs_.size () - 1;
                 break;
             case CMD_Var:
-                vars_[StrTo32Pair_t (name, func_level_)] = {vars_.size () - 1, -1, TYPE_QWORD, nullptr};
+                vars_[StrTo32Pair_t (name, func_level_)] = {(int)vars_.size () - 1, -1, TYPE_QWORD, nullptr};
                 break;
             case CMD_CFunc:
                 createdFuncs_[name] = line;

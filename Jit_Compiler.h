@@ -22,7 +22,6 @@ enum RMModes
 
 #include "MCode.h"
 #include "Instruction.h"
-#define CHECK_64(T) //if (sizeof (T) == 8) {ErrorPrintfBox ("%d %s", __LINE__, __PRETTY_FUNCTION__); man.Emit64Prefix ();}
 
 class JitCompiler_t
 {
@@ -78,49 +77,42 @@ class JitCompiler_t
     template <typename T>
     void mov (CPURegisterInfo_t regDest, T imm)
     {
-        CHECK_64 (T)
         man.EmitMov<T> (regDest, imm);
     }
 
     template <typename T>
     void mov (CPURegisterInfo_t* regDest, T imm)
     {
-        CHECK_64 (T)
         man.EmitMov<T> (regDest, imm);
     }
 
     template <typename T>
     void mov (T* ptr, T imm)
     {
-        CHECK_64 (T)
         man.EmitMov<T> (ptr, imm);
     }
 
     template <typename T>
     void mov (T* pointer, CPURegisterInfo_t regSrc)
     {
-        CHECK_64 (T)
         man.EmitMov<T> (pointer, regSrc);
     }
 
     template <typename T>
     void mov (CPURegisterInfo_t regDest, T* pointer)
     {
-        CHECK_64 (T)
         man.EmitMov<T> (regDest, pointer);
     }
 
     template <typename T = long>
     void push (CPURegisterInfo_t reg)
     {
-        CHECK_64 (T)
         man.EmitPush<T> (reg);
     }
 
     template <typename T = long>
     void pop (CPURegisterInfo_t reg)
     {
-        CHECK_64 (T)
         man.EmitPop<T> (reg);
     }
 
@@ -137,7 +129,7 @@ class JitCompiler_t
         {
             //ErrorPrintfBox ("%d %s", __LINE__, __PRETTY_FUNCTION__);
             man.EmitPush<int32_t> ((int32_t)((int64_t)imm >> (sizeof (int32_t)*8)));
-            man.EmitPush<int32_t> ((int32_t)imm);
+            man.EmitPush<int32_t> ((int32_t)((int64_t)imm));
         }
         else man.EmitPush<T> (imm);
     }
@@ -159,7 +151,7 @@ class JitCompiler_t
         man.EmitCall<T> (ptr);
     }
 
-    void callr (int32_t rel)
+    void callr (int64_t rel)
     {
         man.EmitCallr (rel);
     }
@@ -167,42 +159,36 @@ class JitCompiler_t
     template <typename T>
     void add (CPURegisterInfo_t regDest, T* src)
     {
-        CHECK_64 (T)
         man.EmitAdd<T> (regDest, src);
     }
 
     template <typename T>
     void add (CPURegisterInfo_t regDest, CPURegisterInfo_t* regSrc)
     {
-        CHECK_64 (T)
         man.EmitAdd<T> (regDest, regSrc);
     }
 
     template <typename T>
     void add (CPURegisterInfo_t* regDest, CPURegisterInfo_t regSrc)
     {
-        CHECK_64 (T)
         man.EmitAdd<T> (regDest, regSrc);
     }
 
     template <typename T>
     void add (CPURegisterInfo_t regDest, T imm)
     {
-        CHECK_64 (T)
         man.EmitAdd<T> (regDest, imm);
     }
 
     template <typename T>
     void add (CPURegisterInfo_t* regDest, T imm)
     {
-        CHECK_64 (T)
         man.EmitAdd<T> (regDest, imm);
     }
 
     template <typename T>
     void add (T* dest, CPURegisterInfo_t regSrc)
     {
-        CHECK_64 (T)
         man.EmitAdd<T> (dest, regSrc);
     }
 
@@ -215,42 +201,36 @@ class JitCompiler_t
     template <typename T>
     void adc (CPURegisterInfo_t regDest, T* src)
     {
-        CHECK_64 (T)
         man.EmitAdc<T> (regDest, src);
     }
 
     template <typename T>
     void adc (CPURegisterInfo_t regDest, CPURegisterInfo_t* regSrc)
     {
-        CHECK_64 (T)
         man.EmitAdc<T> (regDest, regSrc);
     }
 
     template <typename T>
     void adc (CPURegisterInfo_t* regDest, CPURegisterInfo_t regSrc)
     {
-        CHECK_64 (T)
         man.EmitAdc<T> (regDest, regSrc);
     }
 
     template <typename T>
     void adc (CPURegisterInfo_t regDest, T imm)
     {
-        CHECK_64 (T)
         man.EmitAdc<T> (regDest, imm);
     }
 
     template <typename T>
     void adc (CPURegisterInfo_t* regDest, T imm)
     {
-        CHECK_64 (T)
         man.EmitAdc<T> (regDest, imm);
     }
 
     template <typename T>
     void adc (T* dest, CPURegisterInfo_t regSrc)
     {
-        CHECK_64 (T)
         man.EmitAdc<T> (dest, regSrc);
     }
 
@@ -263,42 +243,36 @@ class JitCompiler_t
     template <typename T>
     void sub (CPURegisterInfo_t regDest, T imm)
     {
-        CHECK_64 (T)
         man.EmitSub<T> (regDest, imm);
     }
 
     template <typename T>
     void sub (CPURegisterInfo_t* regDest, T imm)
     {
-        CHECK_64 (T)
         man.EmitSub<T> (regDest, imm);
     }
 
     template <typename T>
     void sub (CPURegisterInfo_t regDest, T* src)
     {
-        CHECK_64 (T)
         man.EmitSub<T> (regDest, src);
     }
 
     template <typename T>
     void sub (CPURegisterInfo_t regDest, CPURegisterInfo_t* regSrc)
     {
-        CHECK_64 (T)
         man.EmitSub<T> (regDest, regSrc);
     }
 
     template <typename T>
     void sub (CPURegisterInfo_t* regDest, CPURegisterInfo_t regSrc)
     {
-        CHECK_64 (T)
         man.EmitSub<T> (regDest, regSrc);
     }
 
     template <typename T>
     void sub (T* dest, CPURegisterInfo_t regSrc)
     {
-        CHECK_64 (T)
         man.EmitSub<T> (dest, regSrc);
     }
 
@@ -311,42 +285,36 @@ class JitCompiler_t
     template <typename T>
     void sbb (CPURegisterInfo_t regDest, T imm)
     {
-        CHECK_64 (T)
         man.EmitSbb<T> (regDest, imm);
     }
 
     template <typename T>
     void sbb (CPURegisterInfo_t* regDest, T imm)
     {
-        CHECK_64 (T)
         man.EmitSbb<T> (regDest, imm);
     }
 
     template <typename T>
     void sbb (CPURegisterInfo_t regDest, T* src)
     {
-        CHECK_64 (T)
         man.EmitSbb<T> (regDest, src);
     }
 
     template <typename T>
     void sbb (CPURegisterInfo_t regDest, CPURegisterInfo_t* regSrc)
     {
-        CHECK_64 (T)
         man.EmitSbb<T> (regDest, regSrc);
     }
 
     template <typename T>
     void sbb (CPURegisterInfo_t* regDest, CPURegisterInfo_t regSrc)
     {
-        CHECK_64 (T)
         man.EmitSbb<T> (regDest, regSrc);
     }
 
     template <typename T>
     void sbb (T* dest, CPURegisterInfo_t regSrc)
     {
-        CHECK_64 (T)
         man.EmitSbb<T> (dest, regSrc);
     }
 
@@ -359,14 +327,12 @@ class JitCompiler_t
     template <typename T>
     void mul (CPURegisterInfo_t regDest, CPURegisterInfo_t regSrc, T imm)
     {
-        CHECK_64 (T)
         man.EmitMul<T> (regDest, regSrc, imm);
     }
 
     template <typename T>
     void mul (CPURegisterInfo_t regDest, T* src)
     {
-        CHECK_64 (T)
         man.EmitMul<T> (regDest, src);
     }
 
@@ -385,7 +351,6 @@ class JitCompiler_t
     template <typename T>
     void div (T* src)
     {
-        CHECK_64 (T)
         man.EmitDiv<T> (src);
     }
 
@@ -436,69 +401,64 @@ class JitCompiler_t
     template <typename T>
     void cmp (T* ptr, T imm)
     {
-        CHECK_64 (T)
         man.EmitCmp (ptr, imm);
     }
 
     template <typename T>
     void cmp (CPURegisterInfo_t* reg, T imm)
     {
-        CHECK_64 (T)
         man.EmitCmp (reg, imm);
     }
 
     template <typename T>
     void cmp (CPURegisterInfo_t reg, T imm)
     {
-        CHECK_64 (T)
-        man.EmitCmp (reg, imm);
+        man.EmitCmp<T> (reg, imm);
     }
 
     template <typename T>
     void cmp (CPURegisterInfo_t* regDest, CPURegisterInfo_t regSrc)
     {
-        CHECK_64 (T)
         man.EmitCmp<T> (regDest, regSrc);
     }
 
     template <typename T>
     void cmp (CPURegisterInfo_t regDest, CPURegisterInfo_t* regSrc)
     {
-        CHECK_64 (T)
         man.EmitCmp<T> (regDest, regSrc);
     }
 
-    void jmp (int32_t rel)
+    void jmp (int64_t rel)
     {
         man.EmitJmp (rel);
     }
 
-    void jl (int32_t rel)
+    void jl (int64_t rel)
     {
         man.EmitJl (rel);
     }
 
-    void jge (int32_t rel)
+    void jge (int64_t rel)
     {
         man.EmitJge (rel);
     }
 
-    void je (int32_t rel)
+    void je (int64_t rel)
     {
         man.EmitJe (rel);
     }
 
-    void jne (int32_t rel)
+    void jne (int64_t rel)
     {
         man.EmitJne (rel);
     }
 
-    void jle (int32_t rel)
+    void jle (int64_t rel)
     {
         man.EmitJle (rel);
     }
 
-    void jg (int32_t rel)
+    void jg (int64_t rel)
     {
         man.EmitJg (rel);
     }

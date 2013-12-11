@@ -23,6 +23,7 @@ int main ()
         //proc.RunScriptJit ("Equation.pcs");
         //proc.RunScript ("test.pcs");
         //proc.RunScript ("Equation.pcs");
+        ErrorPrintfBox ("About to start Jit");
         proc.RunScriptJit ("test.pcs");
     }
     catch (ExceptionHandler& ex)

@@ -27,7 +27,7 @@ Cmd_t::Cmd_t (std::string str) :
     long long cmd_result = CMD_A_service[str];
     if (cmd_result)
     {
-        flag = cmd_result;
+        flag = (char) cmd_result;
         return;
     }
     if (*(str.rbegin ()) == ':')

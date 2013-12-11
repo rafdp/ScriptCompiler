@@ -314,7 +314,7 @@ public:
         CATCH_UNKNOWN_ERROR (st_->expn)
     }
     //!////////////////////////////////////////////////////////
-    iterator& operator++ (int)
+    iterator operator++ (int)
     {
         try
         {
@@ -340,7 +340,7 @@ public:
         CATCH_UNKNOWN_ERROR (st_->expn)
     }
     //!////////////////////////////////////////////////////////
-    iterator& operator-- (int)
+    iterator operator-- (int)
     {
         try
         {
