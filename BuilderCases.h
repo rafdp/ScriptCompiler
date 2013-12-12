@@ -2,7 +2,8 @@
 
 #define _BUILD_CASE_FUNC(name) \
 void ScriptCompiler_t::name (Cmd_t& cmd, Arg_t& arg, int n_line) \
-{
+{  \
+n_line *= 1; cmd.cmd *= 1;
 
 #define _RETURN \
 }
@@ -13,7 +14,7 @@ if (expr) ERROR_EXCEPTION ("Invalid args for \"" func "\"", ERROR_PARSER_INVALID
 #define CHECK_TOKEN(tok) \
 if (!CheckName (tok, n_line)) STRING_ERROR (tok)
 
-#define STD_TOK *(std::string*)arg.arg1
+#define STD_TOK (* reinterpret_cast <std::string*> (arg.arg1))
 
 #define CHECK_STD_TOKEN \
 CHECK_TOKEN (STD_TOK)
@@ -98,8 +99,8 @@ _BUILD_CASE_FUNC (Label)
     CHECK_ARGS (arg.flag1 != ARG_NULL ||
                 arg.flag2 != ARG_NULL, "label")
     arg.Clear ();
-    CHECK_TOKEN (*(std::string*)cmd.cmd)
-    ADD_TOKEN (*(std::string*)cmd.cmd)
+    CHECK_TOKEN (* reinterpret_cast <std::string*> (cmd.cmd))
+    ADD_TOKEN (* reinterpret_cast <std::string*> (cmd.cmd))
     cmd.Clear ();
 _RETURN
 
@@ -126,7 +127,7 @@ _BUILD_CASE_FUNC (Import)
                 arg.flag2 != ARG_STR, "import")
 
     int num = 0;
-    STL_LOOP (i, dllImportMap_) num += (int)i->second.size ();
+    STL_LOOP (i, dllImportMap_) num += static_cast <int> (i->second.size ());
 
     std::string funcName (strings_[arg.arg2].begin (),
                           strings_[arg.arg2].begin () +
@@ -205,7 +206,7 @@ _RETURN
 _BUILD_CASE_FUNC (Name)
     ClassifyArg (&arg, true, n_line);
     auto result = userFuncs_.end ();
-    if ((result = userFuncs_.find (*(std::string*)cmd.cmd)) != userFuncs_.end ())
+    if ((result = userFuncs_.find (* reinterpret_cast<std::string*> (cmd.cmd))) != userFuncs_.end ())
     {
         cmd.flag = CMD_UFunc;
         cmd.cmd = result->second;
@@ -234,7 +235,8 @@ _RETURN
 #undef _BUILD_CASE_FUNC
 #define _BUILD_CASE_FUNC(name) \
 bool ScriptCompiler_t::Struct##name (Cmd_t& cmd, Arg_t& arg, int n_line) \
-{
+{ \
+cmd.cmd *= 1; arg.arg1 *= 1; n_line *= 1;
 
 #undef CHECK_ARGS
 #define CHECK_ARGS(expr, func) \
@@ -249,8 +251,12 @@ _BUILD_CASE_FUNC (Var)
                 typeSizes_.find (arg.flag2) == typeSizes_.end ()),
                 "var")
     CHECK_STD_TOKEN
-    bool res = regTypes_.AddVar (STD_TOK, currStruct_,
-                                 arg.flag2 == ARG_NULL ? TYPE_QWORD : arg.arg2);
+    bool res = 0;
+    if (arg.flag2 == ARG_NULL)
+        regTypes_.AddVar (STD_TOK, currStruct_, TYPE_QWORD);
+    else
+        regTypes_.AddVar (STD_TOK, currStruct_, arg.arg2);
+
     if (!res)
         ERROR_EXCEPTION ("Struct: error occured while adding variable to struct", ERROR_ADDING_VAR_STRUCT)
     cmd.Clear ();
@@ -287,8 +293,8 @@ _BUILD_CASE_FUNC (Label)
     CHECK_ARGS (arg.flag1 != ARG_NULL ||
                 arg.flag2 != ARG_NULL, "label")
     arg.Clear ();
-    CHECK_TOKEN (*(std::string*)cmd.cmd)
-    ADD_TOKEN (*(std::string*)cmd.cmd)
+    CHECK_TOKEN (* reinterpret_cast<std::string*> (cmd.cmd))
+    ADD_TOKEN (* reinterpret_cast<std::string*> (cmd.cmd))
     cmd.Clear ();
     return true;
 _RETURN
@@ -380,7 +386,7 @@ _BUILD_CASE_FUNC (Link)
     CHECK_ARGS (arg.flag1 != ARG_STR ||
                 arg.flag2 != ARG_NULL,
                 "link")
-    ParseLinkFile (*(std::string*)arg.arg1);
+    ParseLinkFile (* reinterpret_cast <std::string*> (arg.arg1));
     cmd.Clear ();
     arg.Clear ();
 _RETURN

@@ -20,7 +20,7 @@
 
 class ScriptCompiler_t// : NonCopiable_t
 {
-    //DISABLE_CLASS_COPY (ScriptCompiler_t)
+    DISABLE_CLASS_COPY (ScriptCompiler_t)
 
     void _in_clsf_arg (char* flag,
                        long long* arg,
@@ -77,7 +77,7 @@ class ScriptCompiler_t// : NonCopiable_t
     {
         STL_LOOP (i, die_requests_)
         {
-            (*i)->second.die = (short)line;
+            (*i)->second.die = static_cast<short> (line);
         }
         die_requests_.clear ();
     }
@@ -160,6 +160,7 @@ ScriptCompiler_t::ScriptCompiler_t (std::string filename, exception_data* expn) 
     createdFuncs_      (),
     memberFuncs_       (),
     labels_            (),
+    strings_           (),
     funcs_             (),
     args_              (),
     expn_              (expn),
@@ -225,6 +226,8 @@ ScriptCompiler_t::ScriptCompiler_t (std::string filename, exception_data* expn) 
                     CMD_CASE (Import)
                     CMD_CASE (Var)
                     CMD_CASE (Name)
+                    default:
+                    break;
                 }
             }
             PushData (cmd, arg);
@@ -253,9 +256,11 @@ void ScriptCompiler_t::_in_clsf_arg (char* flag, long long* arg, bool error, int
         #define INVALID_UNREF_CHECK \
             if (*flag & ARG_UNREF_MASK) NAT_EXCEPTION (expn_, "Invalid use of '*'", ERROR_INVALID_UNREF)
         if (var)
-        for (int varLevel = (!struct_ ? func_level_ : struct_func_level_); varLevel >= 0 && varResult == vars_.end (); varLevel--)
+        for (int varLevel = (!struct_ ? func_level_ : struct_func_level_);
+             varLevel >= 0 && varResult == vars_.end ();
+             varLevel--)
         {
-            varResult = vars_.find (StrTo32Pair_t (*(std::string*) (*arg), varLevel));
+            varResult = vars_.find (StrTo32Pair_t (* reinterpret_cast<std::string*> (*arg), varLevel));
             if (varResult != vars_.end () &&
                 varResult->second.die != -1 &&
                 varResult->second.die < line)
@@ -263,11 +268,11 @@ void ScriptCompiler_t::_in_clsf_arg (char* flag, long long* arg, bool error, int
         }
         //!  operator = returns reference to object
         //!  c = b = a;
-        if ((result = consts_.find (*(std::string*) (*arg))) != consts_.end ())
+        if ((result = consts_.find (* reinterpret_cast<std::string*> (*arg))) != consts_.end ())
         {
             INVALID_UNREF_CHECK
             *flag = ARG_NUM;
-            delete[] (char*) (*arg);
+            delete[] reinterpret_cast<std::string*> (*arg);
             *arg = result->second;
         }
         else
@@ -275,15 +280,15 @@ void ScriptCompiler_t::_in_clsf_arg (char* flag, long long* arg, bool error, int
         {
             if (*flag & ARG_UNREF_MASK)
             {
-                if (varResult->second.typeCode == TYPE_PTR) *flag = (char) (ARG_VAR | ARG_UNREF_MASK);
+                if (varResult->second.typeCode == TYPE_PTR) *flag = static_cast<char> (ARG_VAR | ARG_UNREF_MASK);
                 else INVALID_UNREF_CHECK
             }
             else *flag = ARG_VAR;
-            delete (std::string*) (*arg);
+            delete reinterpret_cast<std::string*> (*arg);
             *arg = varResult->second.num;
         }
         else
-        if ((labResult = labels_.find (( (std::string*) (*arg))->c_str ())) != labels_.end ())
+        if ((labResult = labels_.find (( reinterpret_cast<std::string*> (*arg))->c_str ())) != labels_.end ())
         {
             INVALID_UNREF_CHECK
             if (labResult->second == -1)
@@ -293,23 +298,23 @@ void ScriptCompiler_t::_in_clsf_arg (char* flag, long long* arg, bool error, int
             else
             {
                 *flag = ARG_LABEL;
-                delete (std::string*) (*arg);
+                delete reinterpret_cast<std::string*> (*arg);
                 *arg = labResult->second;
             }
         }
         else
-        if (IsString ((std::string*) (*arg)))
+        if (IsString (reinterpret_cast<std::string*> (*arg)))
         {
             INVALID_UNREF_CHECK
             *flag = ARG_STR;
-            ((std::string*) (*arg))->erase (( (std::string*) (*arg))->begin ());
-            ((std::string*) (*arg))->erase (( (std::string*) (*arg))->end () - 1);
-            strings_.push_back (*(std::string*) (*arg));
-            delete (std::string*) (*arg);
+            (reinterpret_cast<std::string*> (*arg))->erase ((reinterpret_cast<std::string*> (*arg))->begin ());
+            (reinterpret_cast<std::string*> (*arg))->erase ((reinterpret_cast<std::string*> (*arg))->end () - 1);
+            strings_.push_back (* reinterpret_cast<std::string*> (*arg));
+            delete reinterpret_cast<std::string*> (*arg);
             *arg = strings_.size () - 1;
         }
         else
-        if ((result = createdFuncs_.find (*(std::string*) (*arg))) != createdFuncs_.end ())
+        if ((result = createdFuncs_.find (* reinterpret_cast<std::string*> (*arg))) != createdFuncs_.end ())
         {
             INVALID_UNREF_CHECK
             if (result->second == -1)
@@ -319,12 +324,12 @@ void ScriptCompiler_t::_in_clsf_arg (char* flag, long long* arg, bool error, int
             else
             {
                 *flag = ARG_FUNC;
-                delete (std::string*) (*arg);
+                delete reinterpret_cast<std::string*> (*arg);
                 *arg = result->second;
             }
         }
         else
-        if ((result = dllFuncsMap_.find (*(std::string*) (*arg))) != dllFuncsMap_.end ())
+        if ((result = dllFuncsMap_.find (* reinterpret_cast<std::string*> (*arg))) != dllFuncsMap_.end ())
         {
             INVALID_UNREF_CHECK
             *flag = ARG_DLL_FUNC;
@@ -335,7 +340,7 @@ void ScriptCompiler_t::_in_clsf_arg (char* flag, long long* arg, bool error, int
         else if (error)
         {
             *flag = ARG_ERROR;
-            delete (std::string*) (*arg);
+            delete reinterpret_cast<std::string*> (*arg);
             *arg = 0;
         }
     }
@@ -601,8 +606,7 @@ void ScriptCompiler_t::ResolvePrototypes ()
         switch (i->flag1)
         {
             case ARG_FUNC_IT:
-            {
-                long long line = createdFuncs_[*(std::string*)i->arg1];
+            {                long long line = createdFuncs_[* reinterpret_cast <std::string*> (i->arg1)];
                 delete (std::string*)i->arg1;
                 i->arg1 = line;
                 i->flag1 = ARG_FUNC;

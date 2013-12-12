@@ -4,7 +4,7 @@ struct RegInfo_t
 {
     char* reg;
     char size;
-    RegInfo_t (char* registers, long long param) :
+    RegInfo_t (char* registers, long long param, exception_data* expn) :
         reg (registers + param),
         size ()
     {
@@ -42,6 +42,8 @@ struct RegInfo_t
             case REG_PTQWORD:
                 size = 8;
                 break;
+            default:
+            NAT_EXCEPTION (expn, "Invalid register info", ERROR_INVALID_OP_SIZE_SWITCH)
         }
     }
 
@@ -58,15 +60,16 @@ struct RegInfo_t
         switch (size)
         {
             case 1:
-                return (long long)*(int8_t*) reg;
+                return static_cast<int64_t>(*reinterpret_cast<int8_t*> (reg));
             case 2:
-                return (long long)*(int16_t*)reg;
+                return static_cast<int64_t>(*reinterpret_cast<int16_t*> (reg));
             case 4:
-                return (long long)*(int32_t*)reg;
+                return static_cast<int64_t>(*reinterpret_cast<int32_t*> (reg));
             case 8:
-                return (long long)*(int64_t*)reg;
+                return static_cast<int64_t>(*reinterpret_cast<int64_t*> (reg));
+            default:
+                return 0;
         }
-        return 0;
     }
 
     template <class T>
@@ -93,19 +96,19 @@ struct RegInfo_t
         switch (size)
         {
             case 1:
-                comp->mov ((char*)reg,      register_);
+                comp->mov (reinterpret_cast<int8_t*>  (reg), register_);
                 break;
             case 2:
-                comp->mov ((short*)reg,     register_);
+                comp->mov (reinterpret_cast<int16_t*> (reg), register_);
                 break;
             case 4:
-            case 8:
-                *(long*)reg = 0;
-                comp->mov ((long*)reg,      register_);
+                comp->mov (reinterpret_cast<int32_t*> (reg), register_);
                 break;
-            /*case 8:
-                comp->mov ((long long*)reg, register_);
-                break;*/
+            case 8:
+                comp->mov (reinterpret_cast<int64_t*> (reg), register_);
+                break;
+            default:
+                return;
         }
     }
 
@@ -115,8 +118,8 @@ struct RegInfo_t
     {
         if (size == sizeof (long long))
         {
-            comp->mov ((long*)reg, register1_);
-            comp->mov ((long*)reg + 1, register2_);
+            comp->mov (reinterpret_cast<int32_t*> (reg), register1_);
+            comp->mov (reinterpret_cast<int32_t*> (reg) + 1, register2_);
         }
     }
 };

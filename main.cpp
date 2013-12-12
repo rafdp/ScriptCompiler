@@ -3,9 +3,11 @@
 
 #include "Compiler.h"
 
+void printHello (RunInstanceDataHandler_t*, void* pt);
+
 void printHello (RunInstanceDataHandler_t*, void* pt)
 {
-    printf ("__Hello %d__\n", *(int*)pt);
+    printf ("__Hello %d__\n", *reinterpret_cast<int*> (pt));
 }
 
 

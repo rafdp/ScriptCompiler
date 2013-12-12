@@ -27,15 +27,15 @@ Cmd_t::Cmd_t (std::string str) :
     long long cmd_result = CMD_A_service[str];
     if (cmd_result)
     {
-        flag = (char) cmd_result;
+        flag = static_cast<char> (cmd_result);
         return;
     }
     if (*(str.rbegin ()) == ':')
     {
-        cmd = (long long) new std::string (str);
-        ((std::string*)cmd)->erase (( (std::string*)cmd)->end () - 1);
+        cmd = reinterpret_cast<int64_t> (new std::string (str));
+        (reinterpret_cast<std::string*> (cmd))->erase ((reinterpret_cast<std::string*> (cmd))->end () - 1);
         flag = CMD_Label;
-        if (CMD_A[ (char*)cmd]) Clear ();
+        if (CMD_A[ *reinterpret_cast<std::string*> (cmd)]) Clear ();
         return;
     }
 
@@ -48,7 +48,7 @@ Cmd_t::Cmd_t (std::string str) :
     }
 
     {
-        cmd = (long long) new std::string (str);
+        cmd = reinterpret_cast<int64_t> (new std::string (str));
         flag = CMD_Name;
         return;
     }
@@ -58,7 +58,7 @@ void Cmd_t::Clear ()
 {
     if (flag == CMD_Label || flag == CMD_Name)
     {
-        delete (std::string*)cmd;
+        delete reinterpret_cast<std::string*> (cmd);
     }
     flag = CMD_Null;
     cmd = 0;

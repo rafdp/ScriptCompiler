@@ -38,7 +38,7 @@ public:
 
     RegInfo_t GetReg (long long param)
     {
-        return RegInfo_t (registers_, param);
+        return RegInfo_t (registers_, param, expn_);
     }
 
     void CallImportFunc (long long func)

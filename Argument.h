@@ -1,6 +1,10 @@
 #ifndef ARG_H_INCLUDED
 #define ARG_H_INCLUDED
 
+struct Arg_t;
+
+void SetStringBadArg (std::string* errorMessage, Arg_t arg_got, ExpectedArg_t expArg);
+
 struct Arg_t
 {
     public:
@@ -51,7 +55,7 @@ void Arg_t::SetArg (char* flag, long long* arg, std::string* param)
         return;
     }
 
-    if ( (*param)[0] == '*') {*flag |= (char) ARG_UNREF_MASK; param->erase (0, 1);}
+    if ( (*param)[0] == '*') {*flag |= static_cast<char> (ARG_UNREF_MASK); param->erase (0, 1);}
 
     auto reg = CMD_REG.find (*param);
     if (reg != CMD_REG.end ())
@@ -70,14 +74,14 @@ void Arg_t::SetArg (char* flag, long long* arg, std::string* param)
     else
     {
         *flag |= ARG_NAME;
-        *arg = (long long) new std::string (*param);
+        *arg = reinterpret_cast<int64_t> (new std::string (*param));
     }
 }
 
 void Arg_t::FreeArg (char* flag, long long* arg)
 {
     if (*flag == ARG_NAME)
-        delete (std::string*) *arg;
+        delete reinterpret_cast<std::string*> (*arg);
     *flag = ARG_NULL;
     *arg = 0;
 }
@@ -120,14 +124,14 @@ void SetStringBadArg (std::string* errorMessage, Arg_t arg_got, ExpectedArg_t ex
         }
         else
         {
-            for (int i = 0; i < LEN + 4; i++) *errorMessage += ' ';
+            for (int j = 0; j < LEN + 4; j++) *errorMessage += ' ';
             *errorMessage += ARG_D[expArg.expFlag2[i + minSize]];
         }
         *errorMessage += '\n';
     }
 
     *errorMessage += std::string ("received:\n    ") + ARG_D[arg_got.flag1];
-    int arg1size = (int) ARG_D[arg_got.flag1].size ();
+    int arg1size = static_cast<int> (ARG_D[arg_got.flag1].size ());
     for (int i = 0; i < LEN - arg1size; i++) *errorMessage += ' ';
     *errorMessage += ARG_D[arg_got.flag2];
 }
@@ -147,11 +151,11 @@ struct ManageInputArgs_t
             error = true;
     }
 
-    ErrorReturn_t CreateError (int val = RET_ERROR_CONTINUE, std::string error = std::string ())
+    ErrorReturn_t CreateError (int val = RET_ERROR_CONTINUE, std::string error_ = std::string ())
     {
-        if (error.empty ())
-            SetStringBadArg (&error, argsGot, expArgs);
-        return ErrorReturn_t (val, error);
+        if (error_.empty ())
+            SetStringBadArg (&error_, argsGot, expArgs);
+        return ErrorReturn_t (val, error_);
     }
 
 };

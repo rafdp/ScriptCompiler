@@ -90,7 +90,8 @@ public:
     bool ManageStructVar (char* flag, long long* arg, long long struct_ = 0)
     {
         if (!Ok ()) return false;
-        if (( (std::string*) (*arg))->find ('.') == ((std::string*) (*arg))->npos && !struct_)
+        if ((reinterpret_cast <std::string*> (*arg))->find ('.') == (reinterpret_cast <std::string*> (*arg))->npos
+            && !struct_)
             return false;
         int nested = struct_ ? 1 : 0;
         long long offset = /*struct_ ? (*mvars_)[struct_][*(std::string*) (*arg)].offset :*/ 0;
@@ -98,7 +99,7 @@ public:
         if (struct_ && !mvars_->empty ())
         {
             auto varsFnd = (*mvars_)[struct_].end ();
-            if ((varsFnd = (*mvars_)[struct_].find (*(std::string*) (*arg))) != (*mvars_)[struct_].end ())
+            if ((varsFnd = (*mvars_)[struct_].find (*reinterpret_cast<std::string*> (*arg))) != (*mvars_)[struct_].end ())
             {
                 typeCode = varsFnd->second.typeCode;
             }
@@ -117,14 +118,14 @@ public:
         {
             pointOld = point;
             if (nested) pointOld++;
-            point = ((std::string*) (*arg))->find ('.', pointOld);
+            point = (reinterpret_cast<std::string*> (*arg))->find ('.', pointOld);
             std::string token;
-            if (point == ((std::string*) (*arg))->npos)
+            if (point == (reinterpret_cast<std::string*> (*arg))->npos)
             {
                 last = true;
-                point = ((std::string*) (*arg))->size ();
+                point = (reinterpret_cast<std::string*> (*arg))->size ();
             }
-            for (size_t i = pointOld; i < point; i++) token += (*(std::string*) (*arg))[i];
+            for (size_t i = pointOld; i < point; i++) token += (*reinterpret_cast<std::string*> (*arg))[i];
             auto varsFound = vars_->end ();
             if (!nested &&
                 (varsFound = vars_->find (StrTo32Pair_t (token, *func_level_))) != vars_->end ())
@@ -174,11 +175,11 @@ public:
             {
                 if (*flag & ARG_UNREF_MASK)
                 {
-                    if (typeCode == TYPE_PTR) *flag = (char) (ARG_UNREF_MASK | ARG_VAR_MEMBER);
+                    if (typeCode == TYPE_PTR) *flag = static_cast<char> (ARG_UNREF_MASK | ARG_VAR_MEMBER);
                     else NAT_EXCEPTION (expn_, "Invalid use of '*'", ERROR_INVALID_UNREF)
                 }
                 else *flag = ARG_VAR_MEMBER;
-                delete (std::string*) (*arg);
+                delete reinterpret_cast<std::string*> (*arg);
                 *arg = 0;
                 *arg = short (typeCode);
                 *arg <<= 16;
@@ -200,7 +201,7 @@ public:
                 else
                 {
                     *flag = ARG_FUNC_MEMBER;
-                    delete (std::string*) (*arg);
+                    delete reinterpret_cast<std::string*> (*arg);
                     *arg = 0;
                     *arg |= int (var + 1);
                     *arg <<= 32;

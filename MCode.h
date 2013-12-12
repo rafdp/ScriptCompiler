@@ -41,7 +41,10 @@ class MCode_t
 
     void AddToTop (uint8_t val)
     {
-        *(buffer_.rbegin ()) += val;
+        //*(buffer_.rbegin ()) += val;
+        uint8_t* ptr = buffer_.data();
+        *(ptr + buffer_.size() - 1) = *(ptr + buffer_.size() - 1) + 0;
+
         //*(uint8_t*)(buffer_.data () + buffer_.size () - 1) += val;
     }
 

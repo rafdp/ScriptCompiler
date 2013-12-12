@@ -1,6 +1,9 @@
 #ifndef MAP_CPP_INCLUDED
 #define MAP_CPP_INCLUDED
 
+void SetMapAssembler ();
+void SetMapReg ();
+
 struct MapHeader
 {
     int key;
@@ -75,6 +78,7 @@ enum Cmd_Assembler
     CMD_Lea,                //! 128
     CMD_Sqrt                //! 129
 };
+
 void SetMapAssembler ()
 {
     static bool set = false;
@@ -175,6 +179,7 @@ enum Registers
     REG_PTDWORD = 0x5B,
     REG_PTQWORD = 0x63
 };
+
 void SetMapReg ()
 {
     static bool set = false;

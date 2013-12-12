@@ -8,8 +8,15 @@ catch (ExceptionHandler& e) \
 #define MIN(a, b) (((a) > (b)) ? (b) : (a))
 #define MAX(a, b) (((a) < (b)) ? (b) : (a))
 
+class StackData_t;
+
 bool isNum (std::string* str);
 bool IsString (std::string* str);
+bool IsArgValue (const char& flag);
+char _GetString (FILE* f, std::string* str, char del);
+
+std::string GetAsmNumString (int val, const char* operand = "dword");
+void PushStackValueJit (const StackData_t& value, JitCompiler_t* comp, exception_data* expn);
 
 
 
@@ -47,6 +54,9 @@ struct VarDescriptor_t
 
 struct VarData_t
 {
+
+    DISABLE_CLASS_COPY(VarData_t)
+
     void* var;
     long long code;
     size_t size;
@@ -70,7 +80,7 @@ struct VarData_t
 
     void Delete ()
     {
-        if (var) delete [] (char*)var;
+        if (var) delete [] reinterpret_cast<char*> (var);
         var = nullptr;
     }
 
@@ -121,7 +131,7 @@ char _GetString (FILE* f, std::string* str, char del)
     char c = ' ';
     bool str_ = false;
     bool str_found = false;
-    while (c == ' ') c = (char)fgetc (f);
+    while (c == ' ') c = static_cast<char> (fgetc (f));
     int iteration = 0;
     while (c != '\n'          &&
            c != EOF           &&
@@ -132,7 +142,7 @@ char _GetString (FILE* f, std::string* str, char del)
         else if (c == '"') str_ = false;
         if (str_ && c == '\\')
         {
-            switch (c = (char)fgetc (f))
+            switch (c = static_cast<char> (fgetc (f)))
             {
                 case 'n':
                     *str += '\n';
@@ -157,7 +167,7 @@ char _GetString (FILE* f, std::string* str, char del)
         {
             *str += c;
         }
-        c = (char)fgetc (f);
+        c = static_cast<char> (fgetc (f));
         iteration++;
     }
     return c;
@@ -168,7 +178,9 @@ struct ExpectedArg_t
     std::vector<char> expFlag1;
     std::vector<char> expFlag2;
 
-    ExpectedArg_t (int n_flag1, int n_flag2, ...)
+    ExpectedArg_t (int n_flag1, int n_flag2, ...) :
+        expFlag1 (),
+        expFlag2 ()
     {
         va_list arg; va_start (arg, n_flag2);
         for (int i = 0; i < n_flag1; i++) expFlag1.push_back (char(va_arg (arg, int)));
@@ -193,16 +205,20 @@ struct StackData_t
 
     template <typename T>
     StackData_t (T data_ = 0, size_t size_ = 0) :
-        data ((long long) data_),
+        data (static_cast <int64_t> (data_)),
         size (size_)
     {}
 
     bool operator! ()
-    {return data == 0;}
+    {
+        return (data == 0);
+    }
 
     template <typename T>
     operator T ()
-    {return (T)data;}
+    {
+        return reinterpret_cast <T> (data);
+    }
 
     friend std::ostream& operator<< (std::ostream& output, const StackData_t& s)
     {
@@ -211,7 +227,7 @@ struct StackData_t
     }
 };
 
-std::string GetAsmNumString (int val, const char* operand = "dword")
+std::string GetAsmNumString (int val, const char* operand /* = "dword" */)
 {
     char val_[MAX_PATH] = "";
     itoa (val, val_, 16);
@@ -221,24 +237,26 @@ std::string GetAsmNumString (int val, const char* operand = "dword")
     return val_str;
 }
 
-void PushStackValueJit (const StackData_t& value, JitCompiler_t* comp)
+void PushStackValueJit (const StackData_t& value, JitCompiler_t* comp, exception_data* expn)
 {
     //ErrorPrintfBox ("%d %s", value.size, __PRETTY_FUNCTION__);
-        switch (value.size)
-        {
-            case sizeof (char):
-            case sizeof (short):
-            case sizeof (int):
-            comp->push ((long)value.data);
-            break;
-            case sizeof (long long):
-            /*comp->push (*( (int*) (& (value.data)) + 1));
-            comp->push (*( (int*) (& (value.data)) + 0));*/
-            comp->push ((long long)value.data);
-            break;
-            //!default:
-            //!NAT_EXCEPTION ()
-        }
+    switch (value.size)
+    {
+        case sizeof (int8_t):
+        comp->push (static_cast<int8_t> (value.data));
+        break;
+        case sizeof (int16_t):
+        comp->push (static_cast<int16_t> (value.data));
+        break;
+        case sizeof (int32_t):
+        comp->push (static_cast<int32_t> (value.data));
+        break;
+        case sizeof (int64_t):
+        comp->push (static_cast<int64_t> (value.data));
+        break;
+        default:
+        NAT_EXCEPTION (expn, "Failed to emit \"push\", invalid operator size", ERROR_INVALID_OP_SIZE_SWITCH)
+    }
 
 }
 

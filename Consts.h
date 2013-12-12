@@ -79,7 +79,8 @@ enum ERRORS
     ERROR_SIGNAL_SEGV,                   //! 35
     ERROR_SIGNAL_TERM,                   //! 36
     ERROR_FATAL,                         //! 37
-    ERROR_SCRIPT_FILE_NOT_FOUND          //! 38
+    ERROR_SCRIPT_FILE_NOT_FOUND,         //! 38
+    ERROR_INVALID_OP_SIZE_SWITCH         //! 39
 };
 
 enum PREDEFINED_CONSTS
@@ -170,9 +171,6 @@ typedef std::vector<DllPair_t>                    DllVector_t;
 typedef std::map<std::string, DllVector_t>        DllImportMap_t;
 typedef StrTo64Map_t                              DllFuncsMap_t;
 typedef std::map<long long, void*>                ResolvedDllFuncsMap_t;
-
-
-void FillConstsMap (StrTo64Map_t* map);
 
 
 
