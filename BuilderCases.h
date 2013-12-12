@@ -331,6 +331,7 @@ _BUILD_CASE_FUNC (End_Struct)
     arg.Clear ();
     return false;
 _RETURN
+
 _BUILD_CASE_FUNC (Null)
     cmd.Clear ();
     arg.Clear ();

@@ -93,12 +93,12 @@ class exception_data
         }
         else
         {
-            if (allocatedMem_ != NULL)
+            if (allocatedMem_ != nullptr)
             {
                 if (availableMem_ == 0)
                 {
                     printf ("Not enough memory for exceptions\n");
-                    return 0;
+                    return nullptr;
                 }
                 usedMem_++;
                 availableMem_--;
@@ -114,7 +114,7 @@ class exception_data
     }
 
     exception_data (size_t size, const char* filename) :
-        allocatedMem_ (NULL),
+        allocatedMem_ (nullptr),
         usedMem_      (0),
         availableMem_ (0),
         filename_     (filename),
@@ -126,10 +126,10 @@ class exception_data
     ~exception_data ()
     {
         CloseLog ();
-        if (allocatedMem_ != NULL)
+        if (allocatedMem_ != nullptr)
         {
             delete[] allocatedMem_;
-            allocatedMem_ = NULL;
+            allocatedMem_ = nullptr;
         }
         usedMem_ = 0;
         availableMem_ = 0;
@@ -175,7 +175,7 @@ ExceptionHandler::ExceptionHandler () :
     error_code_ (0),
     line_   (0),
     file_   (""),
-    cause_     (NULL),
+    cause_     (nullptr),
     pt_ (this)
 {
 }
@@ -188,7 +188,7 @@ ExceptionHandler::ExceptionHandler (const char*     message,
     error_code_ (error_code),
     line_       (line),
     file_       (file),
-    cause_      (NULL),
+    cause_      (nullptr),
     pt_         (this)
 {
 }
@@ -220,7 +220,7 @@ void ExceptionHandler::WriteLog(exception_data* data) const
     fprintf (data->log_, "Exception with error code %d,\n", error_code_);
     fprintf (data->log_, "error message: \"%s\"\n", message_);
     fprintf (data->log_, "occurred in file: \"%s\" on line %d\n", file_, line_);
-    if (cause_ != NULL)
+    if (cause_ != nullptr)
     {
         fprintf (data->log_, "caused by:\n");
         cause_->WriteLog (data);

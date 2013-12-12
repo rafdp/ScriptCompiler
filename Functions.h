@@ -19,7 +19,10 @@ currentReturn_ = RET_NO_ERRORS; \
 FUNCTION_BEGIN (RebuildVar, 2, 4, ARG_VAR _ ARG_NULL _ ARG_NUM)
     VarData_t& var = $ vars_[arg.arg1];
     var.Delete ();
-    var.code = ($ isNum (arg.flag2) ? arg.arg2 : TYPE_QWORD);
+    if ($ isNum (arg.flag2))
+        var.code = arg.arg2;
+    else
+        var.code = TYPE_QWORD;
     var.size = $ typeSizes_[var.code];
     var.Free ();
 FUNCTION_END
@@ -42,13 +45,13 @@ FUNCTION_BEGIN (Mov, 3, 5, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_VAR _ ARG_VA
                 $ GetVarSize (arg.flag2, arg.arg2));
     else
     {
-        /*ErrorPrintfBox ("MOV before\n%s %lld %lld\n%s %lld %lld\n",
+        /*ErrorPrintfBox ("MOV before\n%s %I64d %I64d\n%s %I64d %I64d\n",
                         ARG_D[arg.flag1].c_str (), arg.arg1, $ GetVal (arg.flag1, arg.arg1),
                         ARG_D[arg.flag2].c_str (), arg.arg2, $ GetVal (arg.flag2, arg.arg2));
         long long res = $ GetVal (arg.flag2, arg.arg2);*/
         $ SetVal (arg.flag1, arg.arg1, $ GetVal (arg.flag2, arg.arg2));
 
-        /*ErrorPrintfBox ("MOV after\n%s %lld %lld\n%s %lld %lld\n",
+        /*ErrorPrintfBox ("MOV after\n%s %I64d %I64d\n%s %I64d %I64d\n",
                         ARG_D[arg.flag1].c_str (), arg.arg1, $ GetVal (arg.flag1, arg.arg1),
                         ARG_D[arg.flag2].c_str (), arg.arg2, $ GetVal (arg.flag2, arg.arg2));
         */
@@ -71,7 +74,7 @@ FUNCTION_END
 
 FUNCTION_BEGIN (Print, 1, 5, ARG_NUM _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_NUM _ ARG_STR)
     //ErrorPrintfBox ("Called Print\n");
-    const char error0[] = "Null pointer, cannot print str";
+    const char error0[] = "nullptr pointer, cannot print str";
     const char error1[] = "Invalid cmd";
 
     #define _RET_ERROR_(n) {currentReturn_ = ErrorReturn_t (RET_ERROR_CONTINUE, error##n); return;}
@@ -82,10 +85,12 @@ FUNCTION_BEGIN (Print, 1, 5, ARG_NUM _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_
         { \
             case PRINT_STRING: \
                 if (!val) _RET_ERROR_ (0) \
-                printf ("%s", (char*)val); \
+                printf ("%s", reinterpret_cast <char*> (val)); \
                 break; \
             case PRINT_NUMBER: \
-                printf ("%lld", val); \
+                printf ("%I64d", reinterpret_cast <int64_t> (val)); \
+                break; \
+            default: \
                 break; \
         } \
     }
@@ -97,7 +102,7 @@ FUNCTION_BEGIN (Print, 1, 5, ARG_NUM _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_
         PRINT_FORMATTED ( ($ strings_[arg.arg2]))
     else
     if ($ isNum (arg.flag2) && arg.arg2 == PRINT_STACK)
-        PRINT_FORMATTED ($ dataStack_.top ())
+        PRINT_FORMATTED ($ dataStack_.top() . data)
     else _RET_ERROR_ (1)
 
     #undef _RET_ERROR_
@@ -189,7 +194,7 @@ FUNCTION_BEGIN (JIT_Call_Void, 1, 0, ARG_DLL_FUNC)
 
     JitCompiler_t comp;
     for (stack<StackData_t>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpPoint_]); i < $ dataStack_.end (); i++)
-        PushStackValueJit (*i, &comp);
+        PushStackValueJit (*i, &comp, expn_);
     comp.mov (comp.r_rax, int64_t ($ dllResolved_[arg.arg1]));
     comp.call (comp.r_rax);
     comp.add (comp.r_rsp, (long) $ RspAdd ());
@@ -204,7 +209,7 @@ FUNCTION_BEGIN (JIT_Call_DWord, 1, 3, ARG_DLL_FUNC _ ARG_REG _ ARG_VAR _ ARG_VAR
     JitCompiler_t comp;
 
     for (stack<StackData_t>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpPoint_]); i < $ dataStack_.end (); i++)
-        PushStackValueJit (*i, &comp);
+        PushStackValueJit (*i, &comp, expn_);
     comp.mov (comp.r_rax, int64_t ($ dllResolved_[arg.arg1]));
     comp.call (comp.r_rax);
     if (! $ isVar (arg.flag2)) ($ GetReg (arg.arg2)).MovFromReg (&comp, comp.r_rax);
@@ -221,7 +226,7 @@ FUNCTION_BEGIN (JIT_Call_QWord, 1, 3, ARG_DLL_FUNC _ ARG_REG _ ARG_VAR _ ARG_VAR
         currentReturn_ = ErrorReturn_t (RET_ERROR_CONTINUE, $ isReg (arg.flag2) ? "Invalid reg size" : "Invalid var size");
     JitCompiler_t comp;
     for (stack<StackData_t>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpPoint_]); i < $ dataStack_.end (); i++)
-        PushStackValueJit (*i, &comp);
+        PushStackValueJit (*i, &comp, expn_);
     comp.mov (comp.r_rax, int64_t ($ dllResolved_[arg.arg1]));
     comp.call (comp.r_rax);
     comp.mov ((DWORD*)&res, comp.r_rax);
@@ -619,10 +624,10 @@ if ($ isNum (arg.flag2) && ! $ isNum (arg.flag1))
     jg_offset = comp->Size() - sizeof (int32_t);
     comp->jmp (0);
     jmp_offset = comp->Size() - sizeof (int32_t);
-    JmpPatchRequestOffset (comp, jg_offset, comp->Size() + 1);
+    JmpPatchRequestOffset (jg_offset, comp->Size() + 1);
     comp->cmp<int32_t> (comp->r_rcx, (int32_t)arg.arg2);
 
-    JmpPatchRequestOffset (comp, jmp_offset, comp->Size() + 1);
+    JmpPatchRequestOffset (jmp_offset, comp->Size() + 1);
     jg_offset = 0;
     jl_offset = 0;
     jmp_offset = 0;
@@ -638,20 +643,20 @@ if ($ isNum (arg.flag2) && ! $ isNum (arg.flag1))
     jmp_offset = comp->Size() - sizeof (int32_t);
 
 
-    JmpPatchRequestOffset (comp, jg_offset, comp->Size() + 1);
+    JmpPatchRequestOffset (jg_offset, comp->Size() + 1);
     comp->mov<int8_t> ((int8_t*)&instance_->cmpr_flag_, (int8_t)FLAG_HIGH);
     comp->jmp (0);
     jg_offset = comp->Size() - sizeof (int32_t);
 
-    JmpPatchRequestOffset (comp, jl_offset, comp->Size() + 1);
+    JmpPatchRequestOffset (jl_offset, comp->Size() + 1);
     comp->mov<int8_t> ((int8_t*)&instance_->cmpr_flag_, (int8_t)FLAG_LOW);
     comp->jmp (0);
     jl_offset = comp->Size() - sizeof (int32_t);
 
     //! finally:
-    JmpPatchRequestOffset (comp, jl_offset, comp->Size() + 1);
-    JmpPatchRequestOffset (comp, jg_offset, comp->Size() + 1);
-    JmpPatchRequestOffset (comp, jmp_offset, comp->Size() + 1);
+    JmpPatchRequestOffset (jl_offset, comp->Size() + 1);
+    JmpPatchRequestOffset (jg_offset, comp->Size() + 1);
+    JmpPatchRequestOffset (jmp_offset, comp->Size() + 1);
 
 
 }
@@ -697,10 +702,10 @@ if ($ isNum (arg.flag1) && ! $ isNum (arg.flag2))
     jg_offset = comp->Size() - sizeof (int32_t);
     comp->jmp (0);
     jmp_offset = comp->Size() - sizeof (int32_t);
-    JmpPatchRequestOffset (comp, jg_offset, comp->Size() + 1);
+    JmpPatchRequestOffset (jg_offset, comp->Size() + 1);
     comp->cmp<int32_t> (comp->r_rcx, (int32_t)arg.arg1);
 
-    JmpPatchRequestOffset (comp, jmp_offset, comp->Size() + 1);
+    JmpPatchRequestOffset (jmp_offset, comp->Size() + 1);
     jg_offset = 0;
     jl_offset = 0;
     jmp_offset = 0;
@@ -716,20 +721,20 @@ if ($ isNum (arg.flag1) && ! $ isNum (arg.flag2))
     jmp_offset = comp->Size() - sizeof (int32_t);
 
 
-    JmpPatchRequestOffset (comp, jg_offset, comp->Size() + 1);
+    JmpPatchRequestOffset (jg_offset, comp->Size() + 1);
     comp->mov<int8_t> ((int8_t*)&instance_->cmpr_flag_, (int8_t)FLAG_LOW);
     comp->jmp (0);
     jg_offset = comp->Size() - sizeof (int32_t);
 
-    JmpPatchRequestOffset (comp, jl_offset, comp->Size() + 1);
+    JmpPatchRequestOffset (jl_offset, comp->Size() + 1);
     comp->mov<int8_t> ((int8_t*)&instance_->cmpr_flag_, (int8_t)FLAG_HIGH);
     comp->jmp (0);
     jl_offset = comp->Size() - sizeof (int32_t);
 
     //! finally:
-    JmpPatchRequestOffset (comp, jl_offset, comp->Size() + 1);
-    JmpPatchRequestOffset (comp, jg_offset, comp->Size() + 1);
-    JmpPatchRequestOffset (comp, jmp_offset, comp->Size() + 1);
+    JmpPatchRequestOffset (jl_offset, comp->Size() + 1);
+    JmpPatchRequestOffset (jg_offset, comp->Size() + 1);
+    JmpPatchRequestOffset (jmp_offset, comp->Size() + 1);
 
 
 }
@@ -812,10 +817,10 @@ else
     jg_offset = comp->Size() - sizeof (int32_t);
     comp->jmp (0);
     jmp_offset = comp->Size() - sizeof (int32_t);
-    JmpPatchRequestOffset (comp, jg_offset, comp->Size() + 1);
+    JmpPatchRequestOffset (jg_offset, comp->Size() + 1);
     comp->cmp<int32_t> (comp->r_rcx, comp->r_rax);
 
-    JmpPatchRequestOffset (comp, jmp_offset, comp->Size() + 1);
+    JmpPatchRequestOffset (jmp_offset, comp->Size() + 1);
     jg_offset = 0;
     jl_offset = 0;
     jmp_offset = 0;
@@ -831,20 +836,20 @@ else
     jmp_offset = comp->Size() - sizeof (int32_t);
 
 
-    JmpPatchRequestOffset (comp, jg_offset, comp->Size() + 1);
+    JmpPatchRequestOffset (jg_offset, comp->Size() + 1);
     comp->mov<int8_t> ((int8_t*)&instance_->cmpr_flag_, (int8_t)FLAG_HIGH);
     comp->jmp (0);
     jg_offset = comp->Size() - sizeof (int32_t);
 
-    JmpPatchRequestOffset (comp, jl_offset, comp->Size() + 1);
+    JmpPatchRequestOffset (jl_offset, comp->Size() + 1);
     comp->mov<int8_t> ((int8_t*)&instance_->cmpr_flag_, (int8_t)FLAG_LOW);
     comp->jmp (0);
     jl_offset = comp->Size() - sizeof (int32_t);
 
     //! finally:
-    JmpPatchRequestOffset (comp, jl_offset, comp->Size() + 1);
-    JmpPatchRequestOffset (comp, jg_offset, comp->Size() + 1);
-    JmpPatchRequestOffset (comp, jmp_offset, comp->Size() + 1);
+    JmpPatchRequestOffset (jl_offset, comp->Size() + 1);
+    JmpPatchRequestOffset (jg_offset, comp->Size() + 1);
+    JmpPatchRequestOffset (jmp_offset, comp->Size() + 1);
 }
 comp->inc  (&instance_->run_line_);
 FUNCTION_END
@@ -854,7 +859,7 @@ comp->mov  (comp->r_rax, (int64_t)(void*)&VirtualProcessor_t::Jmp);
 comp->mov  (comp->r_rcx, (int64_t)(void*)this);
 comp->call (comp->r_rax);
 comp->jmp (0);
-JmpPatchRequestLine (comp, (int64_t)(comp->Size() - sizeof (int64_t)), arg.arg1);
+JmpPatchRequestLine ((int64_t)(comp->Size() - sizeof (int64_t)), arg.arg1);
 FUNCTION_END
 
 FUNCTION_BEGIN (Jne, 1, 0, ARG_LABEL)
@@ -863,7 +868,7 @@ comp->mov  (comp->r_rcx, (int64_t)(void*)this);
 comp->call (comp->r_rax);
 comp->cmp (&instance_->cmpr_flag_, '\0');
 comp->jne (0);
-JmpPatchRequestLine (comp, (int64_t)(comp->Size() - sizeof (int64_t)), arg.arg1);
+JmpPatchRequestLine ((int64_t)(comp->Size() - sizeof (int64_t)), arg.arg1);
 comp->inc  (&instance_->run_line_);
 FUNCTION_END
 
@@ -873,7 +878,7 @@ comp->mov  (comp->r_rcx, (int64_t)(void*)this);
 comp->call (comp->r_rax);
 comp->cmp (&instance_->cmpr_flag_, '\0');
 comp->je (0);
-JmpPatchRequestLine (comp, (int64_t)(comp->Size() - sizeof (int64_t)), arg.arg1);
+JmpPatchRequestLine ((int64_t)(comp->Size() - sizeof (int64_t)), arg.arg1);
 comp->inc  (&instance_->run_line_);
 FUNCTION_END
 
@@ -883,7 +888,7 @@ comp->mov  (comp->r_rcx, (int64_t)(void*)this);
 comp->call (comp->r_rax);
 comp->cmp (&instance_->cmpr_flag_, '\0');
 comp->jg (0);
-JmpPatchRequestLine (comp, (int64_t)(comp->Size() - sizeof (int64_t)), arg.arg1);
+JmpPatchRequestLine ((int64_t)(comp->Size() - sizeof (int64_t)), arg.arg1);
 comp->inc  (&instance_->run_line_);
 FUNCTION_END
 
@@ -893,7 +898,7 @@ comp->mov  (comp->r_rcx, (int64_t)(void*)this);
 comp->call (comp->r_rax);
 comp->cmp (&instance_->cmpr_flag_, '\0');
 comp->jge (0);
-JmpPatchRequestLine (comp, (int64_t)(comp->Size() - sizeof (int64_t)), arg.arg1);
+JmpPatchRequestLine ((int64_t)(comp->Size() - sizeof (int64_t)), arg.arg1);
 comp->inc  (&instance_->run_line_);
 FUNCTION_END
 
@@ -903,7 +908,7 @@ comp->mov  (comp->r_rcx, (int64_t)(void*)this);
 comp->call (comp->r_rax);
 comp->cmp (&instance_->cmpr_flag_, '\0');
 comp->jl (0);
-JmpPatchRequestLine (comp, (int64_t)(comp->Size() - sizeof (int64_t)), arg.arg1);
+JmpPatchRequestLine ((int64_t)(comp->Size() - sizeof (int64_t)), arg.arg1);
 comp->inc  (&instance_->run_line_);
 FUNCTION_END
 
@@ -913,7 +918,7 @@ comp->mov  (comp->r_rcx, (int64_t)(void*)this);
 comp->call (comp->r_rax);
 comp->cmp (&instance_->cmpr_flag_, '\0');
 comp->jle (0);
-JmpPatchRequestLine (comp, (int64_t)(comp->Size() - sizeof (int64_t)), arg.arg1);
+JmpPatchRequestLine ((int64_t)(comp->Size() - sizeof (int64_t)), arg.arg1);
 comp->inc  (&instance_->run_line_);
 FUNCTION_END
 
@@ -930,7 +935,7 @@ comp->mov   (comp->r_rcx, (int64_t)(void*)this);
 comp->call  (comp->r_rax);
 comp->inc   (&instance_->run_line_);
 comp->callr (0);
-JmpPatchRequestLine (comp, (int64_t)(comp->Size() - sizeof (int64_t)), (int64_t)((int32_t)arg.arg1 + 1));
+JmpPatchRequestLine ((int64_t)(comp->Size() - sizeof (int64_t)), (int64_t)((int32_t)arg.arg1 + 1));
 FUNCTION_END
 
 FUNCTION_BEGIN (Decr, 3, 0, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG)

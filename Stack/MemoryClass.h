@@ -65,8 +65,8 @@ public:
 
     DynamicMem (exception_data* exp) :
         currSize (Size),
-        data (NULL),
-        temp (NULL),
+        data (nullptr),
+        temp (nullptr),
         maxElements (MaxBytes / sizeof(T)),
         expn (exp)
     {
@@ -94,7 +94,7 @@ public:
         CATCH_IN_FUNC_ERROR (expn)
         CATCH_UNKNOWN_ERROR (expn)
         delete[] data;
-        expn = NULL;
+        expn = nullptr;
     }
 
     void Copy (size_t n)
@@ -103,8 +103,8 @@ public:
         {
             ok ();
             if (n == 0) return;
-            if (temp == NULL) return;
-            if (data == NULL) return;
+            if (temp == nullptr) return;
+            if (data == nullptr) return;
             for (size_t i = 0; i < n; i++) data[i] = temp[i];
             ok ();
         }
@@ -143,7 +143,7 @@ public:
                 Copy (currSize * sizeof (T));
                 currSize += size;
                 delete[] temp;
-                temp = NULL;
+                temp = nullptr;
                 ok ();
             }
             catch (std::bad_alloc)
@@ -164,7 +164,7 @@ public:
             if (size >= currSize || size == -1)
             {
                 delete[] data;
-                data = NULL;
+                data = nullptr;
                 currSize = 0;
             }
             else if (size <= 0) return;
@@ -175,7 +175,7 @@ public:
                 Copy ((currSize - size) * sizeof (T));
                 currSize -= size;
                 delete[] temp;
-                temp = NULL;
+                temp = nullptr;
             }
 
             ok ();

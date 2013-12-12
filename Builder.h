@@ -10,7 +10,8 @@
 #include <math.h>
 #include <stdexcept>
 #include <signal.h>
-#define nullptr NULL
+
+//#define nullptr nullptr
 
 #include "Stack/StackV2.h"
 #include "Consts.h"
@@ -361,13 +362,13 @@ void ScriptCompiler_t::Dump ()
     printf ("%s:\n", #name); \
     STL_LOOP (i, name) \
     { \
-        printf ("  %s %lld\n", i->first.c_str (), i->second); \
+        printf ("  %s %I64d\n", i->first.c_str (), i->second); \
     }
     PRINT_MAP (consts_)
     printf ("vars_:\n");
     STL_LOOP (i, vars_)
     {
-        printf ("  %s %d %lld %d, %lld\n",
+        printf ("  %s %d %I64d %d, %I64d\n",
                 i->first.first.c_str (),
                 i->first.second,
                 i->second.num,
@@ -379,7 +380,7 @@ void ScriptCompiler_t::Dump ()
     printf ("labels_:\n");
     STL_LOOP (i, labels_)
     {
-        printf ("  %s %lld\n", i->first.c_str (), i->second);
+        printf ("  %s %I64d\n", i->first.c_str (), i->second);
     }
 
     printf ("strings_:\n");
@@ -391,13 +392,13 @@ void ScriptCompiler_t::Dump ()
     printf ("funcs_:\n");
     STL_LOOP (i, funcs_)
     {
-        printf ("  %d %lld\n", i->flag, i->cmd);
+        printf ("  %d %I64d\n", i->flag, i->cmd);
     }
     /*
     printf ("args_:\n");
     STL_LOOP (i, args_)
     {
-        printf ("  %d %lld %d %lld\n", i->flag1, i->arg1, i->flag2, i->arg2);
+        printf ("  %d %I64d %d %I64d\n", i->flag1, i->arg1, i->flag2, i->arg2);
     }
     */
     #undef PRINT_MAP
@@ -517,34 +518,30 @@ bool ScriptCompiler_t::CheckName (std::string name, int line)
 
 bool ScriptCompiler_t::AddName (std::string name, char flag, long long cmd, int line)
 {
-    bool ok = true;
-
-    if (ok)
+    switch (flag)
     {
-        switch (flag)
-        {
-            case CMD_Const:
-                consts_[name] = cmd;
-                break;
-            case CMD_Label:
-                if (labels_.find (name) == labels_.end ())
-                {
-                    labels_[name] = line;
-                }
-                else labels_[name] = line;
-                break;
-            case CMD_Extern:
-                userFuncs_[name] = userFuncs_.size () - 1;
-                break;
-            case CMD_Var:
-                vars_[StrTo32Pair_t (name, func_level_)] = {(int)vars_.size () - 1, -1, TYPE_QWORD, nullptr};
-                break;
-            case CMD_CFunc:
-                createdFuncs_[name] = line;
-                break;
-        }
+        case CMD_Const:
+            consts_[name] = cmd;
+            break;
+        case CMD_Label:
+            if (labels_.find (name) == labels_.end ())
+            {
+                labels_[name] = line;
+            }
+            else labels_[name] = line;
+            break;
+        case CMD_Extern:
+            userFuncs_[name] = userFuncs_.size () - 1;
+            break;
+        case CMD_Var:
+            vars_[StrTo32Pair_t (name, func_level_)] = {(int)vars_.size () - 1, -1, TYPE_QWORD, nullptr};
+            break;
+        case CMD_CFunc:
+            createdFuncs_[name] = line;
+            break;
+        default:
+            NAT_EXCEPTION (expn_, "Internal error (invalid registering token type)", ERROR_INVALID_REGISTERING_TOKEN_TYPE)
     }
-    return ok;
 }
 
 bool ScriptCompiler_t::ManageStruct (Cmd_t& cmd, Arg_t& arg, int n_line)
@@ -628,6 +625,8 @@ void ScriptCompiler_t::ResolvePrototypes ()
                 i->flag1 = ARG_LABEL;
                 break;
             }
+            default:
+                break;
         }
         switch (i->flag2)
         {
@@ -655,6 +654,8 @@ void ScriptCompiler_t::ResolvePrototypes ()
                 i->flag2 = ARG_LABEL;
                 break;
             }
+            default:
+                break;
         }
     }
 }

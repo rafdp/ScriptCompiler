@@ -17,6 +17,7 @@ class FileHandler_t
 
 class ScriptLoader_t
 {
+    DISABLE_CLASS_COPY (ScriptLoader_t)
 public:
     std::map<long long, size_t> typeSizes_;
     std::vector<VarData_t>      vars_;
@@ -42,14 +43,15 @@ public:
 };
 
 ScriptLoader_t::ScriptLoader_t (std::string filename, exception_data* expn) :
-    typeSizes_ (),
-    vars_      (),
-    userFuncs_ (),
-    strings_   (),
-    funcs_     (),
-    args_      (),
-    dllFuncs_  (),
-    expn_      (expn)
+    typeSizes_   (),
+    vars_        (),
+    userFuncs_   (),
+    strings_     (),
+    funcs_       (),
+    args_        (),
+    dllFuncs_    (),
+    dllResolved_ (),
+    expn_        (expn)
 {
     FILE* script = fopen (filename.c_str (), "rb");
     if (!script)
@@ -87,14 +89,14 @@ ScriptLoader_t::ScriptLoader_t (std::string filename, exception_data* expn) :
 
     #define READ_STR(name) \
     std::string name; \
-    char c = 0; \
-    while ((c = _load (char)) != CONTROL_CHARACTER) \
-        name += c;
+    char control_character##name = 0; \
+    while ((control_character##name = _load (char)) != CONTROL_CHARACTER) \
+        name += control_character##name;
 
     IMPORT_LOOP (dllFuncs_,
-                {READ_STR (dll)
-                 dllFuncs_[dll] = DllVector_t ();
-                 DllVector_t& currVec = dllFuncs_[dll];
+                {READ_STR (dll_str)
+                 dllFuncs_[dll_str] = DllVector_t ();
+                 DllVector_t& currVec = dllFuncs_[dll_str];
                  IMPORT_LOOP_ (currVec,
                               it,
                               {READ_STR (funcName)
@@ -146,23 +148,23 @@ bool ScriptLoader_t::CheckHeader (FILE* f)
 void ScriptLoader_t::Dump ()
 {
     //printf ("n_vars: %d\n", n_vars_);
-    printf ("userFuncs: %d\n", userFuncs_.size ());
+    printf ("userFuncs: %I64u\n", userFuncs_.size ());
     for (auto i = userFuncs_.begin (); i < userFuncs_.end (); i++)
         printf ("  \"%s\"\n", i->c_str ());
-    printf ("strings: %d\n", strings_.size ());
+    printf ("strings: %I64u\n", strings_.size ());
     for (auto i = strings_.begin (); i < strings_.end (); i++)
         printf ("  \"%s\"\n", *i);
 
     printf ("funcs_:\n");
     for (auto i = funcs_.begin (); i < funcs_.end (); i++)
     {
-        printf ("  %d %lld\n", i->flag, i->cmd);
+        printf ("  %d %I64d\n", i->flag, i->cmd);
     }
 
     printf ("args_:\n");
     for (auto i = args_.begin (); i < args_.end (); i++)
     {
-        printf ("  %d %lld %d %lld\n", i->flag1, i->arg1, i->flag2, i->arg2);
+        printf ("  %d %I64d %d %I64d\n", i->flag1, i->arg1, i->flag2, i->arg2);
     }
 }
 

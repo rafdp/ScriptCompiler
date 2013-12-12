@@ -17,13 +17,14 @@
 
 class VirtualProcessor_t
 {
+    DISABLE_CLASS_COPY (VirtualProcessor_t)
     void FillJitCompiler (JitCompiler_t* compiler,
                           std::string filename,
                           int error_mode,
                           std::string log);
     void PatchJmp (JitCompiler_t* compiler);
-    void JmpPatchRequestLine (JitCompiler_t* compiler, int64_t offset, int64_t line);
-    void JmpPatchRequestOffset (JitCompiler_t* compiler, int64_t offset1, int64_t offset2);
+    void JmpPatchRequestLine (int64_t offset, int64_t line);
+    void JmpPatchRequestOffset (int64_t offset1, int64_t offset2);
     RunInstanceDataHandler_t* instance_;
     exception_data* expn_;
     int error_mode_;
@@ -108,7 +109,7 @@ public:
     friend void OnSigTerm (int);
 };
 
-VirtualProcessor_t* VirtualProcessor_t::currentlyExecuting_ = NULL;
+VirtualProcessor_t* VirtualProcessor_t::currentlyExecuting_ = nullptr;
 
 VirtualProcessor_t::VirtualProcessor_t (exception_data* expn) :
     instance_      (nullptr),
@@ -130,7 +131,7 @@ void VirtualProcessor_t::RunScript (std::string filename, int error_mode, std::s
     checkIfError[MODE_SILENT] = "logging disabled";
 
     #define _PRINTF_TEXT_(funcName) \
-                          "%s occurred in \"%s\" on line %d\nError text:\n\"%s\"\n", \
+                          "%s occurred in \"%s\" on line %I64u\nError text:\n\"%s\"\n", \
                           currentReturn_.retVal == RET_ERROR_FATAL ? "Fatal error" : "Error",\
                           funcName, \
                           instance_->run_line_, \
@@ -141,6 +142,7 @@ void VirtualProcessor_t::RunScript (std::string filename, int error_mode, std::s
     { \
         switch (error_mode_) \
         { \
+             default: \
              case MODE_SILENT: \
                 break;\
              case MODE_PRINTF: \
@@ -225,6 +227,8 @@ void VirtualProcessor_t::RunScript (std::string filename, int error_mode, std::s
                         FuncCase (Divs)
                         FuncCase (Lea)
                         FuncCase (Sqrt)
+                        default:
+                            break;
                     }
                 }
                 else
@@ -277,6 +281,8 @@ void VirtualProcessor_t::RunScript (std::string filename, int error_mode, std::s
 
     #undef FuncCase
 
+    #undef CHECK_ERROR
+
     currentlyExecuting_ = nullptr;
 }
 
@@ -316,12 +322,12 @@ void VirtualProcessor_t::PatchJmp (JitCompiler_t* compiler)
     ErrorPrintfBox ("patch ok");
 }
 
-void VirtualProcessor_t::JmpPatchRequestLine (JitCompiler_t* compiler, int64_t offset, int64_t line)
+void VirtualProcessor_t::JmpPatchRequestLine (int64_t offset, int64_t line)
 {
     patch_jmp_.push_back ((JmpPatchData_t){offset, line, false});
 }
 
-void VirtualProcessor_t::JmpPatchRequestOffset (JitCompiler_t* compiler, int64_t offset1, int64_t offset2)
+void VirtualProcessor_t::JmpPatchRequestOffset (int64_t offset1, int64_t offset2)
 {
     patch_jmp_.push_back ((JmpPatchData_t){offset1, offset2, true});
 }
@@ -335,7 +341,7 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
     checkIfError[MODE_SILENT] = "logging disabled";
 
     #define _PRINTF_TEXT_(funcName) \
-                          "%s occurred in \"%s\" on line %d\nError text:\n\"%s\"\n", \
+                          "%s occurred in \"%s\" on line %I64u\nError text:\n\"%s\"\n", \
                           currentReturn_.retVal == RET_ERROR_FATAL ? "Fatal error" : "Error",\
                           funcName, \
                           instance_->run_line_, \
@@ -346,6 +352,7 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
     { \
         switch (error_mode_) \
         { \
+             default: \
              case MODE_SILENT: \
                 break;\
              case MODE_PRINTF: \
@@ -393,7 +400,7 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
     for (size_t i = 0; i < instance_->funcs_.size (); i ++)
     {
         //ErrorPrintfBox ("Line %d", i);
-        instance_->func_offsets_[i] = (int64_t) (compiler->Size () + 1);
+        instance_->func_offsets_[i] = static_cast <int64_t> (compiler->Size () + 1);
 
         if (instance_->funcs_[i].flag == CMD_Func)
         {
@@ -460,7 +467,7 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
             }
             compiler->mov  (&instance_->run_line_, j + 1);
             compiler->jmp (0);
-            JmpPatchRequestLine (compiler, compiler->Size() - sizeof (int64_t), j + 1);
+            JmpPatchRequestLine (compiler->Size() - sizeof (int64_t), j + 1);
         }
         else
             need_realignment = true;

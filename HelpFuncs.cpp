@@ -55,8 +55,6 @@ struct VarDescriptor_t
 struct VarData_t
 {
 
-    DISABLE_CLASS_COPY(VarData_t)
-
     void* var;
     long long code;
     size_t size;

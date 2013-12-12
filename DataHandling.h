@@ -18,6 +18,7 @@ struct UserFunc_t
 
 class RunInstanceDataHandler_t : public ScriptLoader_t
 {
+    DISABLE_CLASS_COPY (RunInstanceDataHandler_t)
 public:
     stack<StackData_t>      dataStack_;
     stack<CallInfo_t>       callStack_;
@@ -27,7 +28,7 @@ public:
     std::map<long long,
              UserFunc_t>    callImportFuncs_;
     int                     stackDumpPoint_;
-    int*                    func_offsets_;
+    int64_t*                func_offsets_;
 
     RunInstanceDataHandler_t (std::string filename,
                               exception_data* expn,
@@ -61,7 +62,7 @@ public:
             //ErrorPrintfBox ("VAR 32 %d", *(int32_t*)vars_[num].var);
             return *(int32_t*)vars_[num].var;
         case TYPE_QWORD:
-            //ErrorPrintfBox ("VAR 64 %lld", *(int64_t*)vars_[num].var);
+            //ErrorPrintfBox ("VAR 64 %I64d", *(int64_t*)vars_[num].var);
             return *(int64_t*)vars_[num].var;
         default:
             return 0;
@@ -163,7 +164,7 @@ public:
     {
         if ((flag & char (~ARG_UNREF_MASK)) == ARG_VAR)        return vars_[arg].var;
         if ((flag & char (~ARG_UNREF_MASK)) == ARG_VAR_MEMBER) return MemberVarPt (arg);
-        return NULL;
+        return nullptr;
     }
 
     long long GetVarType (char flag, long long arg)
@@ -200,7 +201,7 @@ public:
     void* GetPtr (char flag, long long arg)
     {
         //ErrorPrintfBox ("GetPtr\n");
-        void* ret = NULL;
+        void* ret = nullptr;
         if (isVar (flag) && (ret = GetVarPt (flag, arg))) {/*ErrorPrintfBox ("GetPtr Var\n");*/ return ret;}
         if (isReg (flag)) {/*ErrorPrintfBox ("GetPtr Reg\n");*/ return GetReg (arg) .reg;}
         //ErrorPrintfBox ("GetPtr 0\n");
@@ -231,7 +232,7 @@ RunInstanceDataHandler_t::RunInstanceDataHandler_t (std::string filename,
     cmpr_flag_        (FLAG_NOT_SET),
     callImportFuncs_  (),
     stackDumpPoint_   (),
-    func_offsets_     (new int [funcs_.size()])
+    func_offsets_     (new int64_t [funcs_.size()])
 {
     STL_LOOP (i, vars_) i->Free ();
     for (size_t i = 0; i < userFuncs_.size (); i++)

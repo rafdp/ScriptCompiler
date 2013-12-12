@@ -11,7 +11,7 @@ int ErrorPrintfBox (const char* format, ...);
 
 void FillConstsMap (StrTo64Map_t* map);
 
-//#define nullptr NULL
+//#define nullptr nullptr
 
 
 #define STL_LOOP(iterator, object) for (auto iterator = (object).begin (); iterator != (object).end (); iterator++)
@@ -80,7 +80,8 @@ enum ERRORS
     ERROR_SIGNAL_TERM,                   //! 36
     ERROR_FATAL,                         //! 37
     ERROR_SCRIPT_FILE_NOT_FOUND,         //! 38
-    ERROR_INVALID_OP_SIZE_SWITCH         //! 39
+    ERROR_INVALID_OP_SIZE_SWITCH,        //! 39
+    ERROR_INVALID_REGISTERING_TOKEN_TYPE //! 40
 };
 
 enum PREDEFINED_CONSTS
