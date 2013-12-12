@@ -302,10 +302,12 @@ void VirtualProcessor_t::RunScriptJit (std::string filename, int error_mode, std
 void VirtualProcessor_t::PatchJmp (JitCompiler_t* compiler)
 {
     std::vector<uint8_t>* mcode = compiler->GetData ();
+    ErrorPrintfBox ("SIZE %d", mcode->size());
 
     STL_LOOP (it, patch_jmp_)
     {
-        int64_t offset = (int)(0 - (it->first - (it->offset ? (it->second) : ((int)instance_->func_offsets_[it->second]))) - 9);
+        int64_t offset = (0 - (it->first - (it->offset ? (it->second) : (instance_->func_offsets_[it->second]))) - (sizeof (int64_t) + 1));
+        ErrorPrintfBox ("JMP %d", mcode->end() - mcode->begin() - it->first);
         for (size_t i = 0; i < sizeof (offset); i++)
         {
             (*mcode)[it->first + i] = (uint8_t (offset >> i * 8));
@@ -391,7 +393,7 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
     for (size_t i = 0; i < instance_->funcs_.size (); i ++)
     {
         //ErrorPrintfBox ("Line %d", i);
-        instance_->func_offsets_[i] = (int) (compiler->Size () + 1);
+        instance_->func_offsets_[i] = (int64_t) (compiler->Size () + 1);
 
         if (instance_->funcs_[i].flag == CMD_Func)
         {
@@ -458,7 +460,7 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
             }
             compiler->mov  (&instance_->run_line_, j + 1);
             compiler->jmp (0);
-            JmpPatchRequestLine (compiler, compiler->Size() - 4, j + 1);
+            JmpPatchRequestLine (compiler, compiler->Size() - sizeof (int64_t), j + 1);
         }
         else
             need_realignment = true;

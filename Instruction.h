@@ -328,7 +328,9 @@ public:
                                   MODE_ADDRESS,
                                   OFF, 0);
         emitter_.EmitData (reinterpret_cast<int64_t> (ptr));
-        emitter_.EmitData (sizeof (T_Mem) > sizeof (int32_t) ? (int32_t) imm : (T_Mem) imm);
+        emitter_.EmitData (sizeof (T_Mem) > sizeof (int32_t) ?
+                           reinterpret_cast<int32_t> (imm) :
+                           reinterpret_cast<T_Mem>   (imm));
     }
 
     template <typename T_Reg, typename T>
@@ -337,7 +339,9 @@ public:
         CHECK_SIZE_16 (T_Reg)
         CHECK_SIZE_64 (T_Reg)
         emitter_.EmitInstruction (SIZED_CMD (inMov_RM_Imm), MODE_REGISTER, regDest, 0);
-        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ? (int32_t) imm : (T_Reg) imm);
+        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ?
+                           reinterpret_cast<int32_t> (imm) :
+                           reinterpret_cast<T_Reg>   (imm));
     }
 
     template <typename T_Reg, typename T>
@@ -346,7 +350,9 @@ public:
         CHECK_SIZE_16 (T_Reg)
         CHECK_SIZE_64 (T_Reg)
         emitter_.EmitInstruction (SIZED_CMD (inMov_RM_Imm), MODE_ADDRESS, *regDest, 0);
-        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ? (int32_t) imm : (T_Reg) imm);
+        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ?
+                           reinterpret_cast<int32_t> (imm) :
+                           reinterpret_cast<T_Reg>   (imm));
     }
 
     template <typename T>
@@ -456,7 +462,9 @@ public:
         CHECK_SIZE_16 (T_Reg)
         CHECK_SIZE_64 (T_Reg)
         emitter_.EmitInstruction (SIZED_CMD (inAdd_RM_Imm), regDest, 0);
-        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ? (int32_t) data : (T_Reg) data);
+        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ?
+                           reinterpret_cast<int32_t> (data) :
+                           reinterpret_cast<T_Reg>   (data));
     }
 
     template <typename T_Reg, typename T>
@@ -465,7 +473,9 @@ public:
         CHECK_SIZE_16 (T_Reg)
         CHECK_SIZE_64 (T_Reg)
         emitter_.EmitInstruction (SIZED_CMD (inAdd_RM_Imm), MODE_ADDRESS, *regDest, 0);
-        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ? (int32_t) data : (T_Reg) data);
+        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ?
+                           reinterpret_cast<int32_t> (data) :
+                           reinterpret_cast<T_Reg>   (data));
     }
 
     template <typename T = int>
@@ -517,7 +527,9 @@ public:
         CHECK_SIZE_16 (T_Reg)
         CHECK_SIZE_64 (T_Reg)
         emitter_.EmitInstruction (SIZED_CMD (inAdc_RM_Imm), regDest, 2);
-        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ? (int32_t) data : (T_Reg) data);
+        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ?
+                           reinterpret_cast<int32_t> (data) :
+                           reinterpret_cast<T_Reg>   (data));
     }
 
     template <typename T_Reg, typename T>
@@ -526,7 +538,9 @@ public:
         CHECK_SIZE_16 (T_Reg)
         CHECK_SIZE_64 (T_Reg)
         emitter_.EmitInstruction (SIZED_CMD (inAdc_RM_Imm), MODE_ADDRESS, *regDest, 2);
-        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ? (int32_t) data : (T_Reg) data);
+        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ?
+                           reinterpret_cast<int32_t> (data) :
+                           reinterpret_cast<T_Reg>   (data));
     }
 
     template <typename T = int>
@@ -578,7 +592,9 @@ public:
         CHECK_SIZE_16 (T_Reg)
         CHECK_SIZE_64 (T_Reg)
         emitter_.EmitInstruction (SIZED_CMD (inSub_RM_Imm), regDest, 5);
-        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ? (int32_t) data : (T_Reg) data);
+        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ?
+                           reinterpret_cast<int32_t> (data) :
+                           reinterpret_cast<T_Reg>   (data));
     }
 
     template <typename T_Reg, typename T>
@@ -587,7 +603,9 @@ public:
         CHECK_SIZE_16 (T_Reg)
         CHECK_SIZE_64 (T_Reg)
         emitter_.EmitInstruction (SIZED_CMD (inSub_RM_Imm), MODE_ADDRESS, *regDest, 5);
-        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ? (int32_t) data : (T_Reg) data);
+        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ?
+                           reinterpret_cast<int32_t> (data) :
+                           reinterpret_cast<T_Reg>   (data));
     }
 
     template <typename T = int>
@@ -639,7 +657,9 @@ public:
         CHECK_SIZE_16 (T_Reg)
         CHECK_SIZE_64 (T_Reg)
         emitter_.EmitInstruction (SIZED_CMD (inSbb_RM_Imm), regDest, 3);
-        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ? (int32_t) data : (T_Reg) data);
+        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ?
+                           reinterpret_cast<int32_t> (data) :
+                           reinterpret_cast<T_Reg>   (data));
     }
 
     template <typename T_Reg, typename T>
@@ -648,7 +668,9 @@ public:
         CHECK_SIZE_16 (T_Reg)
         CHECK_SIZE_64 (T_Reg)
         emitter_.EmitInstruction (SIZED_CMD (inSbb_RM_Imm), MODE_ADDRESS, *regDest, 3);
-        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ? (int32_t) data : (T_Reg) data);
+        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ?
+                           reinterpret_cast<int32_t> (data) :
+                           reinterpret_cast<T_Reg>   (data));
     }
 
     template <typename T = int>
@@ -700,7 +722,9 @@ public:
         CHECK_SIZE_16 (T_Reg)
         CHECK_SIZE_64 (T_Reg)
         emitter_.EmitInstruction (SIZED_CMD (inIMul_R_RM_Imm), regDest, regSrc);
-        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ? (int32_t) data : (T_Reg) data);
+        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ?
+                           reinterpret_cast<int32_t> (data) :
+                           reinterpret_cast<T_Reg>   (data));
     }
 
     template <typename T>
@@ -803,7 +827,9 @@ public:
         CHECK_SIZE_64 (T_Mem)
         emitter_.EmitInstruction (SIZED_CMD (inCmp_RM_Imm), MODE_ADDRESS, OFF, 7);
         emitter_.EmitData (reinterpret_cast<int64_t> (ptr));
-        emitter_.EmitData (sizeof (T_Mem) > sizeof (int32_t) ? (int32_t) imm : (T_Mem) imm);
+        emitter_.EmitData (sizeof (T_Mem) > sizeof (int32_t) ?
+                           reinterpret_cast<int32_t> (imm) :
+                           reinterpret_cast<T_Mem>   (imm));
     }
 
     template <typename T_Reg, typename T>
@@ -812,7 +838,9 @@ public:
         CHECK_SIZE_16 (T_Reg)
         CHECK_SIZE_64 (T_Reg)
         emitter_.EmitInstruction (SIZED_CMD (inCmp_RM_Imm), MODE_ADDRESS, *reg, 7);
-        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ? (int32_t) imm : (T_Reg) imm);
+        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ?
+                           reinterpret_cast<int32_t> (imm) :
+                           reinterpret_cast<T_Reg>   (imm));
     }
 
     template <typename T_Reg, typename T>
@@ -821,7 +849,9 @@ public:
         CHECK_SIZE_16 (T_Reg)
         CHECK_SIZE_64 (T_Reg)
         emitter_.EmitInstruction (SIZED_CMD (inCmp_RM_Imm), MODE_REGISTER, reg, 7);
-        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ? (int32_t) imm : (T_Reg) imm);
+        emitter_.EmitData (sizeof (T_Reg) > sizeof (int32_t) ?
+                           reinterpret_cast<int32_t> (imm) :
+                           reinterpret_cast<T_Reg>   (imm));
     }
 
 

@@ -25,7 +25,7 @@ class MCode_t
     {
         for (int i = 0; i < sizeof (void*); i++)
         {
-            buffer_.push_back ((uint8_t)((int64_t)(val) >> i * 8));
+            buffer_.push_back (reinterpret_cast<uint8_t>(reinterpret_cast<int64_t> ((val) >> i * 8)));
 
         }
     }

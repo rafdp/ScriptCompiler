@@ -193,7 +193,7 @@ int Array<T, Size, Allocator>::GetSize()
     try
     {
         ok ();
-        return (int)currSize_;
+        return static_cast<int> (currSize_);
     }
     CATCH_IN_FUNC_ERROR (Allocator::expn)
     CATCH_UNKNOWN_ERROR (Allocator::expn)

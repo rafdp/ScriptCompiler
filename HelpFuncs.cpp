@@ -8,6 +8,9 @@ catch (ExceptionHandler& e) \
 #define MIN(a, b) (((a) > (b)) ? (b) : (a))
 #define MAX(a, b) (((a) < (b)) ? (b) : (a))
 
+bool isNum (std::string* str);
+bool IsString (std::string* str);
+
 
 
 bool isNum (std::string* str)

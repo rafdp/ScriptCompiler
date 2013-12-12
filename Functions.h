@@ -854,7 +854,7 @@ comp->mov  (comp->r_rax, (int64_t)(void*)&VirtualProcessor_t::Jmp);
 comp->mov  (comp->r_rcx, (int64_t)(void*)this);
 comp->call (comp->r_rax);
 comp->jmp (0);
-JmpPatchRequestLine (comp, (int64_t)(comp->Size() - 8), arg.arg1);
+JmpPatchRequestLine (comp, (int64_t)(comp->Size() - sizeof (int64_t)), arg.arg1);
 FUNCTION_END
 
 FUNCTION_BEGIN (Jne, 1, 0, ARG_LABEL)
@@ -863,7 +863,7 @@ comp->mov  (comp->r_rcx, (int64_t)(void*)this);
 comp->call (comp->r_rax);
 comp->cmp (&instance_->cmpr_flag_, '\0');
 comp->jne (0);
-JmpPatchRequestLine (comp, (int64_t)(comp->Size() - 8), arg.arg1);
+JmpPatchRequestLine (comp, (int64_t)(comp->Size() - sizeof (int64_t)), arg.arg1);
 comp->inc  (&instance_->run_line_);
 FUNCTION_END
 
@@ -873,7 +873,7 @@ comp->mov  (comp->r_rcx, (int64_t)(void*)this);
 comp->call (comp->r_rax);
 comp->cmp (&instance_->cmpr_flag_, '\0');
 comp->je (0);
-JmpPatchRequestLine (comp, (int64_t)(comp->Size() - 8), arg.arg1);
+JmpPatchRequestLine (comp, (int64_t)(comp->Size() - sizeof (int64_t)), arg.arg1);
 comp->inc  (&instance_->run_line_);
 FUNCTION_END
 
@@ -883,7 +883,7 @@ comp->mov  (comp->r_rcx, (int64_t)(void*)this);
 comp->call (comp->r_rax);
 comp->cmp (&instance_->cmpr_flag_, '\0');
 comp->jg (0);
-JmpPatchRequestLine (comp, (int64_t)(comp->Size() - 8), arg.arg1);
+JmpPatchRequestLine (comp, (int64_t)(comp->Size() - sizeof (int64_t)), arg.arg1);
 comp->inc  (&instance_->run_line_);
 FUNCTION_END
 
@@ -893,7 +893,7 @@ comp->mov  (comp->r_rcx, (int64_t)(void*)this);
 comp->call (comp->r_rax);
 comp->cmp (&instance_->cmpr_flag_, '\0');
 comp->jge (0);
-JmpPatchRequestLine (comp, (int64_t)(comp->Size() - 8), arg.arg1);
+JmpPatchRequestLine (comp, (int64_t)(comp->Size() - sizeof (int64_t)), arg.arg1);
 comp->inc  (&instance_->run_line_);
 FUNCTION_END
 
@@ -903,7 +903,7 @@ comp->mov  (comp->r_rcx, (int64_t)(void*)this);
 comp->call (comp->r_rax);
 comp->cmp (&instance_->cmpr_flag_, '\0');
 comp->jl (0);
-JmpPatchRequestLine (comp, (int64_t)(comp->Size() - 8), arg.arg1);
+JmpPatchRequestLine (comp, (int64_t)(comp->Size() - sizeof (int64_t)), arg.arg1);
 comp->inc  (&instance_->run_line_);
 FUNCTION_END
 
@@ -913,7 +913,7 @@ comp->mov  (comp->r_rcx, (int64_t)(void*)this);
 comp->call (comp->r_rax);
 comp->cmp (&instance_->cmpr_flag_, '\0');
 comp->jle (0);
-JmpPatchRequestLine (comp, (int64_t)(comp->Size() - 8), arg.arg1);
+JmpPatchRequestLine (comp, (int64_t)(comp->Size() - sizeof (int64_t)), arg.arg1);
 comp->inc  (&instance_->run_line_);
 FUNCTION_END
 
@@ -928,9 +928,9 @@ FUNCTION_BEGIN (Call, 2, 0, ARG_FUNC _ ARG_FUNC_MEMBER)
 comp->mov   (comp->r_rax, (int64_t)(void*)&VirtualProcessor_t::Call);
 comp->mov   (comp->r_rcx, (int64_t)(void*)this);
 comp->call  (comp->r_rax);
-comp->inc  (&instance_->run_line_);
+comp->inc   (&instance_->run_line_);
 comp->callr (0);
-JmpPatchRequestLine (comp, (int64_t)(comp->Size() - 8), arg.arg1 + 1);
+JmpPatchRequestLine (comp, (int64_t)(comp->Size() - sizeof (int64_t)), (int64_t)((int32_t)arg.arg1 + 1));
 FUNCTION_END
 
 FUNCTION_BEGIN (Decr, 3, 0, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG)

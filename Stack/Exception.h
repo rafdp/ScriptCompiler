@@ -78,8 +78,8 @@ class exception_data
     DISABLE_CLASS_COPY (exception_data)
     public:
         ExceptionHandler* allocatedMem_;
-        int usedMem_;
-        int availableMem_;
+        int64_t usedMem_;
+        int64_t availableMem_;
         std::string filename_;
         FILE* log_;
 
@@ -89,7 +89,7 @@ class exception_data
         {
             allocatedMem_ = new ExceptionHandler [size];
             usedMem_ = 0;
-            availableMem_ = (int)size;
+            availableMem_ = static_cast<int64_t> (size);
         }
         else
         {
