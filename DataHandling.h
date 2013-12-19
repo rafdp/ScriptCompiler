@@ -52,18 +52,14 @@ public:
         switch (vars_[num].code)
         {
         case TYPE_BYTE:
-            //ErrorPrintfBox ("VAR 8 %d", *(int8_t*)vars_[num].var);
-            return *(int8_t*)vars_[num].var;
+            return * reinterpret_cast<int8_t*>  (vars_[num].var);
         case TYPE_WORD:
-            //ErrorPrintfBox ("VAR 16 %d", *(int16_t*)vars_[num].var);
-            return *(int16_t*)vars_[num].var;
+            return * reinterpret_cast<int16_t*> (vars_[num].var);
         case TYPE_DWORD:
         case TYPE_PTR:
-            //ErrorPrintfBox ("VAR 32 %d", *(int32_t*)vars_[num].var);
-            return *(int32_t*)vars_[num].var;
+            return * reinterpret_cast<int32_t*> (vars_[num].var);
         case TYPE_QWORD:
-            //ErrorPrintfBox ("VAR 64 %I64d", *(int64_t*)vars_[num].var);
-            return *(int64_t*)vars_[num].var;
+            return * reinterpret_cast<int64_t*> (vars_[num].var);
         default:
             return 0;
         }
@@ -71,18 +67,18 @@ public:
 
     long long GetMemberVar (long long arg)
     {
-        short typeCode = (short) MemberVarType (arg);
+        short typeCode = static_cast <int16_t> (MemberVarType (arg));
         switch (typeCode)
         {
             case TYPE_BYTE:
-                return *(int8_t*)MemberVarPt (arg);
+                return * reinterpret_cast<int8_t*>  (MemberVarPt (arg));
             case TYPE_WORD:
-                return *(int16_t*)MemberVarPt (arg);
+                return * reinterpret_cast<int16_t*> (MemberVarPt (arg));
             case TYPE_DWORD:
             case TYPE_PTR:
-                return *(int32_t*)MemberVarPt (arg);
+                return * reinterpret_cast<int32_t*> (MemberVarPt (arg));
             case TYPE_QWORD:
-                return *(int64_t*)MemberVarPt (arg);
+                return * reinterpret_cast<int64_t*> (MemberVarPt (arg));
             default:
                 return 0;
         }
@@ -93,17 +89,17 @@ public:
         switch (vars_[num].code)
         {
             case TYPE_BYTE:
-                *(int8_t*)vars_[num].var = (int8_t)val;
+                * reinterpret_cast<int8_t*> (vars_[num].var) =  static_cast <int8_t> (val);
                 break;
             case TYPE_WORD:
-                *(int16_t*)vars_[num].var = (int16_t)val;
+                * reinterpret_cast<int16_t*> (vars_[num].var) = static_cast <int16_t> (val);
                 break;
             case TYPE_DWORD:
             case TYPE_PTR:
-                *(int32_t*)vars_[num].var = (int32_t)val;
+                * reinterpret_cast<int32_t*> (vars_[num].var) = static_cast <int32_t> (val);
                 break;
             case TYPE_QWORD:
-                *(int64_t*)vars_[num].var = (int64_t)val;
+                * reinterpret_cast<int64_t*> (vars_[num].var) = static_cast <int64_t> (val);
                 break;
             default:
                 return;
@@ -112,22 +108,22 @@ public:
 
     void SetMemberVar (long long arg, long long val)
     {
-        short typeCode = (short) MemberVarType (arg);
+        short typeCode = static_cast <int16_t> (MemberVarType (arg));
 
         switch (typeCode)
         {
             case TYPE_BYTE:
-                *(int8_t*)MemberVarPt (arg) = (int8_t)val;
+                * reinterpret_cast<int8_t*> (MemberVarPt (arg)) =  static_cast <int8_t> (val);
                 break;
             case TYPE_WORD:
-                *(int16_t*)MemberVarPt (arg) = (int16_t)val;
+                * reinterpret_cast<int16_t*> (MemberVarPt (arg)) = static_cast <int16_t> (val);
                 break;
             case TYPE_DWORD:
             case TYPE_PTR:
-                *(int32_t*)MemberVarPt (arg) = (int32_t)val;
+                * reinterpret_cast<int32_t*> (MemberVarPt (arg)) = static_cast <int32_t> (val);
                 break;
             case TYPE_QWORD:
-                *(int64_t*)MemberVarPt (arg) = (int64_t)val;
+                * reinterpret_cast<int64_t*> (MemberVarPt (arg)) = static_cast <int64_t> (val);
                 break;
             default:
                 return;
@@ -146,7 +142,7 @@ public:
             num = callStack_[callStack_.size () - 1].var;
         if (num == 0)
             NAT_EXCEPTION (expn_, "Invalid var number", ERROR_INVALID_STRUCT_VAR_NUM_STRUCT)
-        return (char*)vars_[num - 1].var + int (arg);
+        return reinterpret_cast <int8_t*> (vars_[num - 1].var) + int32_t (arg);
     }
 
     void ComplexCall (long long arg)
@@ -154,7 +150,7 @@ public:
         int arg_nested_call = 0;
         if (int (arg >> 32) == 0) arg_nested_call = callStack_[callStack_.size () - 1].var;
         else arg_nested_call = int (arg >> 32);
-        callStack_.push ({ (int)run_line_, arg_nested_call});
+        callStack_.push ({ static_cast <int32_t> (run_line_), arg_nested_call});
         run_line_ = int (arg);
     }
 
@@ -265,7 +261,7 @@ long long RunInstanceDataHandler_t::GetVal (char arg_flag, long long arg_arg)
             return GetReg (arg_arg) .Get8byte ();
             break;
         case ARG_STR:
-            return (long long)strings_[arg_arg];
+            return reinterpret_cast <int64_t> (strings_[arg_arg]);
         case ARG_NUM:
             return arg_arg;
         break;

@@ -9,6 +9,8 @@ struct ScriptLine_t
     std::string param2;
 
     ScriptLine_t (FILE* f);
+
+    ~ScriptLine_t ();
 };
 
 
@@ -29,4 +31,7 @@ ScriptLine_t::ScriptLine_t (FILE* f) :
     #undef CHECK_CHAR
 }
 
+
+ScriptLine_t::~ScriptLine_t ()
+{ }
 #endif

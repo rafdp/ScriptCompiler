@@ -28,12 +28,10 @@ CHECK_TOKEN (STD_TOK)
 }
 
 #define ADD_TOKEN(name) \
-if (!AddName (name, cmd.flag, cmd.cmd, n_line)) \
-STRING_ERROR (name)
+AddName (name, cmd.flag, cmd.cmd, n_line);
 
 #define ADD_TOKEN_(name, val) \
-if (!AddName (name, cmd.flag, val, n_line)) \
-STRING_ERROR (name)
+AddName (name, cmd.flag, val, n_line);
 
 #define ADD_STD_TOKEN ADD_TOKEN (STD_TOK)
 #define ADD_STD_TOKEN_(val) ADD_TOKEN_ (STD_TOK, val)
@@ -361,13 +359,11 @@ if (!CheckName (tok, 0)) STRING_ERROR (tok)
 
 #undef ADD_TOKEN
 #define ADD_TOKEN(name) \
-if (!AddName (name, cmd.flag, cmd.cmd, 0)) \
-STRING_ERROR (name)
+AddName (name, cmd.flag, cmd.cmd, 0);
 
 #undef ADD_TOKEN_
 #define ADD_TOKEN_(name, val) \
-if (!AddName (name, cmd.flag, val, 0)) \
-STRING_ERROR (name)
+AddName (name, cmd.flag, val, 0);
 
 #undef ERROR_EXCEPTION
 #define ERROR_EXCEPTION(text, code)\

@@ -182,7 +182,7 @@ void ScriptLoader_t::ResolveDlls ()
         }
         STL_LOOP (iter, i->second)
         {
-            void* func = (void*) GetProcAddress (dll, iter->first.c_str ());
+            void* func = reinterpret_cast <void*> (GetProcAddress (dll, iter->first.c_str ()));
             if (!func)
             {
                 static std::string str ("Cannot find function:\"");

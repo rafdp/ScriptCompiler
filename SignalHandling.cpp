@@ -13,7 +13,7 @@ void OnSigArgSwitch (std::string* error, char* flag, int64_t* arg)
             *error += "\n";
             break;
         case ARG_REG:
-            *error += CMD_REG_D[(int)(*arg)];
+            *error += CMD_REG_D[static_cast <int32_t> (*arg)];
             *error += " contains ";
             *error += std::to_string ($ GetReg (*arg) . Get8byte ());
             *error += "\n";
@@ -23,7 +23,7 @@ void OnSigArgSwitch (std::string* error, char* flag, int64_t* arg)
         {
             *error += "on address ";
             void* ptr = $ GetPtr (*flag, *arg);
-            *error += std::to_string ((int64_t)ptr);
+            *error += std::to_string (reinterpret_cast <int64_t> (ptr));
             if (ptr)
             {
                 *error += " contains ";
@@ -44,7 +44,7 @@ void OnSigArgSwitch (std::string* error, char* flag, int64_t* arg)
             break;
         case ARG_DLL_FUNC:
             *error += "on address ";
-            *error += std::to_string ((int64_t)$ dllResolved_[*arg]);
+            *error += std::to_string (reinterpret_cast <int64_t> ($ dllResolved_[*arg]));
             *error += "\n";
             break;
         default:
@@ -57,7 +57,7 @@ void OnSigEmitInfo (std::string* error)
     *error += "Last executed line = ";
     *error += std::to_string ($ run_line_);
     *error += ";\n";
-    auto found = CMD_D.find ((int) $ funcs_[(int) $ run_line_].cmd);
+    auto found = CMD_D.find (static_cast<int32_t> ($ funcs_[static_cast<int32_t> ($ run_line_)].cmd));
     if (found != CMD_D.end ())
     {
         *error += "Cmd: ";

@@ -86,6 +86,8 @@ struct RegInfo_t
             SIZE_CASE (32)
             SIZE_CASE (64)
             #undef SIZE_CASE
+            default:
+            break;
         }
 
         return;

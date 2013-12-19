@@ -5,10 +5,11 @@
 #include <exception>
 #include <windows.h>
 #include <stdio.h>
-#include <stdlib.h>
+#include <stdint.h>
 #include <iostream>
 #include <conio.h>
 #include <new>
+
 
 class NonCopiable_t
 {

@@ -107,6 +107,9 @@ public:
     friend void OnSigInt (int);
     friend void OnSigSegv (int);
     friend void OnSigTerm (int);
+
+    ~VirtualProcessor_t ()
+    { }
 };
 
 VirtualProcessor_t* VirtualProcessor_t::currentlyExecuting_ = nullptr;
@@ -381,7 +384,7 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
 
     #define FuncCase(name) \
     case CMD_##name: \
-        HANDLE_CALL (Jit_##name, Jit_##name (compiler, (int)i)); \
+        HANDLE_CALL (Jit_##name, Jit_##name (compiler, static_cast<int32_t> (i))); \
         break;
 
 
@@ -450,9 +453,9 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
         else
         if (instance_->funcs_[i].flag == CMD_UFunc)
         {
-            compiler->push (instance_->callImportFuncs_[instance_->funcs_[i].cmd].ptr);
-            compiler->push (instance_);
-            compiler->mov  (compiler->r_rax, instance_->callImportFuncs_[instance_->funcs_[i].cmd].func);
+            compiler->push (reinterpret_cast <int64_t> (instance_->callImportFuncs_[instance_->funcs_[i].cmd].ptr));
+            compiler->push (reinterpret_cast <int64_t> (instance_));
+            compiler->mov  (compiler->r_rax, reinterpret_cast <int64_t> (instance_->callImportFuncs_[instance_->funcs_[i].cmd].func));
             compiler->call (compiler->r_rax);
             compiler->inc  (&instance_->run_line_);
         }

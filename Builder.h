@@ -83,7 +83,7 @@ class ScriptCompiler_t// : NonCopiable_t
         die_requests_.clear ();
     }
 
-    bool AddName (std::string name,
+    void AddName (std::string name,
                   char flag,
                   long long cmd,
                   int line);
@@ -101,6 +101,9 @@ class ScriptCompiler_t// : NonCopiable_t
                        int line);
 
     void ResolvePrototypes ();
+
+    ~ScriptCompiler_t ()
+    { }
 
     #define FUNC_PROT(name) void name (Cmd_t& cmd, Arg_t& arg, int n_line);
 
@@ -516,7 +519,7 @@ bool ScriptCompiler_t::CheckName (std::string name, int line)
 }
 
 
-bool ScriptCompiler_t::AddName (std::string name, char flag, long long cmd, int line)
+void ScriptCompiler_t::AddName (std::string name, char flag, long long cmd, int line)
 {
     switch (flag)
     {
@@ -534,7 +537,7 @@ bool ScriptCompiler_t::AddName (std::string name, char flag, long long cmd, int 
             userFuncs_[name] = userFuncs_.size () - 1;
             break;
         case CMD_Var:
-            vars_[StrTo32Pair_t (name, func_level_)] = {(int)vars_.size () - 1, -1, TYPE_QWORD, nullptr};
+            vars_[StrTo32Pair_t (name, func_level_)] = {static_cast<int32_t> (vars_.size ()) - 1, -1, TYPE_QWORD, nullptr};
             break;
         case CMD_CFunc:
             createdFuncs_[name] = line;
@@ -604,23 +607,23 @@ void ScriptCompiler_t::ResolvePrototypes ()
         {
             case ARG_FUNC_IT:
             {                long long line = createdFuncs_[* reinterpret_cast <std::string*> (i->arg1)];
-                delete (std::string*)i->arg1;
+                delete reinterpret_cast <std::string*> (i->arg1);
                 i->arg1 = line;
                 i->flag1 = ARG_FUNC;
                 break;
             }
             case ARG_FUNC_MEMBER_IT:
             {
-                auto found = memberFuncs_.find (*(std::string*) (i->arg1 >> 32));
+                auto found = memberFuncs_.find (* reinterpret_cast <std::string*> (i->arg1 >> (sizeof (int32_t) * 4)));
                 i->arg1 = found->second.func_;
-                delete (std::string*) (i->arg1 >> 32);
+                delete reinterpret_cast <std::string*> (i->arg1 >> (sizeof (int32_t) * 4));
                 i->flag1 = ARG_FUNC_MEMBER;
                 break;
             }
             case ARG_LABEL_IT:
             {
-                long long line = labels_[*(std::string*)i->arg1];
-                delete (std::string*)i->arg1;
+                long long line = labels_[* reinterpret_cast <std::string*> (i->arg1)];
+                delete reinterpret_cast <std::string*> (i->arg1);
                 i->arg1 = line;
                 i->flag1 = ARG_LABEL;
                 break;
@@ -632,24 +635,24 @@ void ScriptCompiler_t::ResolvePrototypes ()
         {
             case ARG_FUNC_IT:
             {
-                long long line = createdFuncs_[*(std::string*)i->arg2];
-                delete (std::string*)i->arg2;
+                long long line = createdFuncs_[* reinterpret_cast <std::string*> (i->arg2)];
+                delete reinterpret_cast <std::string*> (i->arg2);
                 i->arg2 = line;
                 i->flag2 = ARG_FUNC;
                 break;
             }
             case ARG_FUNC_MEMBER_IT:
             {
-                auto found = memberFuncs_.find (*(std::string*) (i->arg2 >> 32));
+                auto found = memberFuncs_.find (* reinterpret_cast <std::string*> (i->arg2 >> (sizeof (int32_t) * 4)));
                 i->arg2 = found->second.func_;
-                delete (std::string*) (i->arg2 >> 32);
+                delete reinterpret_cast <std::string*> (i->arg1 >> (sizeof (int32_t) * 4));
                 i->flag2 = ARG_FUNC_MEMBER;
                 break;
             }
             case ARG_LABEL_IT:
             {
-                long long line = labels_[*(std::string*)i->arg2];
-                delete (std::string*)i->arg2;
+                long long line = labels_[* reinterpret_cast <std::string*> (i->arg2)];
+                delete reinterpret_cast <std::string*> (i->arg2);
                 i->arg2 = line;
                 i->flag2 = ARG_LABEL;
                 break;

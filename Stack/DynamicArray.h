@@ -11,7 +11,7 @@ private:
     size_t currSize_;
 public:
     void ok () throw (ExceptionHandler&);
-    Array(exception_data* ex);
+    Array(exception_data* expn_);
     virtual ~Array();
     void Dump();
     void push_back(const T& elem);

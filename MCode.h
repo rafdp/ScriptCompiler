@@ -25,7 +25,7 @@ class MCode_t
     {
         for (int i = 0; i < sizeof (void*); i++)
         {
-            buffer_.push_back (static_cast<uint8_t>(((int64_t)(val) >> i * 8)));
+            buffer_.push_back (static_cast<uint8_t>(reinterpret_cast<int64_t>(val) >> i * 8));
         }
     }
 
@@ -38,13 +38,10 @@ class MCode_t
         }
     }
 
-    void AddToTop (uint8_t val)
+    template<typename T>
+    void AddToTop (T val)
     {
-        *(buffer_.rbegin ()) += val;
-        /*uint8_t* ptr = buffer_.data();
-        *(ptr + buffer_.size() - 1) = *(ptr + buffer_.size() - 1) + 0;*/
-
-        //*(uint8_t*)(buffer_.data () + buffer_.size () - 1) += val;
+        buffer_.back() += static_cast <uint8_t> (val);
     }
 
     void BuildAndRun ()

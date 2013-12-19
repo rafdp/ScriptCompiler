@@ -39,6 +39,8 @@ const size_t MaxBytes = 100 * 1024 * sizeof (int);
 template <typename T, size_t Size = 1>
 struct DynamicMem
 {
+private:
+    DynamicMem& operator = (const DynamicMem& that);
 protected:
     size_t currSize;
     char* data;
@@ -64,11 +66,11 @@ public:
     }
 
     DynamicMem (exception_data* exp) :
-        currSize (Size),
-        data (nullptr),
-        temp (nullptr),
+        currSize    (Size),
+        data        (nullptr),
+        temp        (nullptr),
         maxElements (MaxBytes / sizeof(T)),
-        expn (exp)
+        expn        (exp)
     {
         try
         {
@@ -85,16 +87,40 @@ public:
         CATCH_UNKNOWN_ERROR (expn)
     }
 
+    DynamicMem (const DynamicMem<T, Size>& that) :
+        currSize    (that.currSize),
+        data        (nullptr),
+        temp        (nullptr),
+        maxElements (that.maxElements),
+        expn        (that.exp)
+    {
+        try
+        {
+            data = new char [currSize * sizeof (T)];
+            ZeroMemory (data, currSize * sizeof (T));
+            for (size_t i = 0; i < currSize; i++) data[i] = that.data[i];
+            ok ();
+
+        }
+        catch (std::bad_alloc)
+        {
+            NAT_EXCEPTION (expn, "DynamicMem::DynamicMem (const DynamicMem<T, Size>& that) Failed to allocate space on heap", Error_NoMemOnAllocation)
+        }
+        CATCH_IN_FUNC_ERROR (expn)
+        CATCH_UNKNOWN_ERROR (expn)
+    }
+
     virtual ~DynamicMem ()
     {
         try
         {
             ok ();
+            delete[] data;
+            data = nullptr;
+            expn = nullptr;
         }
         CATCH_IN_FUNC_ERROR (expn)
         CATCH_UNKNOWN_ERROR (expn)
-        delete[] data;
-        expn = nullptr;
     }
 
     void Copy (size_t n)

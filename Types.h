@@ -72,7 +72,8 @@ public:
         if (!Ok ()) return false;
         if (sizes_->find (struct_) == sizes_->end ()) return false;
         if (mvars_->find (struct_) == mvars_->end () ) (*mvars_)[struct_] = std::map<std::string, MemberVarDescriptor_t> ();
-        (*mvars_)[struct_][var] = { (*mvars_)[struct_].size (), (*sizes_)[struct_], type};
+        (*mvars_)[struct_][var] = { static_cast<int64_t> ((*mvars_)[struct_].size ()),
+                                    static_cast<int64_t> ((*sizes_)[struct_]), type};
         (*sizes_)[struct_] += (*sizes_)[type];
         return true;
     }
@@ -216,3 +217,4 @@ public:
 };
 
 #endif // TYPES_H_INCLUDED
+

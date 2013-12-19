@@ -29,9 +29,9 @@ void Array<T, Size, Allocator>::ok () throw (ExceptionHandler&)
 }
 
 template <typename T, int Size, class Allocator>
-Array<T, Size, Allocator>::Array (exception_data* expn)
+Array<T, Size, Allocator>::Array (exception_data* expn_)
 try :
-    Allocator (expn),
+    Allocator (expn_),
     currSize_ (0)
 {
     ok ();

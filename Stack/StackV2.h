@@ -16,6 +16,7 @@ enum ErrorsStack
 template <typename T>
 class stack
 {
+    DISABLE_CLASS_COPY (stack)
 public:
     Array<T> data;
     void ok () throw (ExceptionHandler&);

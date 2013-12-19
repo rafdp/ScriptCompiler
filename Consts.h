@@ -1,6 +1,7 @@
 #ifndef CONSTS_H_INCLUDED
 #define CONSTS_H_INCLUDED
 
+
 typedef int64_t QWORD;
 typedef std::map<std::string, long long> StrTo64Map_t;
 typedef std::pair<std::string, int> StrTo32Pair_t;

@@ -54,7 +54,6 @@ struct VarDescriptor_t
 
 struct VarData_t
 {
-
     void* var;
     long long code;
     size_t size;
@@ -64,6 +63,20 @@ struct VarData_t
         code (code_),
         size (size_)
     {}
+
+    VarData_t (const VarData_t& that) :
+        var  (that.var),
+        code (that.code),
+        size (that.size)
+    {}
+
+    VarData_t& operator = (const VarData_t& that)
+    {
+        var  = that.var;
+        code = that.code;
+        size = that.size;
+        return *this;
+    }
 
     VarData_t () :
         var  (nullptr),
@@ -188,6 +201,9 @@ struct ExpectedArg_t
         if (n_flag1 == 0) expFlag1.push_back (ARG_NULL);
         if (n_flag2 == 0) expFlag2.push_back (ARG_NULL);
     }
+
+    ~ExpectedArg_t ()
+    { }
 };
 
 template<class T> typename std::vector<T>::const_iterator find (const std::vector<T>& vec, const T& data)
@@ -253,7 +269,7 @@ void PushStackValueJit (const StackData_t& value, JitCompiler_t* comp, exception
         comp->push (static_cast<int64_t> (value.data));
         break;
         default:
-        NAT_EXCEPTION (expn, "Failed to emit \"push\", invalid operator size", ERROR_INVALID_OP_SIZE_SWITCH)
+        NAT_EXCEPTION (expn, "Failed to emit \"push\", invalid operand size", ERROR_INVALID_OP_SIZE_SWITCH)
     }
 
 }

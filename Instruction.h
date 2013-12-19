@@ -5,24 +5,32 @@ uint8_t BuildSIB (const uint8_t scale, uint8_t destination, uint8_t source);
 
 struct CPURegisterInfo_t
 {
-    int8_t reg;
-    explicit CPURegisterInfo_t (int8_t reg_) :
+    uint8_t reg;
+    explicit CPURegisterInfo_t (uint8_t reg_) :
         reg (reg_)
     {}
 };
 
 uint8_t BuildModRM (const uint8_t mod, uint8_t destination, uint8_t source)
 {
-    return ((mod << 6) |
-            (source << 3) |
-            (destination));
+    uint8_t result = mod;
+    result = static_cast <uint8_t> (result << 2);
+    result |= source;
+    result = static_cast <uint8_t> (result << 3);
+    result |= destination;
+
+    return result;
 }
 
 uint8_t BuildSIB (const uint8_t scale, uint8_t destination, uint8_t source)
 {
-    return ((scale << 6) |
-            (source << 3) |
-            (destination));
+    uint8_t result = scale;
+    result = static_cast <uint8_t> (result << 2);
+    result |= source;
+    result = static_cast <uint8_t> (result << 3);
+    result |= destination;
+
+    return result;
 }
 
 struct Instruction_t
@@ -940,7 +948,11 @@ public:
         return &emitter_.mcode_.buffer_;
     }
 
+    ~InstructionManager_t ()
+    { }
+
 #undef CHECK_SIZE_16
+#undef CHECK_SIZE_64
 #undef CHECK_SIZE_16_NO8
 
 };
