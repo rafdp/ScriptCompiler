@@ -100,7 +100,7 @@ public:
 #undef FUNC_PRT
 
     friend void OnSigAbort (int);
-    friend void OnSigArgSwitch (std::string* error, char* flag, int64_t* arg);
+    friend void OnSigArgSwitch (std::string* error, int8_t* flag, int64_t* arg);
     friend void OnSigEmitInfo (std::string* error);
     friend void OnSigFpe (int);
     friend void OnSigIll (int);
@@ -192,7 +192,7 @@ void VirtualProcessor_t::RunScript (std::string filename, int error_mode, std::s
         currentReturn_ = ErrorReturn_t (RET_SUCCESS);
         for ( ; instance_->run_line_ < instance_->funcs_.size (); instance_->run_line_ ++)
         {
-            //printf ("LINE %d\n", instance_->run_line_);
+            //printf ("LINE %I64u\n", instance_->run_line_);
             try
             {
                 if (instance_->funcs_[instance_->run_line_].flag == CMD_Func)
@@ -391,7 +391,7 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
     instance_ = new RunInstanceDataHandler_t (filename, expn_, regFuncs_);
 
     bool need_realignment = false;
-    //short int3 = 0xC3CC;
+    //int16_t int3 = 0xC3CC;
     //((void(*)())&int3)();
     //Print();
     //((void(*)())&int3)();

@@ -22,10 +22,10 @@ class RunInstanceDataHandler_t : public ScriptLoader_t
 public:
     stack<StackData_t>      dataStack_;
     stack<CallInfo_t>       callStack_;
-    char                    registers_[REGISTERS_SIZE];
+    int8_t                    registers_[REGISTERS_SIZE];
     size_t                  run_line_;
     char                    cmpr_flag_;
-    std::map<long long,
+    std::map<int64_t,
              UserFunc_t>    callImportFuncs_;
     int                     stackDumpPoint_;
     int64_t*                func_offsets_;
@@ -34,20 +34,20 @@ public:
                               exception_data* expn,
                               std::map<std::string, UserFunc_t> importUserFuncs);
 
-    long long GetVal (char arg_flag, long long arg_arg);
-    bool SetVal (char arg_flag, long long arg_arg, long long setting);
+    int64_t GetVal (int8_t arg_flag, int64_t arg_arg);
+    bool SetVal (int8_t arg_flag, int64_t arg_arg, int64_t setting);
 
-    RegInfo_t GetReg (long long param)
+    RegInfo_t GetReg (int64_t param)
     {
         return RegInfo_t (registers_, param, expn_);
     }
 
-    void CallImportFunc (long long func)
+    void CallImportFunc (int64_t func)
     {
         return callImportFuncs_[func].CallFunc (this);
     }
 
-    long long GetVar (long long num)
+    int64_t GetVar (int64_t num)
     {
         switch (vars_[num].code)
         {
@@ -65,9 +65,9 @@ public:
         }
     }
 
-    long long GetMemberVar (long long arg)
+    int64_t GetMemberVar (int64_t arg)
     {
-        short typeCode = static_cast <int16_t> (MemberVarType (arg));
+        int16_t typeCode = static_cast <int16_t> (MemberVarType (arg));
         switch (typeCode)
         {
             case TYPE_BYTE:
@@ -84,7 +84,7 @@ public:
         }
     }
 
-    void SetVar (long long num, long long val)
+    void SetVar (int64_t num, int64_t val)
     {
         switch (vars_[num].code)
         {
@@ -106,9 +106,9 @@ public:
         }
     }
 
-    void SetMemberVar (long long arg, long long val)
+    void SetMemberVar (int64_t arg, int64_t val)
     {
-        short typeCode = static_cast <int16_t> (MemberVarType (arg));
+        int16_t typeCode = static_cast <int16_t> (MemberVarType (arg));
 
         switch (typeCode)
         {
@@ -130,14 +130,14 @@ public:
         }
     }
 
-    long long MemberVarType (long long arg)
+    int64_t MemberVarType (int64_t arg)
     {
-        return short (arg >> 48);
+        return int16_t (arg >> 48);
     }
 
-    void* MemberVarPt (long long arg)
+    void* MemberVarPt (int64_t arg)
     {
-        int num = short (arg >> 32);
+        int num = int16_t (arg >> 32);
         if (num == 0)
             num = callStack_[callStack_.size () - 1].var;
         if (num == 0)
@@ -145,7 +145,7 @@ public:
         return reinterpret_cast <int8_t*> (vars_[num - 1].var) + int32_t (arg);
     }
 
-    void ComplexCall (long long arg)
+    void ComplexCall (int64_t arg)
     {
         int arg_nested_call = 0;
         if (int (arg >> 32) == 0) arg_nested_call = callStack_[callStack_.size () - 1].var;
@@ -156,45 +156,45 @@ public:
 
     ~RunInstanceDataHandler_t ();
 
-    void* GetVarPt (char flag, long long arg)
+    void* GetVarPt (int8_t flag, int64_t arg)
     {
-        if ((flag & char (~ARG_UNREF_MASK)) == ARG_VAR)        return vars_[arg].var;
-        if ((flag & char (~ARG_UNREF_MASK)) == ARG_VAR_MEMBER) return MemberVarPt (arg);
+        if ((flag & int8_t (~ARG_UNREF_MASK)) == ARG_VAR)        return vars_[arg].var;
+        if ((flag & int8_t (~ARG_UNREF_MASK)) == ARG_VAR_MEMBER) return MemberVarPt (arg);
         return nullptr;
     }
 
-    long long GetVarType (char flag, long long arg)
+    int64_t GetVarType (int8_t flag, int64_t arg)
     {
-        if ((flag & char (~ARG_UNREF_MASK)) == ARG_VAR)        return vars_[arg].code;
-        if ((flag & char (~ARG_UNREF_MASK)) == ARG_VAR_MEMBER) return MemberVarType (arg);
+        if ((flag & int8_t (~ARG_UNREF_MASK)) == ARG_VAR)        return vars_[arg].code;
+        if ((flag & int8_t (~ARG_UNREF_MASK)) == ARG_VAR_MEMBER) return MemberVarType (arg);
         return 0;
     }
 
-    size_t GetVarSize (char flag, long long arg)
+    size_t GetVarSize (int8_t flag, int64_t arg)
     {
-        if ((flag & char (~ARG_UNREF_MASK)) == ARG_VAR)        return typeSizes_[vars_[arg].code];
-        if ((flag & char (~ARG_UNREF_MASK)) == ARG_VAR_MEMBER) return typeSizes_[MemberVarType (arg)];
+        if ((flag & int8_t (~ARG_UNREF_MASK)) == ARG_VAR)        return typeSizes_[vars_[arg].code];
+        if ((flag & int8_t (~ARG_UNREF_MASK)) == ARG_VAR_MEMBER) return typeSizes_[MemberVarType (arg)];
         return 0;
     }
 
-    size_t GetSize (char flag, long long arg)
+    size_t GetSize (int8_t flag, int64_t arg)
     {
         if (isVar (flag)) return GetVarSize (flag, arg);
         if (isReg (flag)) return GetReg (arg) .size;
-        if (isStr (flag)) return sizeof (char*);
+        if (isStr (flag)) return sizeof (int8_t*);
         if (isNum (flag)) return sizeof (int);
         return 0;
     }
 
-    inline bool isNum  (char flag) {return ((flag & char (~ARG_UNREF_MASK)) == ARG_NUM  ? true : false);}
-    inline bool isNull (char flag) {return ((flag & char (~ARG_UNREF_MASK)) == ARG_NULL ? true : false);}
-    inline bool isVar  (char flag) {return ((flag & char (~ARG_UNREF_MASK)) == ARG_VAR ||
-                                            (flag & char (~ARG_UNREF_MASK)) == ARG_VAR_MEMBER ? true : false);}
-    inline bool isReg  (char flag) {return ((flag & char (~ARG_UNREF_MASK)) == ARG_REG  ? true : false);}
-    inline bool isData (char flag) {return isVar (flag) || isReg (flag);}
-    inline bool isStr  (char flag) {return ((flag & char (~ARG_UNREF_MASK)) == ARG_STR  ? true : false);}
+    inline bool isNum  (int8_t flag) {return ((flag & int8_t (~ARG_UNREF_MASK)) == ARG_NUM  ? true : false);}
+    inline bool isNull (int8_t flag) {return ((flag & int8_t (~ARG_UNREF_MASK)) == ARG_NULL ? true : false);}
+    inline bool isVar  (int8_t flag) {return ((flag & int8_t (~ARG_UNREF_MASK)) == ARG_VAR ||
+                                            (flag & int8_t (~ARG_UNREF_MASK)) == ARG_VAR_MEMBER ? true : false);}
+    inline bool isReg  (int8_t flag) {return ((flag & int8_t (~ARG_UNREF_MASK)) == ARG_REG  ? true : false);}
+    inline bool isData (int8_t flag) {return isVar (flag) || isReg (flag);}
+    inline bool isStr  (int8_t flag) {return ((flag & int8_t (~ARG_UNREF_MASK)) == ARG_STR  ? true : false);}
 
-    void* GetPtr (char flag, long long arg)
+    void* GetPtr (int8_t flag, int64_t arg)
     {
         //ErrorPrintfBox ("GetPtr\n");
         void* ret = nullptr;
@@ -204,9 +204,9 @@ public:
         return ret;
     }
 
-    long long RspAdd ()
+    int64_t RspAdd ()
     {
-        long long result = 0;
+        int64_t result = 0;
         for (int i = stackDumpPoint_; i < dataStack_.size (); i++)
         {
             if (dataStack_[i].size == 8) result += 8;
@@ -249,9 +249,9 @@ RunInstanceDataHandler_t::RunInstanceDataHandler_t (std::string filename,
     }
 }
 
-long long RunInstanceDataHandler_t::GetVal (char arg_flag, long long arg_arg)
+int64_t RunInstanceDataHandler_t::GetVal (int8_t arg_flag, int64_t arg_arg)
 {
-    switch (arg_flag & ~char (ARG_UNREF_MASK))
+    switch (arg_flag & ~int8_t (ARG_UNREF_MASK))
     {
         case ARG_VAR:
             return GetVar (arg_arg);
@@ -271,9 +271,9 @@ long long RunInstanceDataHandler_t::GetVal (char arg_flag, long long arg_arg)
     return 0;
 }
 
-bool RunInstanceDataHandler_t::SetVal (char arg_flag, long long arg_arg, long long setting)
+bool RunInstanceDataHandler_t::SetVal (int8_t arg_flag, int64_t arg_arg, int64_t setting)
 {
-    switch (arg_flag & ~char (ARG_UNREF_MASK))
+    switch (arg_flag & ~int8_t (ARG_UNREF_MASK))
     {
         case ARG_VAR:
             SetVar (arg_arg, setting);

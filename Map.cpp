@@ -19,7 +19,7 @@ struct MapHeader
 const int KEY = 0x7C5C2F7C;
 const int VERSION = 2020;
 
-const char CONTROL_CHARACTER = 4;
+const int8_t CONTROL_int8_tACTER = 4;
 
 std::map<std::string, int> CMD_A;
 std::map<std::string, int> CMD_A_service;

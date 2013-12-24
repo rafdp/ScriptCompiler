@@ -12,8 +12,8 @@ class StackData_t;
 
 bool isNum (std::string* str);
 bool IsString (std::string* str);
-bool IsArgValue (const char& flag);
-char _GetString (FILE* f, std::string* str, char del);
+bool IsArgValue (const int8_t& flag);
+int8_t _GetString (FILE* f, std::string* str, int8_t del);
 
 std::string GetAsmNumString (int val, const char* operand = "dword");
 void PushStackValueJit (const StackData_t& value, JitCompiler_t* comp, exception_data* expn);
@@ -46,19 +46,19 @@ bool IsString (std::string* str)
 
 struct VarDescriptor_t
 {
-    long long num;
-    short die;
-    long long typeCode;
+    int64_t num;
+    int16_t die;
+    int64_t typeCode;
     bool pointer;
 };
 
 struct VarData_t
 {
     void* var;
-    long long code;
+    int64_t code;
     size_t size;
 
-    VarData_t (void* var_, long long code_, size_t size_) :
+    VarData_t (void* var_, int64_t code_, size_t size_) :
         var  (var_),
         code (code_),
         size (size_)
@@ -86,12 +86,12 @@ struct VarData_t
 
     void Free ()
     {
-        if (size > 0) var = new char [size];
+        if (size > 0) var = new int8_t [size];
     }
 
     void Delete ()
     {
-        if (var) delete [] reinterpret_cast<char*> (var);
+        if (var) delete [] reinterpret_cast<int8_t*> (var);
         var = nullptr;
     }
 
@@ -102,7 +102,7 @@ struct VarData_t
 };
 
 
-bool IsArgValue (const char& flag)
+bool IsArgValue (const int8_t& flag)
 {
     if (flag != ARG_NUM &&
         flag != ARG_VAR &&
@@ -137,12 +137,12 @@ struct ErrorReturn_t
     {}
 };
 
-char _GetString (FILE* f, std::string* str, char del)
+int8_t _GetString (FILE* f, std::string* str, int8_t del)
 {
-    char c = ' ';
+    int8_t c = ' ';
     bool str_ = false;
     bool str_found = false;
-    while (c == ' ') c = static_cast<char> (fgetc (f));
+    while (c == ' ') c = static_cast<int8_t> (fgetc (f));
     int iteration = 0;
     while (c != '\n'          &&
            c != EOF           &&
@@ -153,7 +153,7 @@ char _GetString (FILE* f, std::string* str, char del)
         else if (c == '"') str_ = false;
         if (str_ && c == '\\')
         {
-            switch (c = static_cast<char> (fgetc (f)))
+            switch (c = static_cast<int8_t> (fgetc (f)))
             {
                 case 'n':
                     *str += '\n';
@@ -178,7 +178,7 @@ char _GetString (FILE* f, std::string* str, char del)
         {
             *str += c;
         }
-        c = static_cast<char> (fgetc (f));
+        c = static_cast<int8_t> (fgetc (f));
         iteration++;
     }
     return c;
@@ -186,16 +186,16 @@ char _GetString (FILE* f, std::string* str, char del)
 
 struct ExpectedArg_t
 {
-    std::vector<char> expFlag1;
-    std::vector<char> expFlag2;
+    std::vector<int8_t> expFlag1;
+    std::vector<int8_t> expFlag2;
 
     ExpectedArg_t (int n_flag1, int n_flag2, ...) :
         expFlag1 (),
         expFlag2 ()
     {
         va_list arg; va_start (arg, n_flag2);
-        for (int i = 0; i < n_flag1; i++) expFlag1.push_back (char(va_arg (arg, int)));
-        for (int i = 0; i < n_flag2; i++) expFlag2.push_back (char(va_arg (arg, int)));
+        for (int i = 0; i < n_flag1; i++) expFlag1.push_back (int8_t(va_arg (arg, int)));
+        for (int i = 0; i < n_flag2; i++) expFlag2.push_back (int8_t(va_arg (arg, int)));
         va_end (arg);
 
         if (n_flag1 == 0) expFlag1.push_back (ARG_NULL);
@@ -214,7 +214,7 @@ template<class T> typename std::vector<T>::const_iterator find (const std::vecto
 
 struct StackData_t
 {
-    long long data;
+    int64_t data;
     size_t size;
 
     template <typename T>
@@ -257,34 +257,34 @@ void PushStackValueJit (const StackData_t& value, JitCompiler_t* comp, exception
     switch (value.size)
     {
         case sizeof (int8_t):
-        comp->push (static_cast<int8_t> (value.data));
-        break;
+            comp->push<int8_t> (static_cast<int8_t> (value.data));
+            break;
         case sizeof (int16_t):
-        comp->push (static_cast<int16_t> (value.data));
-        break;
+            comp->push<int16_t> (static_cast<int16_t> (value.data));
+            break;
         case sizeof (int32_t):
-        comp->push (static_cast<int32_t> (value.data));
-        break;
+            comp->push<int32_t> (static_cast<int32_t> (value.data));
+            break;
         case sizeof (int64_t):
-        comp->push (static_cast<int64_t> (value.data));
-        break;
+            comp->push<int64_t> (static_cast<int64_t> (value.data));
+            break;
         default:
-        NAT_EXCEPTION (expn, "Failed to emit \"push\", invalid operand size", ERROR_INVALID_OP_SIZE_SWITCH)
+            NAT_EXCEPTION (expn, "Failed to emit \"push\", invalid operand size", ERROR_INVALID_OP_SIZE_SWITCH)
     }
 
 }
 
 struct MemberVarDescriptor_t
 {
-    long long num;
-    long long offset;
-    long long typeCode;
+    int64_t num;
+    int64_t offset;
+    int64_t typeCode;
 };
 
 struct FuncStructPair_t
 {
-    long long func_;
-    long long struct_;
+    int64_t func_;
+    int64_t struct_;
 };
 
 struct CallInfo_t

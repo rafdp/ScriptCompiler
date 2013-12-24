@@ -6,7 +6,7 @@ uint8_t BuildSIB (const uint8_t scale, uint8_t destination, uint8_t source);
 struct CPURegisterInfo_t
 {
     uint8_t reg;
-    explicit CPURegisterInfo_t (uint8_t reg_) :
+    explicit CPURegisterInfo_t (int8_t reg_) :
         reg (reg_)
     {}
 };
@@ -290,10 +290,10 @@ public:
 #define CHECK_SIZE_16_NO8(T) if (sizeof (T) == sizeof (int16_t)) Emit66hPrefix ();
 
 /*
-#define CHECK_SIZE_16(T) if (sizeof (T) == sizeof (char)) ErrorPrintfBox ("char in %s", __PRETTY_FUNCTION__);
-#define CHECK_SIZE_16_NO8(T) if (sizeof (T) == sizeof (char)) ErrorPrintfBox ("char in no8 %s", __PRETTY_FUNCTION__);
+#define CHECK_SIZE_16(T) if (sizeof (T) == sizeof (int8_t)) ErrorPrintfBox ("int8_t in %s", __PRETTY_FUNCTION__);
+#define CHECK_SIZE_16_NO8(T) if (sizeof (T) == sizeof (int8_t)) ErrorPrintfBox ("int8_t in no8 %s", __PRETTY_FUNCTION__);
 */
-#define SIZED_CMD(name) sizeof (T) != sizeof (char) ? name : name##_8
+#define SIZED_CMD(name) sizeof (T) != sizeof (int8_t) ? name : name##_8
 
     template <typename T = int>
     void EmitMov (CPURegisterInfo_t regDest, CPURegisterInfo_t regSrc)

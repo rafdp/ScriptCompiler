@@ -19,16 +19,16 @@ ScriptLine_t::ScriptLine_t (FILE* f) :
     param1 (),
     param2 ()
 {
-    #define CHECK_CHAR(c) if (c == EOF || c == '\n'/* || c == ';'*/) return;
+    #define CHECK_int8_t(c) if (c == EOF || c == '\n'/* || c == ';'*/) return;
     if (feof (f)) return;
 
-    char last = 0;
+    int8_t last = 0;
     last = _GetString (f, &cmd, ' ');
-    CHECK_CHAR (last)
+    CHECK_int8_t (last)
     last = _GetString (f, &param1, ',');
-    CHECK_CHAR (last)
+    CHECK_int8_t (last)
     last = _GetString (f, &param2, EOF);
-    #undef CHECK_CHAR
+    #undef CHECK_int8_t
 }
 
 

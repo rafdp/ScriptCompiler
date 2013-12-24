@@ -8,22 +8,22 @@ void SetStringBadArg (std::string* errorMessage, Arg_t arg_got, ExpectedArg_t ex
 struct Arg_t
 {
     public:
-    char flag1;
-    char flag2;
-    long long arg1;
-    long long arg2;
+    int8_t flag1;
+    int8_t flag2;
+    int64_t arg1;
+    int64_t arg2;
 
     Arg_t ();
 
     Arg_t (std::string param1, std::string param2);
 
-    void SetArg (char* flag, long long* arg, std::string* param);
+    void SetArg (int8_t* flag, int64_t* arg, std::string* param);
 
-    void FreeArg (char* flag, long long* arg);
+    void FreeArg (int8_t* flag, int64_t* arg);
 
     void Clear ();
 
-    void Set (char fl1, long long ar1, char fl2, long long ar2);
+    void Set (int8_t fl1, int64_t ar1, int8_t fl2, int64_t ar2);
 };
 
 Arg_t::Arg_t () :
@@ -44,7 +44,7 @@ Arg_t::Arg_t (std::string param1, std::string param2) :
     SetArg (&flag2, &arg2, &param2);
 }
 
-void Arg_t::SetArg (char* flag, long long* arg, std::string* param)
+void Arg_t::SetArg (int8_t* flag, int64_t* arg, std::string* param)
 {
     *flag = 0;
 
@@ -55,7 +55,7 @@ void Arg_t::SetArg (char* flag, long long* arg, std::string* param)
         return;
     }
 
-    if ( (*param)[0] == '*') {*flag |= static_cast<char> (ARG_UNREF_MASK); param->erase (0, 1);}
+    if ( (*param)[0] == '*') {*flag |= static_cast<int8_t> (ARG_UNREF_MASK); param->erase (0, 1);}
 
     auto reg = CMD_REG.find (*param);
     if (reg != CMD_REG.end ())
@@ -78,7 +78,7 @@ void Arg_t::SetArg (char* flag, long long* arg, std::string* param)
     }
 }
 
-void Arg_t::FreeArg (char* flag, long long* arg)
+void Arg_t::FreeArg (int8_t* flag, int64_t* arg)
 {
     if (*flag == ARG_NAME)
         delete reinterpret_cast<std::string*> (*arg);
@@ -92,7 +92,7 @@ void Arg_t::Clear ()
     FreeArg (&flag2, &arg2);
 }
 
-void Arg_t::Set (char fl1, long long ar1, char fl2, long long ar2)
+void Arg_t::Set (int8_t fl1, int64_t ar1, int8_t fl2, int64_t ar2)
 {
     flag1 = fl1;
     arg1 = ar1;
@@ -146,8 +146,8 @@ struct ManageInputArgs_t
         argsGot (argsGot_),
         error (false)
     {
-        if (find (expArgs.expFlag1, char (argsGot.flag1 & ~char (ARG_UNREF_MASK))) == expArgs.expFlag1.end () ||
-            find (expArgs.expFlag2, char (argsGot.flag2 & ~char (ARG_UNREF_MASK))) == expArgs.expFlag2.end ())
+        if (find (expArgs.expFlag1, int8_t (argsGot.flag1 & ~int8_t (ARG_UNREF_MASK))) == expArgs.expFlag1.end () ||
+            find (expArgs.expFlag2, int8_t (argsGot.flag2 & ~int8_t (ARG_UNREF_MASK))) == expArgs.expFlag2.end ())
             error = true;
     }
 

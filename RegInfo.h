@@ -2,9 +2,9 @@
 #define REGINFO_H_INCLUDED
 struct RegInfo_t
 {
-    char* reg;
-    char size;
-    RegInfo_t (char* registers, long long param, exception_data* expn) :
+    int8_t* reg;
+    int8_t size;
+    RegInfo_t (int8_t* registers, int64_t param, exception_data* expn) :
         reg (registers + param),
         size ()
     {
@@ -49,13 +49,13 @@ struct RegInfo_t
 
 /*
     #define TYPED_PTR_REGISTER (register) \
-    register.GetPtr < (( (register).size == sizeof (long long)) ? (long long*) : \
-    (( (register).size == sizeof (long)) ? (long*) : \
-    (( (register).size == sizeof (short)) ? (short*) : \
-    (( (register).size == sizeof (char)) ? (char*) : (void*)))))> ()
+    register.GetPtr < (( (register).size == sizeof (int64_t)) ? (int64_t*) : \
+    (( (register).size == sizeof (int32_t) ? (int32_t*) : \
+    (( (register).size == sizeof (int16_t)) ? (int16_t*) : \
+    (( (register).size == sizeof (int8_t)) ? (int8_t*) : (void*)))))> ()
 */
 
-    long long Get8byte ()
+    int64_t Get8byte ()
     {
         switch (size)
         {
@@ -118,7 +118,7 @@ struct RegInfo_t
                        CPURegisterInfo_t register1_,
                        CPURegisterInfo_t register2_)
     {
-        if (size == sizeof (long long))
+        if (size == sizeof (int64_t))
         {
             comp->mov (reinterpret_cast<int32_t*> (reg), register1_);
             comp->mov (reinterpret_cast<int32_t*> (reg) + 1, register2_);

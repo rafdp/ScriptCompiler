@@ -3,7 +3,7 @@
 
 
 typedef int64_t QWORD;
-typedef std::map<std::string, long long> StrTo64Map_t;
+typedef std::map<std::string, int64_t> StrTo64Map_t;
 typedef std::pair<std::string, int> StrTo32Pair_t;
 const int MAX_BUFFER = 4096;
 
@@ -161,22 +161,22 @@ void FillConstsMap (StrTo64Map_t* map)
 #include "HelpFuncs.cpp"
 
 typedef std::map<StrTo32Pair_t, VarDescriptor_t>  VarMap_t;
-typedef std::map<long long,
+typedef std::map<int64_t,
                  std::map<std::string,
                           MemberVarDescriptor_t>> MembVarMap_t;
 
 typedef std::map<std::string, FuncStructPair_t>   MemberFuncMap_t;
 
-typedef std::pair<std::string, long long>         DllPair_t;
+typedef std::pair<std::string, int64_t>         DllPair_t;
 typedef std::vector<DllPair_t>                    DllVector_t;
 
 typedef std::map<std::string, DllVector_t>        DllImportMap_t;
 typedef StrTo64Map_t                              DllFuncsMap_t;
-typedef std::map<long long, void*>                ResolvedDllFuncsMap_t;
+typedef std::map<int64_t, void*>                ResolvedDllFuncsMap_t;
 
 
 
-void OnSigArgSwitch (std::string* error, char* flag, int64_t* arg);
+void OnSigArgSwitch (std::string* error, int8_t* flag, int64_t* arg);
 void OnSigEmitInfo (std::string* error);
 void OnSigAbort (int);
 void OnSigFpe (int);

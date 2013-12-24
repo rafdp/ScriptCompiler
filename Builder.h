@@ -23,8 +23,8 @@ class ScriptCompiler_t// : NonCopiable_t
 {
     DISABLE_CLASS_COPY (ScriptCompiler_t)
 
-    void _in_clsf_arg (char* flag,
-                       long long* arg,
+    void _in_clsf_arg (int8_t* flag,
+                       int64_t* arg,
                        bool error,
                        int line,
                        bool var = true,
@@ -35,14 +35,15 @@ class ScriptCompiler_t// : NonCopiable_t
     public:
     std::string                      file_;
     StrTo64Map_t                     consts_;
-    std::map<long long, size_t>      typeSizes_;
+    std::map<int64_t, size_t>        typeSizes_;
     VarMap_t                         vars_;
     MembVarMap_t                     mvars_;
     StrTo64Map_t                     userFuncs_;
     StrTo64Map_t                     createdFuncs_;
     MemberFuncMap_t                  memberFuncs_;
+    std::map<int64_t, std::string>   memberFuncsPrototypes_;
     std::map<std::string,
-             long long>              labels_;
+             int64_t>              labels_;
     std::vector<std::string>         strings_;
     std::vector<Cmd_t>               funcs_;
     std::vector<Arg_t>               args_;
@@ -50,7 +51,7 @@ class ScriptCompiler_t// : NonCopiable_t
     std::vector<VarMap_t::iterator>  die_requests_;
     RegisteredTypes_t                regTypes_;
     std::string                      currFunc_;
-    long long                        currStruct_;
+    int64_t                        currStruct_;
     bool                             structFunc_;
     DllImportMap_t                   dllImportMap_;
     DllFuncsMap_t                    dllFuncsMap_;
@@ -78,14 +79,14 @@ class ScriptCompiler_t// : NonCopiable_t
     {
         STL_LOOP (i, die_requests_)
         {
-            (*i)->second.die = static_cast<short> (line);
+            (*i)->second.die = static_cast<int16_t> (line);
         }
         die_requests_.clear ();
     }
 
     void AddName (std::string name,
-                  char flag,
-                  long long cmd,
+                  int8_t flag,
+                  int64_t cmd,
                   int line);
     bool CheckName (std::string name,
                     int line);
@@ -153,34 +154,36 @@ class ScriptCompiler_t// : NonCopiable_t
 #include "BuilderCases.h"
 
 ScriptCompiler_t::ScriptCompiler_t (std::string filename, exception_data* expn) :
-    func_level_        (),
-    struct_func_level_ (),
-    file_              (filename),
-    consts_            (),
-    typeSizes_         (),
-    vars_              (),
-    mvars_             (),
-    userFuncs_         (),
-    createdFuncs_      (),
-    memberFuncs_       (),
-    labels_            (),
-    strings_           (),
-    funcs_             (),
-    args_              (),
-    expn_              (expn),
-    die_requests_      (),
-    regTypes_          (&consts_,
-                        &typeSizes_,
-                        &mvars_,
-                        &vars_,
-                        &func_level_,
-                        &memberFuncs_,
-                        expn_),
-    currFunc_           (),
-    currStruct_         (),
-    structFunc_         (false),
-    dllImportMap_       (),
-    dllFuncsMap_        ()
+    func_level_            (),
+    struct_func_level_     (),
+    file_                  (filename),
+    consts_                (),
+    typeSizes_             (),
+    vars_                  (),
+    mvars_                 (),
+    userFuncs_             (),
+    createdFuncs_          (),
+    memberFuncs_           (),
+    memberFuncsPrototypes_ (),
+    labels_                (),
+    strings_               (),
+    funcs_                 (),
+    args_                  (),
+    expn_                  (expn),
+    die_requests_          (),
+    regTypes_              (&consts_,
+                            &typeSizes_,
+                            &mvars_,
+                            &vars_,
+                            &func_level_,
+                            &memberFuncs_,
+                            &memberFuncsPrototypes_,
+                            expn_),
+    currFunc_               (),
+    currStruct_             (),
+    structFunc_             (false),
+    dllImportMap_           (),
+    dllFuncsMap_            ()
 {
     FillConstsMap (&consts_);
 
@@ -250,7 +253,7 @@ void ScriptCompiler_t::PushData (const Cmd_t& cmd, const Arg_t& arg)
     args_.push_back (arg);
 }
 
-void ScriptCompiler_t::_in_clsf_arg (char* flag, long long* arg, bool error, int line, bool var, bool struct_)
+void ScriptCompiler_t::_in_clsf_arg (int8_t* flag, int64_t* arg, bool error, int line, bool var, bool struct_)
 {
     if ( (*flag & ARG_NAME) == ARG_NAME)
     {
@@ -259,8 +262,9 @@ void ScriptCompiler_t::_in_clsf_arg (char* flag, long long* arg, bool error, int
         auto labResult = labels_.end ();
         #define INVALID_UNREF_CHECK \
             if (*flag & ARG_UNREF_MASK) NAT_EXCEPTION (expn_, "Invalid use of '*'", ERROR_INVALID_UNREF)
+        //ErrorPrintfBox ("A _in_clsf_arg %d %d", consts_.find (* reinterpret_cast<std::string*> (*arg)), consts_.end ());
         if (var)
-        for (int varLevel = (!struct_ ? func_level_ : struct_func_level_);
+        for (int64_t varLevel = (!struct_ ? func_level_ : struct_func_level_);
              varLevel >= 0 && varResult == vars_.end ();
              varLevel--)
         {
@@ -276,7 +280,7 @@ void ScriptCompiler_t::_in_clsf_arg (char* flag, long long* arg, bool error, int
         {
             INVALID_UNREF_CHECK
             *flag = ARG_NUM;
-            delete[] reinterpret_cast<std::string*> (*arg);
+            delete reinterpret_cast<std::string*> (*arg);
             *arg = result->second;
         }
         else
@@ -284,7 +288,7 @@ void ScriptCompiler_t::_in_clsf_arg (char* flag, long long* arg, bool error, int
         {
             if (*flag & ARG_UNREF_MASK)
             {
-                if (varResult->second.typeCode == TYPE_PTR) *flag = static_cast<char> (ARG_VAR | ARG_UNREF_MASK);
+                if (varResult->second.typeCode == TYPE_PTR) *flag = static_cast<int8_t> (ARG_VAR | ARG_UNREF_MASK);
                 else INVALID_UNREF_CHECK
             }
             else *flag = ARG_VAR;
@@ -353,8 +357,11 @@ void ScriptCompiler_t::_in_clsf_arg (char* flag, long long* arg, bool error, int
 
 void ScriptCompiler_t::ClassifyArg (Arg_t* arg, bool error, int line, bool var, bool struct_)
 {
+    //ErrorPrintfBox ("A ClassifyArg");
     _in_clsf_arg (&arg->flag1, &arg->arg1, error, line, var, struct_);
+    //ErrorPrintfBox ("B ClassifyArg");
     _in_clsf_arg (&arg->flag2, &arg->arg2, error, line, var, struct_);
+    //ErrorPrintfBox ("C ClassifyArg");
 }
 
 void ScriptCompiler_t::Dump ()
@@ -427,8 +434,8 @@ void ScriptCompiler_t::Save ()
     fwrite (&maph, sizeof (MapHeader), 1, save);
 
     #define WRITE_STR(name) \
-        STL_LOOP (i, name) fwrite (& (*i), sizeof (char), 1, save); \
-        fwrite (&CONTROL_CHARACTER, sizeof (CONTROL_CHARACTER), 1, save);
+        STL_LOOP (i, name) fwrite (& (*i), sizeof (int8_t), 1, save); \
+        fwrite (&CONTROL_int8_tACTER, sizeof (CONTROL_int8_tACTER), 1, save);
 
     #define WRITE_SIZE(name) \
         size_t size_##name = name.size (); \
@@ -447,12 +454,12 @@ void ScriptCompiler_t::Save ()
                                    auto& vec = it->second;
                                    WRITE_STL_LOOP_ (vec, it_,
                                                    {WRITE_STR (it_->first);
-                                                    fwrite (& (it_->second), sizeof (long long), 1, save);})})
+                                                    fwrite (& (it_->second), sizeof (int64_t), 1, save);})})
 
-    WRITE_STL_LOOP (typeSizes_, {fwrite (& (it->first), sizeof (long long), 1, save);
+    WRITE_STL_LOOP (typeSizes_, {fwrite (& (it->first), sizeof (int64_t), 1, save);
                                 fwrite (& (it->second), sizeof (size_t), 1, save);})
-    WRITE_STL_LOOP (vars_, {fwrite (& (it->second.num), sizeof (long long), 1, save);
-                           fwrite (& (it->second.typeCode), sizeof (long long), 1, save);
+    WRITE_STL_LOOP (vars_, {fwrite (& (it->second.num), sizeof (int64_t), 1, save);
+                           fwrite (& (it->second.typeCode), sizeof (int64_t), 1, save);
                            fwrite (& (typeSizes_[it->second.typeCode]), sizeof (size_t), 1, save);})
 
 
@@ -519,7 +526,7 @@ bool ScriptCompiler_t::CheckName (std::string name, int line)
 }
 
 
-void ScriptCompiler_t::AddName (std::string name, char flag, long long cmd, int line)
+void ScriptCompiler_t::AddName (std::string name, int8_t flag, int64_t cmd, int line)
 {
     switch (flag)
     {
@@ -606,7 +613,8 @@ void ScriptCompiler_t::ResolvePrototypes ()
         switch (i->flag1)
         {
             case ARG_FUNC_IT:
-            {                long long line = createdFuncs_[* reinterpret_cast <std::string*> (i->arg1)];
+            {
+                int64_t line = createdFuncs_[* reinterpret_cast <std::string*> (i->arg1)];
                 delete reinterpret_cast <std::string*> (i->arg1);
                 i->arg1 = line;
                 i->flag1 = ARG_FUNC;
@@ -614,15 +622,14 @@ void ScriptCompiler_t::ResolvePrototypes ()
             }
             case ARG_FUNC_MEMBER_IT:
             {
-                auto found = memberFuncs_.find (* reinterpret_cast <std::string*> (i->arg1 >> (sizeof (int32_t) * 4)));
+                auto found = memberFuncs_.find (memberFuncsPrototypes_[i->arg1 >> (sizeof (int32_t) * 4)]);
                 i->arg1 = found->second.func_;
-                delete reinterpret_cast <std::string*> (i->arg1 >> (sizeof (int32_t) * 4));
                 i->flag1 = ARG_FUNC_MEMBER;
                 break;
             }
             case ARG_LABEL_IT:
             {
-                long long line = labels_[* reinterpret_cast <std::string*> (i->arg1)];
+                int64_t line = labels_[* reinterpret_cast <std::string*> (i->arg1)];
                 delete reinterpret_cast <std::string*> (i->arg1);
                 i->arg1 = line;
                 i->flag1 = ARG_LABEL;
@@ -635,7 +642,7 @@ void ScriptCompiler_t::ResolvePrototypes ()
         {
             case ARG_FUNC_IT:
             {
-                long long line = createdFuncs_[* reinterpret_cast <std::string*> (i->arg2)];
+                int64_t line = createdFuncs_[* reinterpret_cast <std::string*> (i->arg2)];
                 delete reinterpret_cast <std::string*> (i->arg2);
                 i->arg2 = line;
                 i->flag2 = ARG_FUNC;
@@ -643,15 +650,14 @@ void ScriptCompiler_t::ResolvePrototypes ()
             }
             case ARG_FUNC_MEMBER_IT:
             {
-                auto found = memberFuncs_.find (* reinterpret_cast <std::string*> (i->arg2 >> (sizeof (int32_t) * 4)));
+                auto found = memberFuncs_.find (memberFuncsPrototypes_[i->arg2 >> (sizeof (int32_t) * 4)]);
                 i->arg2 = found->second.func_;
-                delete reinterpret_cast <std::string*> (i->arg1 >> (sizeof (int32_t) * 4));
                 i->flag2 = ARG_FUNC_MEMBER;
                 break;
             }
             case ARG_LABEL_IT:
             {
-                long long line = labels_[* reinterpret_cast <std::string*> (i->arg2)];
+                int64_t line = labels_[* reinterpret_cast <std::string*> (i->arg2)];
                 delete reinterpret_cast <std::string*> (i->arg2);
                 i->arg2 = line;
                 i->flag2 = ARG_LABEL;

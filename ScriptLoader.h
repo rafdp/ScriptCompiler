@@ -19,7 +19,7 @@ class ScriptLoader_t
 {
     DISABLE_CLASS_COPY (ScriptLoader_t)
 public:
-    std::map<long long, size_t> typeSizes_;
+    std::map<int64_t, size_t> typeSizes_;
     std::vector<VarData_t>      vars_;
     std::vector<std::string>    userFuncs_;
     std::vector<char*>          strings_;
@@ -89,9 +89,9 @@ ScriptLoader_t::ScriptLoader_t (std::string filename, exception_data* expn) :
 
     #define READ_STR(name) \
     std::string name; \
-    char control_character##name = 0; \
-    while ((control_character##name = _load (char)) != CONTROL_CHARACTER) \
-        name += control_character##name;
+    int8_t control_int8_tacter##name = 0; \
+    while ((control_int8_tacter##name = _load (int8_t)) != CONTROL_int8_tACTER) \
+        name += control_int8_tacter##name;
 
     IMPORT_LOOP (dllFuncs_,
                 {READ_STR (dll_str)
@@ -100,15 +100,15 @@ ScriptLoader_t::ScriptLoader_t (std::string filename, exception_data* expn) :
                  IMPORT_LOOP_ (currVec,
                               it,
                               {READ_STR (funcName)
-                              currVec.push_back (DllPair_t (funcName, _load (long long)));})})
+                              currVec.push_back (DllPair_t (funcName, _load (int64_t)));})})
 
 
-    IMPORT_LOOP (typeSizes, {long long code = _load (long long);
+    IMPORT_LOOP (typeSizes, {int64_t code = _load (int64_t);
                             typeSizes_[code] = _load (size_t);})
 
     IMPORT_LOOP__ (vars, {vars_.reserve (n_vars); for (size_t i = 0; i < n_vars; i++) vars_.push_back (VarData_t ());},
-                  {long long num = _load (long long);
-                   long long code = _load (long long);
+                  {int64_t num = _load (int64_t);
+                   int64_t code = _load (int64_t);
                    vars_[num] = VarData_t (nullptr, code, _load (size_t));})
 
 

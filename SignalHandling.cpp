@@ -1,9 +1,9 @@
 
 #define $ VirtualProcessor_t::currentlyExecuting_->instance_->
 
-void OnSigArgSwitch (std::string* error, char* flag, int64_t* arg)
+void OnSigArgSwitch (std::string* error, int8_t* flag, int64_t* arg)
 {
-    switch (*flag & ~char (ARG_UNREF_MASK))
+    switch (*flag & ~int8_t (ARG_UNREF_MASK))
     {
         case ARG_LABEL:
         case ARG_FUNC:

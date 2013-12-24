@@ -104,13 +104,13 @@ class JitCompiler_t
         man.EmitMov<T> (regDest, pointer);
     }
 
-    template <typename T = long>
+    template <typename T = int32_t>
     void push (CPURegisterInfo_t reg)
     {
         man.EmitPush<T> (reg);
     }
 
-    template <typename T = long>
+    template <typename T = int32_t>
     void pop (CPURegisterInfo_t reg)
     {
         man.EmitPop<T> (reg);
@@ -140,9 +140,10 @@ class JitCompiler_t
         man.EmitPushf<T> ();
     }
 
+    template <typename T = int32_t>
     void call (CPURegisterInfo_t regDest)
     {
-        man.EmitCall (regDest);
+        man.EmitCall<T> (regDest);
     }
 
     template <typename T>

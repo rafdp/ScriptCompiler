@@ -160,13 +160,16 @@ _BUILD_CASE_FUNC (Import)
 _RETURN
 
 _BUILD_CASE_FUNC (Var)
+    //ErrorPrintfBox ("A Var");
     ClassifyArg (&arg, false, n_line, false);
+    //ErrorPrintfBox ("B Var");
     CHECK_ARGS (arg.flag1 != ARG_NAME ||
                (arg.flag2 != ARG_NULL &&
                 arg.flag2 != ARG_NUM) ||
                (arg.flag2 == ARG_NUM &&
                 typeSizes_.find (arg.flag2) == typeSizes_.end ()),
                 "var")
+    //ErrorPrintfBox ("C Var");
     auto tempRes = vars_.find (StrTo32Pair_t (STD_TOK, func_level_));
     if (tempRes != vars_.end () &&
        ((func_level_ != 0 && tempRes->second.die == -1) ||
@@ -174,11 +177,13 @@ _BUILD_CASE_FUNC (Var)
         ERROR_EXCEPTION ("Var already exists", ERROR_VAR_ALREADY_EXISTS)
 
         //! Check if this var has already been created
+
+    //ErrorPrintfBox ("D Var");
     if (tempRes != vars_.end () && tempRes->second.die < n_line && tempRes->second.die != -1)
     { //! if yes rebuild the var with new type
         cmd.Set (CMD_Func, CMD_RebuildVar);
-        char flag = arg.flag2;
-        long long type = arg.arg2;
+        int8_t flag = arg.flag2;
+        int64_t type = arg.arg2;
         tempRes->second.die = -1;
         if (func_level_ > 0)
         {
@@ -199,6 +204,7 @@ _BUILD_CASE_FUNC (Var)
         cmd.Clear ();
         arg.Clear ();
     }
+    //ErrorPrintfBox ("E Var");
 _RETURN
 
 _BUILD_CASE_FUNC (Name)
@@ -251,9 +257,9 @@ _BUILD_CASE_FUNC (Var)
     CHECK_STD_TOKEN
     bool res = 0;
     if (arg.flag2 == ARG_NULL)
-        regTypes_.AddVar (STD_TOK, currStruct_, TYPE_QWORD);
+        res = regTypes_.AddVar (STD_TOK, currStruct_, TYPE_QWORD);
     else
-        regTypes_.AddVar (STD_TOK, currStruct_, arg.arg2);
+        res = regTypes_.AddVar (STD_TOK, currStruct_, arg.arg2);
 
     if (!res)
         ERROR_EXCEPTION ("Struct: error occured while adding variable to struct", ERROR_ADDING_VAR_STRUCT)

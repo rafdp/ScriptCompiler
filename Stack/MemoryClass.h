@@ -43,8 +43,8 @@ private:
     DynamicMem& operator = (const DynamicMem& that);
 protected:
     size_t currSize;
-    char* data;
-    char* temp;
+    int8_t* data;
+    int8_t* temp;
     const size_t maxElements;
     exception_data* expn;
 public:
@@ -74,7 +74,7 @@ public:
     {
         try
         {
-            data = new char [currSize * sizeof (T)];
+            data = new int8_t [currSize * sizeof (T)];
             ZeroMemory (data, currSize * sizeof (T));
             ok ();
 
@@ -96,7 +96,7 @@ public:
     {
         try
         {
-            data = new char [currSize * sizeof (T)];
+            data = new int8_t [currSize * sizeof (T)];
             ZeroMemory (data, currSize * sizeof (T));
             for (size_t i = 0; i < currSize; i++) data[i] = that.data[i];
             ok ();
@@ -146,7 +146,7 @@ public:
             try
             {
                 ok ();
-                data = new char [size * sizeof (T)];
+                data = new int8_t [size * sizeof (T)];
                 ZeroMemory (data, size);
                 currSize = size;
                 ok ();
@@ -164,7 +164,7 @@ public:
             {
                 ok ();
                 temp = data;
-                data = new char [(size + currSize) * sizeof (T)];
+                data = new int8_t [(size + currSize) * sizeof (T)];
                 ZeroMemory (data, currSize + size);
                 Copy (currSize * sizeof (T));
                 currSize += size;
@@ -197,7 +197,7 @@ public:
             else
             {
                 temp = data;
-                data = new char [(currSize - size) * sizeof (T)];
+                data = new int8_t [(currSize - size) * sizeof (T)];
                 Copy ((currSize - size) * sizeof (T));
                 currSize -= size;
                 delete[] temp;

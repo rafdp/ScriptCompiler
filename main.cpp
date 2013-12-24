@@ -17,16 +17,22 @@ int main ()
     try
     {
         //ScriptCompiler_t comp ("Equation.txt", &ex_data);
+        ErrorPrintfBox ("A main");
         ScriptCompiler_t comp ("test.txt", &ex_data);
+        ErrorPrintfBox ("B main");
         comp.Save ();
+        ErrorPrintfBox ("C main");
         VirtualProcessor_t proc (&ex_data);
+        ErrorPrintfBox ("D main");
         int data = 17;
         proc.RegFunc (UserFunc_t (printHello, &data), "printhello");
+        ErrorPrintfBox ("E main");
         //proc.RunScriptJit ("Equation.pcs");
-        //proc.RunScript ("test.pcs");
+        proc.RunScript ("test.pcs");
+        ErrorPrintfBox ("F main");
         //proc.RunScript ("Equation.pcs");
-        ErrorPrintfBox ("About to start Jit");
-        proc.RunScriptJit ("test.pcs");
+        ErrorPrintfBox ("G main");
+        //proc.RunScriptJit ("test.pcs");
     }
     catch (ExceptionHandler& ex)
     {

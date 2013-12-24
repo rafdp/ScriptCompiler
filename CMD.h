@@ -4,14 +4,14 @@
 struct Cmd_t
 {
     public:
-    char flag;
-    long long cmd;
+    int8_t flag;
+    int64_t cmd;
     Cmd_t (std::string str);
     Cmd_t ();
 
     void Clear ();
     void Error ();
-    void Set (char fl, long long cm);
+    void Set (int8_t fl, int64_t cm);
 };
 
 Cmd_t::Cmd_t () :
@@ -24,10 +24,10 @@ Cmd_t::Cmd_t (std::string str) :
     cmd  (0)
 {
     if (!str.size ()) return;
-    long long cmd_result = CMD_A_service[str];
+    int64_t cmd_result = CMD_A_service[str];
     if (cmd_result)
     {
-        flag = static_cast<char> (cmd_result);
+        flag = static_cast<int8_t> (cmd_result);
         return;
     }
     if (*(str.rbegin ()) == ':')
@@ -71,7 +71,7 @@ void Cmd_t::Error ()
 }
 
 
-void Cmd_t::Set (char fl, long long cm)
+void Cmd_t::Set (int8_t fl, int64_t cm)
 {
     flag = fl;
     cmd = cm;
