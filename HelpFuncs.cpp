@@ -305,7 +305,7 @@ struct CallInfo_t
 
 struct JmpPatchData_t
 {
-    int64_t first, second;
+    int32_t first, second;
     bool offset;
 };
 

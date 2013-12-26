@@ -214,6 +214,7 @@ FUNCTION_BEGIN (JIT_Call_Void, 1, 0, ARG_DLL_FUNC)
     JitCompiler_t comp;
     for (stack<StackData_t>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpPoint_]); i < $ dataStack_.end (); i++)
         PushStackValueJit (*i, &comp, expn_);
+    comp.int3();
     comp.mov<int64_t> (comp.r_rax, reinterpret_cast<int64_t> ($ dllResolved_[arg.arg1]));
     comp.call<int64_t> (comp.r_rax);
     comp.add<int64_t> (comp.r_rsp, $ RspAdd ());
@@ -257,174 +258,33 @@ FUNCTION_END
 
 #undef ASM_FILL_STACK
 #undef ASM_CALL_FUNC
-
 #define ARITHMETIC_FUNCTION(name, operator, check0) \
-FUNCTION_BEGIN (name, 3, 4, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_NUM) \
-int64_t opVal = $ GetVal (arg.flag2, arg.arg2); \
+FUNCTION_BEGIN(name, 2, 3, ARG_VAR _ ARG_REG _ ARG_VAR _ ARG_REG _ ARG_NUM) \
+long long opVal = $ GetVal (arg.flag2, arg.arg2); \
 if (check0 && opVal == 0) \
 { \
-currentReturn_ = ErrorReturn_t (RET_ERROR_FATAL, "Invalid second operand value (0)"); \
+    currentReturn_ = ErrorReturn_t (RET_ERROR_FATAL, "Invalid second operand value (0)"); \
+    return; \
 } \
 $ SetVal (arg.flag1, arg.arg1, $ GetVal (arg.flag1, arg.arg1) operator opVal); \
 FUNCTION_END
 
-#define SIZE_CASE(type) \
-case sizeof (type): \
-    comp.mov<type> ((type*) $ GetPtr (arg.flag1, arg.arg1), comp.r_rax); \
-    break;
-
-#define ARITHMETIC_FUNCTION_ADD_SUB_MUL_BASE(func) \
-{ \
-    JitCompiler_t comp; \
-    comp.push (comp.r_rax); \
-    ARG_SIZE_SWITCH_PTR_LONG (1, 0, comp.mov FUNC_OPEN comp.r_rax _ , FUNC_CLOSE) \
-    ARG_SIZE_SWITCH_PTR_LONG (2, 0, comp.func FUNC_OPEN comp.r_rax _ , FUNC_CLOSE) \
-    if ($ isReg (arg.flag1)) $ GetReg (arg.arg1) . MovFromReg (&comp, comp.r_rax); \
-    else \
-    { \
-        ARG_SIZE_SWITCH_PTR_LONG (1, 0, comp.mov FUNC_OPEN , _ comp.r_rax FUNC_CLOSE) \
-    } \
-    comp.pop (comp.r_rax); \
-    comp.retn (); \
-    comp.BuildAndRun (); \
-}
-
-#define ARITHMETIC_FUNCTION_ADD_SUB_64_PART(func1, func2) \
-bool first64 = $ GetSize (arg.flag1, arg.arg1) > sizeof (DWORD); \
-bool second64 = $ GetSize (arg.flag2, arg.arg2) > sizeof (DWORD); \
-if (first64 || \
-    second64) \
-{ \
-    JitCompiler_t comp; \
-    comp.push (comp.r_rax); \
-    comp.push (comp.r_rdx); \
- \
-    ARG_SIZE_SWITCH_PTR_LONG (1, 0, comp.mov FUNC_OPEN comp.r_rax _ , FUNC_CLOSE) \
-    if (first64) \
-        ARG_SIZE_SWITCH_PTR_LONG (1, 1, comp.mov FUNC_OPEN comp.r_rdx _ , FUNC_CLOSE) \
- \
-    ARG_SIZE_SWITCH_PTR_LONG (2, 0, comp.func1 FUNC_OPEN comp.r_rax _ , FUNC_CLOSE) \
-    if (second64 && first64) \
-        ARG_SIZE_SWITCH_PTR_LONG (2, 1, comp.func2 FUNC_OPEN comp.r_rdx _ , FUNC_CLOSE) \
- \
-    ARG_SIZE_SWITCH_PTR_LONG (1, 0, comp.mov FUNC_OPEN , _ comp.r_rax FUNC_CLOSE) \
-    if (first64) \
-        ARG_SIZE_SWITCH_PTR_LONG (1, 1, comp.mov FUNC_OPEN , _ comp.r_rdx FUNC_CLOSE) \
- \
-    comp.pop (comp.r_rdx); \
-    comp.pop (comp.r_rax); \
-    comp.retn (); \
-    comp.BuildAndRun (); \
-} \
-else
-
-
-FUNCTION_BEGIN (Add, 3, 4, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_NUM)
-
-ARITHMETIC_FUNCTION_ADD_SUB_64_PART (add, adc)
-ARITHMETIC_FUNCTION_ADD_SUB_MUL_BASE (add)
-
-FUNCTION_END
-
-FUNCTION_BEGIN (Sub, 3, 4, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_NUM)
-
-ARITHMETIC_FUNCTION_ADD_SUB_64_PART (sub, sbb)
-ARITHMETIC_FUNCTION_ADD_SUB_MUL_BASE (sub)
-
-FUNCTION_END
-
-FUNCTION_BEGIN (Mul, 3, 4, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_NUM)
-if ($ GetSize (arg.flag1, arg.arg1) > sizeof (DWORD) ||
-    $ GetSize (arg.flag2, arg.arg2) > sizeof (DWORD))
-    {
-        //ErrorPrintfBox ("SIZE %d %d\n", $ GetSize (arg.flag1, arg.arg1), $ GetSize (arg.flag2, arg.arg2));
-    $ SetVal (arg.flag1, arg.arg1,
-              $ GetVal (arg.flag1, arg.arg1) * $ GetVal (arg.flag2, arg.arg2));
-    }
-else
-ARITHMETIC_FUNCTION_ADD_SUB_MUL_BASE (mul)
-FUNCTION_END
-
-
-//ARITHMETIC_FUNCTION_ADD_SUB_MUL (Add, +, add)
-//ARITHMETIC_FUNCTION_ADD_SUB_MUL (Sub, -, sub)
-//ARITHMETIC_FUNCTION_ADD_SUB_MUL (Mul, *, mul)
-/*
-FUNCTION_BEGIN (Div, 3, 4, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_NUM)
-int64_t opVal = $ GetVal (arg.flag2, arg.arg2);
-
-if (opVal == 0)
-{
-    return ErrorReturn_t (RET_ERROR_FATAL, "Invalid second operand value (0)");
-}
-
-if ($ GetSize (arg.flag2, arg.arg2) > sizeof (DWORD))
-    $ SetVal (arg.flag1, arg.arg1,
-              $ GetVal (arg.flag1, arg.arg1) / opVal);
-else
-{
-    JitCompiler_t comp;
-    comp.push (comp.r_rax);
-    comp.push (comp.r_rdx);
-
-    comp.mov (comp.r_rax, (int32_t*) $ GetPtr (arg.flag1, arg.arg1));
-    if ($ GetSize (arg.flag1, arg.arg1) > sizeof (DWORD))
-        comp.mov (comp.r_rdx, (int32_t*) $ GetPtr (arg.flag1, arg.arg1) + 1);
-    else
-        comp.mov (comp.r_rdx, 0);
-    comp.div ((int32_t*) $ GetPtr (arg.flag2, arg.arg2));
-    if ($ isReg (arg.flag1)) $ GetReg (arg.arg1) . MovFromReg (&comp, comp.r_rax);
-    else
-    {
-        switch ($ GetSize (arg.flag1, arg.arg1))
-        {
-            SIZE_CASE (int8_t)
-            SIZE_CASE (int16_t)
-            case sizeof (int64_t):
-            comp.mov ((int32_t*) $ GetPtr (arg.flag1, arg.arg1) + 1, 0);
-            SIZE_CASE (int32_t)
-        }
-    }
-
-    comp.pop (comp.r_rdx);
-    comp.pop (comp.r_rax);
-    comp.retn ();
-    comp.BuildAndRun ();
-}
-FUNCTION_END
- */
-
-
+ARITHMETIC_FUNCTION (Add, +, false)
+ARITHMETIC_FUNCTION (Sub, -, false)
+ARITHMETIC_FUNCTION (Mul, *, false)
 ARITHMETIC_FUNCTION (Div, /, true)
-
-
-FUNCTION_BEGIN (Sqrt, 3, 0, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG)
-    int64_t val = $ GetVal (arg.flag1, arg.arg1);
-    /*
-    if (val < 0)
-        currentReturn_ = ErrorReturn_t (RET_ERROR_CONTINUE, "Cannot calculate square root of a negative value");
-        */
-    $ SetVal (arg.flag1, arg.arg1, static_cast<int64_t> (round (sqrt (static_cast <double> (val)))));
-FUNCTION_END
-
-
-//ARITHMETIC_FUNCTION (Add, +, false)
-//ARITHMETIC_FUNCTION (Sub, -, false)
-//ARITHMETIC_FUNCTION (Mul, *, false)
-//ARITHMETIC_FUNCTION (Div, /, true)
 #undef ARITHMETIC_FUNCTION
-#undef ARITHMETIC_FUNCTION_ADD_SUB
-#undef SIZE_CASE
 
 #define STACK_ARITHMETIC_FUNCTION(name, operator, check0) \
-FUNCTION_BEGIN (name, 1, 0, ARG_NULL) \
-int64_t val1 = $ dataStack_.pop (); \
-int64_t val0 = $ dataStack_.pop (); \
+FUNCTION_BEGIN(name, 0, 0, ARG_NULL) \
+long long val1 = $ dataStack_.pop(); \
+long long val0 = $ dataStack_.pop(); \
 if (check0 && val1 == 0) \
 { \
-currentReturn_ = ErrorReturn_t (RET_ERROR_FATAL, "Invalid second operand value (0)"); \
+    currentReturn_ = ErrorReturn_t (RET_ERROR_FATAL, "Invalid second operand value (0)"); \
+    return; \
 } \
-$ dataStack_.push (StackData_t (val0 operator val1, sizeof (int64_t))); \
+$ dataStack_.push(StackData_t (val0 operator val1, sizeof (long long))); \
 FUNCTION_END
 
 
@@ -432,11 +292,19 @@ STACK_ARITHMETIC_FUNCTION (Adds, +, false)
 STACK_ARITHMETIC_FUNCTION (Subs, -, false)
 STACK_ARITHMETIC_FUNCTION (Muls, *, false)
 STACK_ARITHMETIC_FUNCTION (Divs, /, true)
-
-
 #undef STACK_ARITHMETIC_FUNCTION
 
+FUNCTION_BEGIN (Sqrt, 3, 0, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG)
+    int64_t val = $ GetVal (arg.flag1, arg.arg1);
+
+    if (val < 0)
+        currentReturn_ = ErrorReturn_t (RET_ERROR_CONTINUE, "Cannot calculate square root of a negative value");
+
+    $ SetVal (arg.flag1, arg.arg1, static_cast<int64_t> (round (sqrt (static_cast <double> (val)))));
+FUNCTION_END
+
 #undef FUNCTION_BEGIN
+
 #define FUNCTION_BEGIN(name, n_params1, n_params2, params) \
 void VirtualProcessor_t::Jit_##name (JitCompiler_t* comp, int i) \
 { \
@@ -581,7 +449,6 @@ if ($ isNum (arg.flag2) && ! $ isNum (arg.flag1))
 
 
     comp->mov (comp->r_rcx, static_cast<int64_t> (0));
-    comp->mov (comp->r_rdx, static_cast<int64_t> (0));
 
     switch (size1)
     {
@@ -602,18 +469,7 @@ if ($ isNum (arg.flag2) && ! $ isNum (arg.flag1))
             return;
     }
 
-    comp->cmp<int32_t> (comp->r_rdx, static_cast<int32_t> (arg.arg2 >> (sizeof (int32_t)*8)));
-    comp->je (0);
-    jg_offset = comp->Size() - sizeof (int32_t);
-    comp->jmp (0);
-    jmp_offset = comp->Size() - sizeof (int32_t);
-    JmpPatchRequestOffset (jg_offset, comp->Size() + 1);
-    comp->cmp<int32_t> (comp->r_rcx, static_cast<int32_t> (arg.arg2));
-
-    JmpPatchRequestOffset (jmp_offset, comp->Size() + 1);
-    jg_offset = 0;
-    jl_offset = 0;
-    jmp_offset = 0;
+    comp->cmp<int64_t> (comp->r_rcx, arg.arg2);
 
     comp->jg (0);
     jg_offset = comp->Size() - sizeof (int32_t);
@@ -625,7 +481,6 @@ if ($ isNum (arg.flag2) && ! $ isNum (arg.flag1))
     comp->jmp (0);
     jmp_offset = comp->Size() - sizeof (int32_t);
 
-
     JmpPatchRequestOffset (jg_offset, comp->Size() + 1);
     comp->mov<int8_t> (reinterpret_cast<int8_t*> (&instance_->cmpr_flag_), static_cast<int8_t> (FLAG_HIGH));
     comp->jmp (0);
@@ -633,11 +488,8 @@ if ($ isNum (arg.flag2) && ! $ isNum (arg.flag1))
 
     JmpPatchRequestOffset (jl_offset, comp->Size() + 1);
     comp->mov<int8_t> (reinterpret_cast<int8_t*> (&instance_->cmpr_flag_), static_cast<int8_t> (FLAG_LOW));
-    comp->jmp (0);
-    jl_offset = comp->Size() - sizeof (int32_t);
 
     //! finally:
-    JmpPatchRequestOffset (jl_offset, comp->Size() + 1);
     JmpPatchRequestOffset (jg_offset, comp->Size() + 1);
     JmpPatchRequestOffset (jmp_offset, comp->Size() + 1);
 
@@ -648,9 +500,9 @@ if ($ isNum (arg.flag1) && ! $ isNum (arg.flag2))
 {
     comp->push (arg.arg2);
     comp->push (arg.flag2);
-    comp->mov (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&RunInstanceDataHandler_t::GetPtr)));
-    comp->mov (comp->r_rcx, reinterpret_cast<int64_t> (reinterpret_cast<void*>(instance_)));
-    comp->call (comp->r_rax);
+    comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&RunInstanceDataHandler_t::GetPtr)));
+    comp->mov<int64_t> (comp->r_rcx, reinterpret_cast<int64_t> (reinterpret_cast<void*>(instance_)));
+    comp->call<int64_t> (comp->r_rax);
 
 
     size_t jg_offset = 0;
@@ -658,8 +510,7 @@ if ($ isNum (arg.flag1) && ! $ isNum (arg.flag2))
     size_t jmp_offset = 0;
 
 
-    comp->mov<int32_t> (comp->r_rcx, 0);
-    comp->mov<int32_t> (comp->r_rdx, 0);
+    comp->mov<int64_t> (comp->r_rcx, static_cast<int64_t> (0));
 
     switch (size2)
     {
@@ -673,28 +524,14 @@ if ($ isNum (arg.flag1) && ! $ isNum (arg.flag2))
             comp->mov<int32_t> (comp->r_rcx, &comp->r_rax);
             break;
         case sizeof (int64_t):
-            comp->mov<int32_t> (comp->r_rcx, &comp->r_rax);
-            comp->mov<int32_t> (comp->r_rdx, comp->r_rax);
-            comp->add<int32_t> (comp->r_rdx, sizeof (int32_t));
-            comp->mov<int32_t> (comp->r_rdx, &comp->r_rdx);
+            comp->mov<int64_t> (comp->r_rcx, &comp->r_rax);
             break;
         default:
             currentReturn_ = ErrorReturn_t (RET_ERROR_FATAL, "invalid argument 2 size");
             return;
     }
 
-    comp->cmp<int32_t> (comp->r_rdx, static_cast<int32_t> (arg.arg1 >> (sizeof (int32_t)*8)));
-    comp->je (0);
-    jg_offset = comp->Size() - sizeof (int32_t);
-    comp->jmp (0);
-    jmp_offset = comp->Size() - sizeof (int32_t);
-    JmpPatchRequestOffset (jg_offset, comp->Size() + 1);
-    comp->cmp<int32_t> (comp->r_rcx, static_cast<int32_t> (arg.arg1));
-
-    JmpPatchRequestOffset (jmp_offset, comp->Size() + 1);
-    jg_offset = 0;
-    jl_offset = 0;
-    jmp_offset = 0;
+    comp->cmp<int64_t> (comp->r_rcx, arg.arg2);
 
     comp->jg (0);
     jg_offset = comp->Size() - sizeof (int32_t);
@@ -706,7 +543,6 @@ if ($ isNum (arg.flag1) && ! $ isNum (arg.flag2))
     comp->jmp (0);
     jmp_offset = comp->Size() - sizeof (int32_t);
 
-
     JmpPatchRequestOffset (jg_offset, comp->Size() + 1);
     comp->mov<int8_t> (reinterpret_cast<int8_t*> (&instance_->cmpr_flag_), static_cast<int8_t> (FLAG_HIGH));
     comp->jmp (0);
@@ -714,11 +550,8 @@ if ($ isNum (arg.flag1) && ! $ isNum (arg.flag2))
 
     JmpPatchRequestOffset (jl_offset, comp->Size() + 1);
     comp->mov<int8_t> (reinterpret_cast<int8_t*> (&instance_->cmpr_flag_), static_cast<int8_t> (FLAG_LOW));
-    comp->jmp (0);
-    jl_offset = comp->Size() - sizeof (int32_t);
 
     //! finally:
-    JmpPatchRequestOffset (jl_offset, comp->Size() + 1);
     JmpPatchRequestOffset (jg_offset, comp->Size() + 1);
     JmpPatchRequestOffset (jmp_offset, comp->Size() + 1);
 
@@ -728,48 +561,46 @@ else
 {
     comp->push (arg.arg1);
     comp->push (arg.flag1);
-    comp->mov (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&RunInstanceDataHandler_t::GetPtr)));
-    comp->mov (comp->r_rcx, reinterpret_cast<int64_t> (reinterpret_cast<void*>(instance_)));
-    comp->call (comp->r_rax);
-    comp->push (comp->r_rax);
+    comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&RunInstanceDataHandler_t::GetPtr)));
+    comp->mov<int64_t> (comp->r_rcx, reinterpret_cast<int64_t> (reinterpret_cast<void*>(instance_)));
+    comp->call<int64_t> (comp->r_rax);
+    comp->push<int64_t> (comp->r_rax);
 
     comp->push (arg.arg2);
     comp->push (arg.flag2);
-    comp->mov (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&RunInstanceDataHandler_t::GetPtr)));
-    comp->mov (comp->r_rcx, reinterpret_cast<int64_t> (reinterpret_cast<void*>(instance_)));
-    comp->call (comp->r_rax);
+    comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&RunInstanceDataHandler_t::GetPtr)));
+    comp->mov<int64_t> (comp->r_rcx, reinterpret_cast<int64_t> (reinterpret_cast<void*>(instance_)));
+    comp->call<int64_t> (comp->r_rax);
 
-    comp->pop (comp->r_rcx);
+    comp->pop<int64_t> (comp->r_rcx);
 
 
     size_t jg_offset = 0;
     size_t jl_offset = 0;
     size_t jmp_offset = 0;
-    comp->mov<int32_t> (comp->r_rbx, 0);
-    comp->mov<int32_t> (comp->r_rdx, 0);
 
     switch (size1)
     {
         case sizeof (int8_t):
             comp->mov<int8_t> (comp->r_rcx, &comp->r_rcx);
             comp->push<int8_t> (comp->r_rcx);
-            comp->mov<int32_t> (comp->r_rcx, 0);
+            comp->mov<int64_t> (comp->r_rcx, static_cast<int64_t> (0));
             comp->pop<int8_t> (comp->r_rcx);
             break;
         case sizeof (int16_t):
             comp->mov<int16_t> (comp->r_rcx, &comp->r_rcx);
             comp->push<int16_t> (comp->r_rcx);
-            comp->mov<int32_t> (comp->r_rcx, 0);
+            comp->mov<int64_t> (comp->r_rcx, static_cast<int64_t> (0));
             comp->pop<int16_t> (comp->r_rcx);
             break;
         case sizeof (int32_t):
-            comp->mov<int16_t> (comp->r_rcx, &comp->r_rcx);
+            comp->mov<int32_t> (comp->r_rcx, &comp->r_rcx);
+            comp->push<int32_t> (comp->r_rcx);
+            comp->mov<int64_t> (comp->r_rcx, static_cast<int64_t> (0));
+            comp->pop<int32_t> (comp->r_rcx);
             break;
         case sizeof (int64_t):
-            comp->mov<int32_t> (comp->r_rdx, comp->r_rcx);
-            comp->mov<int32_t> (comp->r_rcx, &comp->r_rcx);
-            comp->add<int32_t> (comp->r_rdx, sizeof (int32_t));
-            comp->mov<int32_t> (comp->r_rdx, &comp->r_rdx);
+            comp->mov<int64_t> (comp->r_rcx, &comp->r_rcx);
             break;
         default:
             currentReturn_ = ErrorReturn_t (RET_ERROR_FATAL, "invalid argument 1 size");
@@ -781,41 +612,30 @@ else
         case sizeof (int8_t):
             comp->mov<int8_t> (comp->r_rax, &comp->r_rax);
             comp->push<int8_t> (comp->r_rax);
-            comp->mov<int32_t> (comp->r_rax, 0);
+            comp->mov<int64_t> (comp->r_rax, static_cast<int64_t> (0));
             comp->pop<int8_t> (comp->r_rax);
             break;
         case sizeof (int16_t):
             comp->mov<int16_t> (comp->r_rax, &comp->r_rax);
             comp->push<int16_t> (comp->r_rax);
-            comp->mov<int32_t> (comp->r_rax, 0);
+            comp->mov<int64_t> (comp->r_rax, static_cast<int64_t> (0));
             comp->pop<int16_t> (comp->r_rax);
             break;
         case sizeof (int32_t):
-            comp->mov<int16_t> (comp->r_rax, &comp->r_rax);
+            comp->mov<int32_t> (comp->r_rax, &comp->r_rax);
+            comp->push<int32_t> (comp->r_rax);
+            comp->mov<int64_t> (comp->r_rax, static_cast<int64_t> (0));
+            comp->pop<int32_t> (comp->r_rax);
             break;
         case sizeof (int64_t):
-            comp->mov<int32_t> (comp->r_rbx, comp->r_rax);
-            comp->mov<int32_t> (comp->r_rax, &comp->r_rax);
-            comp->add<int32_t> (comp->r_rbx, sizeof (int32_t));
-            comp->mov<int32_t> (comp->r_rbx, &comp->r_rbx);
+            comp->mov<int64_t> (comp->r_rax, &comp->r_rax);
             break;
         default:
             currentReturn_ = ErrorReturn_t (RET_ERROR_FATAL, "invalid argument 2 size");
             return;
     }
 
-    comp->cmp<int32_t> (comp->r_rdx, comp->r_rbx);
-    comp->je (0);
-    jg_offset = comp->Size() - sizeof (int32_t);
-    comp->jmp (0);
-    jmp_offset = comp->Size() - sizeof (int32_t);
-    JmpPatchRequestOffset (jg_offset, comp->Size() + 1);
-    comp->cmp<int32_t> (comp->r_rcx, comp->r_rax);
-
-    JmpPatchRequestOffset (jmp_offset, comp->Size() + 1);
-    jg_offset = 0;
-    jl_offset = 0;
-    jmp_offset = 0;
+    comp->cmp<int64_t> (comp->r_rcx, comp->r_rcx);
 
     comp->jg (0);
     jg_offset = comp->Size() - sizeof (int32_t);
@@ -827,7 +647,6 @@ else
     comp->jmp (0);
     jmp_offset = comp->Size() - sizeof (int32_t);
 
-
     JmpPatchRequestOffset (jg_offset, comp->Size() + 1);
     comp->mov<int8_t> (reinterpret_cast<int8_t*> (&instance_->cmpr_flag_), static_cast<int8_t> (FLAG_HIGH));
     comp->jmp (0);
@@ -835,11 +654,8 @@ else
 
     JmpPatchRequestOffset (jl_offset, comp->Size() + 1);
     comp->mov<int8_t> (reinterpret_cast<int8_t*> (&instance_->cmpr_flag_), static_cast<int8_t> (FLAG_LOW));
-    comp->jmp (0);
-    jl_offset = comp->Size() - sizeof (int32_t);
 
     //! finally:
-    JmpPatchRequestOffset (jl_offset, comp->Size() + 1);
     JmpPatchRequestOffset (jg_offset, comp->Size() + 1);
     JmpPatchRequestOffset (jmp_offset, comp->Size() + 1);
 }

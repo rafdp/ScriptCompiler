@@ -192,7 +192,7 @@ void VirtualProcessor_t::RunScript (std::string filename, int error_mode, std::s
         currentReturn_ = ErrorReturn_t (RET_SUCCESS);
         for ( ; instance_->run_line_ < instance_->funcs_.size (); instance_->run_line_ ++)
         {
-            //printf ("LINE %I64u\n", instance_->run_line_);
+            printf ("LINE %I64u\n", instance_->run_line_);
             try
             {
                 if (instance_->funcs_[instance_->run_line_].flag == CMD_Func)
@@ -311,28 +311,32 @@ void VirtualProcessor_t::RunScriptJit (std::string filename, int error_mode, std
 void VirtualProcessor_t::PatchJmp (JitCompiler_t* compiler)
 {
     std::vector<uint8_t>* mcode = compiler->GetData ();
-    ErrorPrintfBox ("SIZE %d", mcode->size());
+    //ErrorPrintfBox ("SIZE %d", mcode->size());
 
     STL_LOOP (it, patch_jmp_)
     {
-        int64_t offset = (0 - (it->first - (it->offset ? (it->second) : (instance_->func_offsets_[it->second]))) - (sizeof (int64_t) + 1));
-        ErrorPrintfBox ("JMP %d", mcode->end() - mcode->begin() - it->first);
+        int32_t offset = static_cast<int32_t> (0 - (it->first - (it->offset ? (it->second) : (instance_->func_offsets_[it->second]))) - (sizeof (int32_t) + 1));
+        //ErrorPrintfBox ("JMP %d", mcode->end() - mcode->begin() - it->first);
         for (size_t i = 0; i < sizeof (offset); i++)
         {
             (*mcode)[it->first + i] = (uint8_t (offset >> i * 8));
         }
     }
-    ErrorPrintfBox ("patch ok");
+    //ErrorPrintfBox ("patch ok");
 }
 
 void VirtualProcessor_t::JmpPatchRequestLine (int64_t offset, int64_t line)
 {
-    patch_jmp_.push_back ((JmpPatchData_t){offset, line, false});
+    patch_jmp_.push_back ((JmpPatchData_t){static_cast<int32_t> (offset),
+                                           static_cast<int32_t> (line),
+                                           false});
 }
 
 void VirtualProcessor_t::JmpPatchRequestOffset (int64_t offset1, int64_t offset2)
 {
-    patch_jmp_.push_back ((JmpPatchData_t){offset1, offset2, true});
+    patch_jmp_.push_back ((JmpPatchData_t){static_cast<int32_t> (offset1),
+                                           static_cast<int32_t> (offset2),
+                                           true});
 }
 
 void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string filename, int error_mode, std::string log)
@@ -402,7 +406,7 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
 
     for (size_t i = 0; i < instance_->funcs_.size (); i ++)
     {
-        //ErrorPrintfBox ("Line %d", i);
+        printf ("Line %d\n", static_cast<int32_t> (i));
         instance_->func_offsets_[i] = static_cast <int64_t> (compiler->Size () + 1);
 
         if (instance_->funcs_[i].flag == CMD_Func)

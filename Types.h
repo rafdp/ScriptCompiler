@@ -47,7 +47,7 @@ public:
         AddType ("word", TYPE_WORD, 2);
         AddType ("dword", TYPE_DWORD, 4);
         AddType ("qword", TYPE_QWORD, 8);
-        AddType ("ptr", TYPE_PTR, 4);
+        AddType ("ptr", TYPE_PTR, 8);
     }
 
     void AddType (std::string name, int64_t code, size_t size)
@@ -206,7 +206,7 @@ public:
                     size_t size = memberFuncsPrototypes_->size ();
                     (*memberFuncsPrototypes_)[size] = * reinterpret_cast<std::string*> (*arg);
                     delete reinterpret_cast<std::string*> (*arg);
-                    *arg = size - 1;
+                    *arg = size;
                     *arg <<= sizeof (int32_t) * 8;
                     *arg |= static_cast<int32_t> (struct_);
                 }
