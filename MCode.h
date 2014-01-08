@@ -46,16 +46,22 @@ class MCode_t
 
     void BuildAndRun ()
     {
-        uint8_t* func = new uint8_t [buffer_.size () + 1];
+        //uint8_t* func = new uint8_t [buffer_.size () + 1];
+        uint8_t* func = reinterpret_cast<uint8_t*> (VirtualAlloc (nullptr,
+                                                                  buffer_.size () + 1,
+                                                                  MEM_COMMIT | MEM_RESERVE,
+                                                                  PAGE_EXECUTE_READWRITE));
         memcpy (func, buffer_.data (), buffer_.size ());
-        //ErrorPrintfBox ("%X", func);
+        ErrorPrintfBox ("About to run %I64d", reinterpret_cast<int64_t> (func));
         //VirtualProtect (func, buffer_.size (), PAGE_EXECUTE_READWRITE, nullptr);
         //for (size_t i = 0; i < buffer_.size (); i++) printf ("%02X ", buffer_[i]);
         //printf ("\n");
         //ErrorPrintfBox ("A %x %x\n", this, &buffer_);
         (reinterpret_cast<void (*)()> (func)) ();
+        ErrorPrintfBox ("Returned");
         //ErrorPrintfBox ("B %x %x\n", this, &buffer_);
-        delete [] func;
+        //delete [] func;
+        VirtualFree (func, buffer_.size () + 1, MEM_DECOMMIT);
         //ErrorPrintfBox ("C %x %x\n", this, &buffer_);
         func = nullptr;
         buffer_.clear ();

@@ -22,7 +22,7 @@ class RunInstanceDataHandler_t : public ScriptLoader_t
 public:
     stack<StackData_t>      dataStack_;
     stack<CallInfo_t>       callStack_;
-    int8_t                    registers_[REGISTERS_SIZE];
+    int8_t                  registers_[REGISTERS_SIZE];
     size_t                  run_line_;
     char                    cmpr_flag_;
     std::map<int64_t,

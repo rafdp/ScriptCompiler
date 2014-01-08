@@ -167,12 +167,12 @@ typedef std::map<int64_t,
 
 typedef std::map<std::string, FuncStructPair_t>   MemberFuncMap_t;
 
-typedef std::pair<std::string, int64_t>         DllPair_t;
+typedef std::pair<std::string, int64_t>           DllPair_t;
 typedef std::vector<DllPair_t>                    DllVector_t;
 
 typedef std::map<std::string, DllVector_t>        DllImportMap_t;
 typedef StrTo64Map_t                              DllFuncsMap_t;
-typedef std::map<int64_t, void*>                ResolvedDllFuncsMap_t;
+typedef std::map<int64_t, void*>                  ResolvedDllFuncsMap_t;
 
 
 

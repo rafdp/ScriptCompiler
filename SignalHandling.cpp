@@ -172,12 +172,12 @@ void OnSigTerm (int)
 
 void RegisterSignalHandlers ()
 {
-    signal (SIGABRT, OnSigAbort);
+    /*signal (SIGABRT, OnSigAbort);
     signal (SIGFPE,  OnSigFpe);
     signal (SIGILL,  OnSigIll);
     signal (SIGINT,  OnSigInt);
     signal (SIGSEGV, OnSigSegv);
-    signal (SIGTERM, OnSigTerm);
+    signal (SIGTERM, OnSigTerm);*/
 }
 
 #undef $
