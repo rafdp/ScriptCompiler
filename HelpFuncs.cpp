@@ -253,7 +253,7 @@ std::string GetAsmNumString (int val, const char* operand /* = "dword" */)
 
 void PushStackValueJit (const StackData_t& value, JitCompiler_t* comp, exception_data* expn)
 {
-    //ErrorPrintfBox ("%d %s", value.size, __PRETTY_FUNCTION__);
+    //ErrorPrintfBox ("%s \n%I64X", __PRETTY_FUNCTION__, value.data);
     switch (value.size)
     {
         case sizeof (int8_t):

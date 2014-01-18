@@ -3,6 +3,14 @@
 uint8_t BuildModRM (const uint8_t mod, uint8_t destination, uint8_t source);
 uint8_t BuildSIB (const uint8_t scale, uint8_t destination, uint8_t source);
 
+enum REX_PREFIXES
+{
+    REX_W = 0b00001000,
+    REX_R = 0b00000100,
+    REX_X = 0b00000010,
+    REX_B = 0b00000001
+};
+
 struct CPURegisterInfo_t
 {
     uint8_t reg;
@@ -25,7 +33,7 @@ uint8_t BuildModRM (const uint8_t mod, uint8_t destination, uint8_t source)
 uint8_t BuildSIB (const uint8_t scale, uint8_t destination, uint8_t source)
 {
     uint8_t result = scale;
-    result = static_cast <uint8_t> (result << 2);
+    result = static_cast <uint8_t> (result << 3);
     result |= source;
     result = static_cast <uint8_t> (result << 3);
     result |= destination;
@@ -106,6 +114,8 @@ class CmdEmitter_t
                           CPURegisterInfo_t reg2)
     {
         EmitInstruction (instr, RMMode, reg1.reg, reg2.reg);
+        if (RMMode != MODE_REGISTER && reg1.reg == R_RSP)
+            EmitData (BuildSIB (MODE_1, R_RSP, SOURCE_NONE));
     }
 
     void EmitInstruction (Instruction_t instr,
@@ -114,6 +124,8 @@ class CmdEmitter_t
                           CPURegisterInfo_t reg)
     {
         EmitInstruction (instr, RMMode, prm, reg.reg);
+        if (RMMode != MODE_REGISTER && reg.reg == R_RSP)
+            EmitData (BuildSIB (MODE_1, R_RSP, SOURCE_NONE));
     }
 
     void EmitInstruction (Instruction_t instr,
@@ -122,6 +134,8 @@ class CmdEmitter_t
                           uint8_t prm)
     {
         EmitInstruction (instr, RMMode, reg.reg, prm);
+        if (RMMode != MODE_REGISTER && reg.reg == R_RSP)
+            EmitData (BuildSIB (MODE_1, R_RSP, SOURCE_NONE));
     }
 
     template <typename T>
@@ -285,7 +299,7 @@ public:
 
 #define CHECK_SIZE_16(T) if (sizeof (T) == sizeof (int16_t)) Emit66hPrefix ();
 
-#define CHECK_SIZE_64(T) if (sizeof (T) == sizeof (int64_t)) EmitRexWPrefix ();
+#define CHECK_SIZE_64(T) if (sizeof (T) == sizeof (int64_t)) EmitRexPrefix (REX_W);
 
 #define CHECK_SIZE_16_NO8(T) if (sizeof (T) == sizeof (int16_t)) Emit66hPrefix ();
 
@@ -918,9 +932,9 @@ public:
         emitter_.EmitInstruction (inJg_Rel, rel);
     }
 
-    void EmitRexWPrefix ()
+    void EmitRexPrefix (char mask)
     {
-        emitter_.EmitData ('\x48');
+        emitter_.EmitData ('\x40' | mask);
     }
 
     void Emit66hPrefix ()
@@ -931,6 +945,14 @@ public:
     void EmitInt3 ()
     {
         emitter_.EmitData ('\xCC');
+    }
+
+    void ParameterPush (int64_t p1, int64_t p2, int64_t p3, int64_t p4)
+    {
+        EmitMov (RCX, p1);
+        EmitMov (RDX, p1);
+        EmitMov (RDX, p1);
+        EmitMov (RDX, p1);
     }
 
     void BuildAndRun ()

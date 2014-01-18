@@ -1,4 +1,6 @@
 
+void __cdecl ScanfPort (const char* str, void* ptr);
+
 class FileHandler_t
 {
     public:
@@ -168,6 +170,12 @@ void ScriptLoader_t::Dump ()
     }
 }
 
+void __cdecl ScanfPort (const char* str, void* ptr)
+{
+    //printf ("str = %X\npointer = %X", str, ptr);
+    ptr = ptr + 1;
+}
+
 void ScriptLoader_t::ResolveDlls ()
 {
     STL_LOOP (i, dllFuncs_)
@@ -182,7 +190,9 @@ void ScriptLoader_t::ResolveDlls ()
         }
         STL_LOOP (iter, i->second)
         {
+
             void* func = reinterpret_cast <void*> (GetProcAddress (dll, iter->first.c_str ()));
+            //if (iter->first == std::string ("scanf")) func = reinterpret_cast <void*> (ScanfPort);
             if (!func)
             {
                 static std::string str ("Cannot find function:\"");

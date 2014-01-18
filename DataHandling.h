@@ -181,15 +181,15 @@ public:
     {
         if (isVar (flag)) return GetVarSize (flag, arg);
         if (isReg (flag)) return GetReg (arg) .size;
-        if (isStr (flag)) return sizeof (int8_t*);
-        if (isNum (flag)) return sizeof (int);
+        if (isStr (flag)) return sizeof (char*);
+        if (isNum (flag)) return sizeof (int64_t);
         return 0;
     }
 
     inline bool isNum  (int8_t flag) {return ((flag & int8_t (~ARG_UNREF_MASK)) == ARG_NUM  ? true : false);}
     inline bool isNull (int8_t flag) {return ((flag & int8_t (~ARG_UNREF_MASK)) == ARG_NULL ? true : false);}
     inline bool isVar  (int8_t flag) {return ((flag & int8_t (~ARG_UNREF_MASK)) == ARG_VAR ||
-                                            (flag & int8_t (~ARG_UNREF_MASK)) == ARG_VAR_MEMBER ? true : false);}
+                                              (flag & int8_t (~ARG_UNREF_MASK)) == ARG_VAR_MEMBER ? true : false);}
     inline bool isReg  (int8_t flag) {return ((flag & int8_t (~ARG_UNREF_MASK)) == ARG_REG  ? true : false);}
     inline bool isData (int8_t flag) {return isVar (flag) || isReg (flag);}
     inline bool isStr  (int8_t flag) {return ((flag & int8_t (~ARG_UNREF_MASK)) == ARG_STR  ? true : false);}

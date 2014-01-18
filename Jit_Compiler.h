@@ -2,22 +2,45 @@
 #define JIT_COMPILER_H_INCLUDED
 
 #define R_RAX 0b000
-#define R_RCX 0b001
-#define R_RDX 0b010
-#define R_RBX 0b011
-#define R_RSP 0b100
-#define SIB   0b100
-#define R_RBP 0b101
-#define OFF   0b101
-#define R_RSI 0b110
-#define R_RDI 0b111
+#define R_R8  0b000
 
-enum RMModes
+#define R_RCX 0b001
+#define R_R9  0b001
+
+#define R_RDX 0b010
+#define R_R10 0b010
+
+#define R_RBX 0b011
+#define R_R11 0b011
+
+#define R_RSP 0b100
+#define R_R12 0b100
+
+#define SIB   0b100
+
+#define R_RBP 0b101
+#define R_R13 0b101
+
+#define OFF   0b101
+
+#define R_RSI 0b110
+#define R_R14 0b110
+
+#define R_RDI 0b111
+#define R_R15 0b111
+
+#define SOURCE_NONE R_RSP
+
+enum RM_SIB_Modes
 {
     MODE_ADDRESS       = 0b00,
     MODE_ADDRESS_BYTE  = 0b01,
     MODE_ADDRESS_DWORD = 0b10,
-    MODE_REGISTER      = 0b11
+    MODE_REGISTER      = 0b11,
+    MODE_1             = 0b00,
+    MODE_2             = 0b01,
+    MODE_4             = 0b10,
+    MODE_8             = 0b11
 };
 
 #include "MCode.h"
@@ -127,9 +150,16 @@ class JitCompiler_t
     {
         if (sizeof (T) == sizeof (int64_t))
         {
-            //ErrorPrintfBox ("%d %s", __LINE__, __PRETTY_FUNCTION__);
-            man.EmitPush<int32_t> (static_cast<int32_t>(static_cast<int64_t>(imm) >> (sizeof (int32_t)*8)));
-            man.EmitPush<int32_t> (static_cast<int32_t>(static_cast<int64_t>(imm)));
+            man.EmitSub<int64_t> (r_rsp, sizeof (int32_t));
+            man.EmitMov<int32_t> (&r_rsp, static_cast<int32_t>(static_cast<int64_t>(imm) >> (sizeof (int32_t)*8)));
+            man.EmitSub<int64_t> (r_rsp, sizeof (int32_t));
+            man.EmitMov<int32_t> (&r_rsp, static_cast<int32_t>(static_cast<int64_t>(imm)));
+        }
+        else
+        if (sizeof (T) == sizeof (int32_t))
+        {
+            man.EmitSub<int64_t> (r_rsp, sizeof (int32_t));
+            man.EmitMov<int32_t> (&r_rsp, imm);
         }
         else man.EmitPush<T> (imm);
     }
@@ -486,5 +516,14 @@ class JitCompiler_t
 #undef OFF
 #undef R_ESI
 #undef R_EDI
+#undef SOURCE_NONE
+#undef R_R8
+#undef R_R9
+#undef R_R10
+#undef R_R11
+#undef R_R12
+#undef R_R13
+#undef R_R14
+#undef R_R15
 
 #endif // JIT_COMPILER_H_INCLUDED
