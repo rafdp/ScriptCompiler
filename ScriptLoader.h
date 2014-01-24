@@ -172,8 +172,8 @@ void ScriptLoader_t::Dump ()
 
 void __cdecl ScanfPort (const char* str, void* ptr)
 {
-    //printf ("str = %X\npointer = %X", str, ptr);
-    ptr = ptr + 1;
+    printf ("str = %s\npointer = %d", str, * reinterpret_cast<int32_t*> (ptr));
+    //ptr = ptr + 1;
 }
 
 void ScriptLoader_t::ResolveDlls ()

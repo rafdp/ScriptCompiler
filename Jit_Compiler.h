@@ -100,13 +100,27 @@ class JitCompiler_t
     template <typename T>
     void mov (CPURegisterInfo_t regDest, T imm)
     {
-        man.EmitMov<T> (regDest, imm);
+        if (sizeof (T) != sizeof (int64_t))
+            man.EmitMov<T> (regDest, imm);
+        else
+        {
+            man.EmitMov<int32_t> (regDest, imm >> (8 * sizeof (int32_t)));
+            man.EmitShld<int64_t> (regDest, regDest, static_cast<char>(8 * sizeof (int32_t)));
+            man.EmitMov<int32_t> (regDest, imm);
+        }
     }
 
     template <typename T>
     void mov (CPURegisterInfo_t* regDest, T imm)
     {
-        man.EmitMov<T> (regDest, imm);
+        if (sizeof (T) != sizeof (int64_t))
+            man.EmitMov<T> (regDest, imm);
+        else
+        {
+            man.EmitMov<int32_t> (regDest, imm >> (8 * sizeof (int32_t)));
+            man.EmitShld<int64_t> (regDest, regDest, static_cast<char>(8 * sizeof (int32_t)));
+            man.EmitMov<int32_t> (regDest, imm);
+        }
     }
 
     template <typename T>
@@ -502,6 +516,11 @@ class JitCompiler_t
     std::vector<uint8_t>* GetData ()
     {
         return man.GetData ();
+    }
+
+    void ParameterPush (int64_t p1 = 0, int64_t p2 = 0, int64_t p3 = 0, int64_t p4 = 0)
+    {
+        man.ParameterPush (p1, p2, p3, p4);
     }
 
 };

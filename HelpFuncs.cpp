@@ -16,7 +16,7 @@ bool IsArgValue (const int8_t& flag);
 int8_t _GetString (FILE* f, std::string* str, int8_t del);
 
 std::string GetAsmNumString (int val, const char* operand = "dword");
-void PushStackValueJit (const StackData_t& value, JitCompiler_t* comp, exception_data* expn);
+void PushStackValueJit (stack<StackData_t>* st, int dump_start, JitCompiler_t* comp, exception_data* expn);
 
 
 
@@ -251,26 +251,66 @@ std::string GetAsmNumString (int val, const char* operand /* = "dword" */)
     return val_str;
 }
 
-void PushStackValueJit (const StackData_t& value, JitCompiler_t* comp, exception_data* expn)
+void PushStackValueJit (stack<StackData_t>* st, int dump_start, JitCompiler_t* comp, exception_data* expn)
 {
     //ErrorPrintfBox ("%s \n%I64X", __PRETTY_FUNCTION__, value.data);
-    switch (value.size)
+    int size = st->size() - dump_start;
+    if (size <= 0)
+        return;
+    if (size == 1)
     {
-        case sizeof (int8_t):
-            comp->push<int8_t> (static_cast<int8_t> (value.data));
-            break;
-        case sizeof (int16_t):
-            comp->push<int16_t> (static_cast<int16_t> (value.data));
-            break;
-        case sizeof (int32_t):
-            comp->push<int32_t> (static_cast<int32_t> (value.data));
-            break;
-        case sizeof (int64_t):
-            comp->push<int64_t> (static_cast<int64_t> (value.data));
-            break;
-        default:
-            NAT_EXCEPTION (expn, "Failed to emit \"push\", invalid operand size", ERROR_INVALID_OP_SIZE_SWITCH)
+        comp->ParameterPush ((*st)[dump_start + size - 1].data);
     }
+    else
+    if ((st->size() - dump_start) == 2)
+    {
+        comp->ParameterPush ((*st)[dump_start + size - 1].data,
+                             (*st)[dump_start + size - 2].data);
+    }
+    else
+    if ((st->size() - dump_start) == 3)
+    {
+        comp->ParameterPush ((*st)[dump_start + size - 1].data,
+                             (*st)[dump_start + size - 2].data,
+                             (*st)[dump_start + size - 3].data);
+    }
+    else
+    if ((st->size() - dump_start) == 4)
+    {
+        comp->ParameterPush ((*st)[dump_start + size - 1].data,
+                             (*st)[dump_start + size - 2].data,
+                             (*st)[dump_start + size - 3].data,
+                             (*st)[dump_start + size - 4].data);
+    }
+    else
+    {
+        comp->ParameterPush ((*st)[dump_start + size - 1].data,
+                             (*st)[dump_start + size - 2].data,
+                             (*st)[dump_start + size - 3].data,
+                             (*st)[dump_start + size - 4].data);
+        for (stack<StackData_t>::iterator i (st, & (*st)[dump_start + size - 4]); i > stack<StackData_t>::iterator (st, & (*st)[dump_start]); i--)
+        {
+            switch (i->size)
+            {
+                case sizeof (int8_t):
+                    comp->push<int8_t> (static_cast<int8_t> (i->data));
+                    break;
+                case sizeof (int16_t):
+                    comp->push<int16_t> (static_cast<int16_t> (i->data));
+                    break;
+                case sizeof (int32_t):
+                    comp->push<int32_t> (static_cast<int32_t> (i->data));
+                    break;
+                case sizeof (int64_t):
+                    comp->push<int64_t> (static_cast<int64_t> (i->data));
+                    break;
+                default:
+                    NAT_EXCEPTION (expn, "Failed to emit \"push\", invalid operand size", ERROR_INVALID_OP_SIZE_SWITCH)
+            }
+        }
+
+    }
+
 
 }
 

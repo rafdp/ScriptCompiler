@@ -213,9 +213,7 @@ FUNCTION_BEGIN (JIT_Call_Void, 1, 0, ARG_DLL_FUNC)
 
     JitCompiler_t comp;
     comp.int3 ();
-    for (stack<StackData_t>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpPoint_]); i < $ dataStack_.end (); i++)
-        PushStackValueJit (*i, &comp, expn_);
-
+    PushStackValueJit (& $ dataStack_, $ stackDumpPoint_, &comp, expn_);
     comp.mov<int64_t> (comp.r_rax, reinterpret_cast<int64_t> ($ dllResolved_[arg.arg1]));
     comp.call<int64_t> (comp.r_rax);
     comp.add<int64_t> (comp.r_rsp, $ RspAdd ());
@@ -229,8 +227,7 @@ FUNCTION_BEGIN (JIT_Call_DWord, 1, 3, ARG_DLL_FUNC _ ARG_REG _ ARG_VAR _ ARG_VAR
         currentReturn_ = ErrorReturn_t (RET_ERROR_CONTINUE, $ isReg (arg.flag2) ? "Invalid reg size" : "Invalid var size");
     JitCompiler_t comp;
 
-    for (stack<StackData_t>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpPoint_]); i < $ dataStack_.end (); i++)
-        PushStackValueJit (*i, &comp, expn_);
+    PushStackValueJit (& $ dataStack_, $ stackDumpPoint_, &comp, expn_);
     comp.mov<int64_t> (comp.r_rax, reinterpret_cast<int64_t> ($ dllResolved_[arg.arg1]));
     comp.call<int64_t> (comp.r_rax);
 
@@ -245,8 +242,7 @@ FUNCTION_BEGIN (JIT_Call_QWord, 1, 3, ARG_DLL_FUNC _ ARG_REG _ ARG_VAR _ ARG_VAR
     if ($ GetSize (arg.flag2, arg.arg2) != sizeof (QWORD))
         currentReturn_ = ErrorReturn_t (RET_ERROR_CONTINUE, $ isReg (arg.flag2) ? "Invalid reg size" : "Invalid var size");
     JitCompiler_t comp;
-    for (stack<StackData_t>::iterator i (& $ dataStack_, & $ dataStack_[$ stackDumpPoint_]); i < $ dataStack_.end (); i++)
-        PushStackValueJit (*i, &comp, expn_);
+    PushStackValueJit (& $ dataStack_, $ stackDumpPoint_, &comp, expn_);
     comp.mov<int64_t> (comp.r_rax, reinterpret_cast<int64_t> ($ dllResolved_[arg.arg1]));
     comp.call<int64_t> (comp.r_rax);
 
@@ -342,7 +338,7 @@ if ($ isNum (arg.flag2) || $ isStr (arg.flag2))
     comp->push (arg.arg1);
     comp->push (arg.flag1);
     comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&RunInstanceDataHandler_t::GetPtr)));
-    comp->mov<int64_t> (comp->r_rcx, reinterpret_cast<int64_t> (reinterpret_cast<void*>(instance_)));
+    comp->ParameterPush (reinterpret_cast<int64_t> (instance_));
     comp->call<int64_t> (comp->r_rax);
 
     switch (size1)
@@ -369,14 +365,14 @@ else
     comp->push (arg.arg1);
     comp->push (arg.flag1);
     comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&RunInstanceDataHandler_t::GetPtr)));
-    comp->mov<int64_t> (comp->r_rcx, reinterpret_cast<int64_t> (reinterpret_cast<void*>(instance_)));
+    comp->ParameterPush (reinterpret_cast<int64_t> (instance_));
     comp->call<int64_t> (comp->r_rax);
     comp->push<int64_t> (comp->r_rax);
 
     comp->push (arg.arg2);
     comp->push (arg.flag2);
     comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&RunInstanceDataHandler_t::GetPtr)));
-    comp->mov<int64_t> (comp->r_rcx, reinterpret_cast<int64_t> (reinterpret_cast<void*>(instance_)));
+    comp->ParameterPush (reinterpret_cast<int64_t> (instance_));
     comp->call<int64_t> (comp->r_rax);
 
     comp->pop<int64_t> (comp->r_rcx);
@@ -440,7 +436,7 @@ if ($ isNum (arg.flag2) && ! $ isNum (arg.flag1))
     comp->push (arg.arg1);
     comp->push (arg.flag1);
     comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&RunInstanceDataHandler_t::GetPtr)));
-    comp->mov<int64_t> (comp->r_rcx, reinterpret_cast<int64_t> (reinterpret_cast<void*>(instance_)));
+    comp->ParameterPush (reinterpret_cast<int64_t> (instance_));
     comp->call<int64_t> (comp->r_rax);
 
 
@@ -502,7 +498,7 @@ if ($ isNum (arg.flag1) && ! $ isNum (arg.flag2))
     comp->push (arg.arg2);
     comp->push (arg.flag2);
     comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&RunInstanceDataHandler_t::GetPtr)));
-    comp->mov<int64_t> (comp->r_rcx, reinterpret_cast<int64_t> (reinterpret_cast<void*>(instance_)));
+    comp->ParameterPush (reinterpret_cast<int64_t> (instance_));
     comp->call<int64_t> (comp->r_rax);
 
 
@@ -563,14 +559,14 @@ else
     comp->push (arg.arg1);
     comp->push (arg.flag1);
     comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&RunInstanceDataHandler_t::GetPtr)));
-    comp->mov<int64_t> (comp->r_rcx, reinterpret_cast<int64_t> (reinterpret_cast<void*>(instance_)));
+    comp->ParameterPush (reinterpret_cast<int64_t> (instance_));
     comp->call<int64_t> (comp->r_rax);
     comp->push<int64_t> (comp->r_rax);
 
     comp->push (arg.arg2);
     comp->push (arg.flag2);
     comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&RunInstanceDataHandler_t::GetPtr)));
-    comp->mov<int64_t> (comp->r_rcx, reinterpret_cast<int64_t> (reinterpret_cast<void*>(instance_)));
+    comp->ParameterPush (reinterpret_cast<int64_t> (instance_));
     comp->call<int64_t> (comp->r_rax);
 
     comp->pop<int64_t> (comp->r_rcx);
