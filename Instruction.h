@@ -211,6 +211,13 @@ public:
                   inIMul_R_RM,
                   inIDiv_RM_8,
                   inIDiv_RM,
+                  inOr_RM_Imm_8,
+                  inOr_RM_ImmF,
+                  inOr_RM_Imm,
+                  inOr_R_RM_8,
+                  inOr_R_RM,
+                  inOr_RM_R_8,
+                  inOr_RM_R,
                   inInc_RM_8,
                   inInc_RM,
                   inCmp_RM_R_8,
@@ -280,6 +287,13 @@ public:
         inIMul_R_RM       ({0x0F, 0xAF}),
         inIDiv_RM_8       ({0xF6}),
         inIDiv_RM         ({0xF7}),
+        inOr_RM_Imm_8     ({0x80}),
+        inOr_RM_ImmF      ({0x83}),
+        inOr_RM_Imm       ({0x81}),
+        inOr_R_RM_8       ({0x0A}),
+        inOr_R_RM         ({0x0B}),
+        inOr_RM_R_8       ({0x08}),
+        inOr_RM_R         ({0x09}),
         inInc_RM_8        ({0xFE}),
         inInc_RM          ({0xFF}),
         inCmp_RM_R_8      ({0x38}),
@@ -824,6 +838,77 @@ public:
             emitter_.EmitData (static_cast<int32_t> (reinterpret_cast<int64_t> (ptr)));
     }
 
+    template <typename T_Reg, typename T>
+    void EmitOr (CPURegisterInfo_t regDest, T data)
+    {
+        CHECK_SIZE_16 (T_Reg)
+        CHECK_SIZE_64 (T_Reg)
+        emitter_.EmitInstruction (SIZED_CMD (inOr_RM_Imm), regDest, 1);
+        if (sizeof (T_Reg) > sizeof (int32_t))
+             emitter_.EmitData<int32_t> (static_cast<int32_t> (data));
+        else emitter_.EmitData<T_Reg>   (static_cast<T_Reg>   (data));
+    }
+
+    template <typename T_Reg, typename T>
+    void EmitOr (CPURegisterInfo_t* regDest, T data)
+    {
+        CHECK_SIZE_16 (T_Reg)
+        CHECK_SIZE_64 (T_Reg)
+        emitter_.EmitInstruction (SIZED_CMD (inOr_RM_Imm), MODE_ADDRESS, *regDest, 1);
+        if (sizeof (T_Reg) > sizeof (int32_t))
+             emitter_.EmitData<int32_t> (static_cast<int32_t> (data));
+        else emitter_.EmitData<T_Reg>   (static_cast<T_Reg>   (data));
+    }
+
+    template <typename T = int>
+    void EmitOrF (CPURegisterInfo_t regDest, int8_t data)
+    {
+        CHECK_SIZE_16_NO8 (T)
+        CHECK_SIZE_64 (T)
+        emitter_.EmitInstruction (inOr_RM_ImmF, regDest, 1);
+        emitter_.EmitData (data);
+    }
+
+    template <typename T>
+    void EmitOr (CPURegisterInfo_t regDest, T* src)
+    {
+        CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
+        emitter_.EmitInstruction (SIZED_CMD (inOr_R_RM), MODE_ADDRESS, OFF, regDest);
+        if (sizeof (T) == sizeof (int64_t))
+            emitter_.EmitData (reinterpret_cast<int64_t> (src));
+        else
+            emitter_.EmitData (static_cast<int32_t> (reinterpret_cast<int64_t> (src)));
+    }
+
+    template <typename T>
+    void EmitOr (CPURegisterInfo_t regDest, CPURegisterInfo_t* regSrc)
+    {
+        CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
+        emitter_.EmitInstruction (SIZED_CMD (inOr_R_RM), MODE_ADDRESS, *regSrc, regDest);
+    }
+
+    template <typename T>
+    void EmitOr (CPURegisterInfo_t* regDest, CPURegisterInfo_t regSrc)
+    {
+        CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
+        emitter_.EmitInstruction (SIZED_CMD (inOr_RM_R), MODE_ADDRESS, *regDest, regSrc);
+    }
+
+    template <typename T>
+    void EmitOr (T* dest, CPURegisterInfo_t regSrc)
+    {
+        CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
+        emitter_.EmitInstruction (SIZED_CMD (inOr_RM_R), MODE_ADDRESS, OFF, regSrc);
+        if (sizeof (T) == sizeof (int64_t))
+            emitter_.EmitData (reinterpret_cast<int64_t> (dest));
+        else
+            emitter_.EmitData (static_cast<int32_t> (reinterpret_cast<int64_t> (dest)));
+    }
+
     template <typename T>
     void EmitInc (T* ptr)
     {
@@ -1025,11 +1110,11 @@ public:
     {
         EmitMov<int32_t> (CPURegisterInfo_t (R_RCX), (p1 >> (8 * sizeof (int32_t))));
         EmitShld<int64_t> (CPURegisterInfo_t (R_RCX), CPURegisterInfo_t (R_RCX), static_cast<int8_t> (8 * sizeof (int32_t)));
-        EmitMov<int32_t> (CPURegisterInfo_t (R_RCX), (p1));
+        EmitOr<int32_t> (CPURegisterInfo_t (R_RCX), (p1));
 
         EmitMov<int32_t> (CPURegisterInfo_t (R_RDX), (p2 >> (8 * sizeof (int32_t))));
         EmitShld<int64_t> (CPURegisterInfo_t (R_RDX), CPURegisterInfo_t (R_RDX), static_cast<int8_t> (8 * sizeof (int32_t)));
-        EmitMov<int32_t> (CPURegisterInfo_t (R_RDX), (p2));
+        EmitOr<int32_t> (CPURegisterInfo_t (R_RDX), (p2));
 
         EmitRexPrefix (REX_W | REX_B);
         emitter_.EmitInstruction (inMov_RM_Imm, MODE_REGISTER, CPURegisterInfo_t (R_R8), 0);
@@ -1039,8 +1124,8 @@ public:
         emitter_.EmitInstruction (inShld_RM_R_Imm, CPURegisterInfo_t (R_R8), CPURegisterInfo_t (R_R8));
         emitter_.EmitData (static_cast<int8_t> (8 * sizeof (int32_t)));
 
-        EmitRexPrefix (REX_W | REX_B);
-        emitter_.EmitInstruction (inMov_RM_Imm, MODE_REGISTER, CPURegisterInfo_t (R_R8), 0);
+        EmitRexPrefix (REX_B);
+        emitter_.EmitInstruction (inOr_RM_Imm, MODE_REGISTER, CPURegisterInfo_t (R_R8), 1);
         emitter_.EmitData (static_cast<int32_t> (p3));
 
         EmitRexPrefix (REX_W | REX_B);
@@ -1051,8 +1136,8 @@ public:
         emitter_.EmitInstruction (inShld_RM_R_Imm, CPURegisterInfo_t (R_R9), CPURegisterInfo_t (R_R9));
         emitter_.EmitData (static_cast<int8_t> (8 * sizeof (int32_t)));
 
-        EmitRexPrefix (REX_W | REX_B);
-        emitter_.EmitInstruction (inMov_RM_Imm, MODE_REGISTER, CPURegisterInfo_t (R_R9), 0);
+        EmitRexPrefix (REX_B);
+        emitter_.EmitInstruction (inOr_RM_Imm, MODE_REGISTER, CPURegisterInfo_t (R_R9), 1);
         emitter_.EmitData (static_cast<int32_t> (p4));
     }
 

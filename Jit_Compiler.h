@@ -105,8 +105,10 @@ class JitCompiler_t
         else
         {
             man.EmitMov<int32_t> (regDest, imm >> (8 * sizeof (int32_t)));
-            man.EmitShld<int64_t> (regDest, regDest, static_cast<char>(8 * sizeof (int32_t)));
-            man.EmitMov<int32_t> (regDest, imm);
+            man.EmitShld<int64_t> (regDest, regDest, static_cast<char>(4 * sizeof (int32_t)));
+            man.EmitOr<int64_t> (regDest, static_cast<int32_t> (static_cast<uint16_t> (imm >> (4 * sizeof (int32_t)))));
+            man.EmitShld<int64_t> (regDest, regDest, static_cast<char>(4 * sizeof (int32_t)));
+            man.EmitOr<int64_t> (regDest, static_cast<int32_t> (static_cast<uint16_t> (imm)));
         }
     }
 
@@ -118,8 +120,10 @@ class JitCompiler_t
         else
         {
             man.EmitMov<int32_t> (regDest, imm >> (8 * sizeof (int32_t)));
-            man.EmitShld<int64_t> (regDest, regDest, static_cast<char>(8 * sizeof (int32_t)));
-            man.EmitMov<int32_t> (regDest, imm);
+            man.EmitShld<int64_t> (regDest, regDest, static_cast<char>(4 * sizeof (int32_t)));
+            man.EmitOr<int64_t> (regDest, static_cast<int32_t> (static_cast<uint16_t> (imm >> (4 * sizeof (int32_t)))));
+            man.EmitShld<int64_t> (regDest, regDest, static_cast<char>(4 * sizeof (int32_t)));
+            man.EmitOr<int64_t> (regDest, static_cast<int32_t> (static_cast<uint16_t> (imm)));
         }
     }
 
@@ -397,6 +401,48 @@ class JitCompiler_t
     void div (T* src)
     {
         man.EmitDiv<T> (src);
+    }
+
+    template <typename T>
+    void or_ (CPURegisterInfo_t regDest, T* src)
+    {
+        man.EmitOr<T> (regDest, src);
+    }
+
+    template <typename T>
+    void or_ (CPURegisterInfo_t regDest, CPURegisterInfo_t* regSrc)
+    {
+        man.EmitOr<T> (regDest, regSrc);
+    }
+
+    template <typename T>
+    void or_ (CPURegisterInfo_t* regDest, CPURegisterInfo_t regSrc)
+    {
+        man.EmitOr<T> (regDest, regSrc);
+    }
+
+    template <typename T>
+    void or_ (CPURegisterInfo_t regDest, T imm)
+    {
+        man.EmitOr<T> (regDest, imm);
+    }
+
+    template <typename T>
+    void or_ (CPURegisterInfo_t* regDest, T imm)
+    {
+        man.EmitOr<T> (regDest, imm);
+    }
+
+    template <typename T>
+    void or_ (T* dest, CPURegisterInfo_t regSrc)
+    {
+        man.EmitOr<T> (dest, regSrc);
+    }
+
+    template <typename T = int>
+    void orf (CPURegisterInfo_t regDest, int8_t data)
+    {
+        man.EmitOrF (regDest, data);
     }
 
     void retn ()

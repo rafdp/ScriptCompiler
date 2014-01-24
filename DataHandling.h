@@ -207,7 +207,7 @@ public:
     int64_t RspAdd ()
     {
         int64_t result = 0;
-        for (int i = stackDumpPoint_; i < dataStack_.size (); i++)
+        for (int i = stackDumpPoint_ + 4; i < dataStack_.size (); i++)
         {
             if (dataStack_[i].size == 8) result += 8;
             else result += 4;
