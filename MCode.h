@@ -57,6 +57,7 @@ class MCode_t
         //for (size_t i = 0; i < buffer_.size (); i++) printf ("%02X ", buffer_[i]);
         //printf ("\n");
         //ErrorPrintfBox ("A %x %x\n", this, &buffer_);
+        //DebugBreak ();
         (reinterpret_cast<void (*)()> (func)) ();
         ErrorPrintfBox ("Returned");
         //ErrorPrintfBox ("B %x %x\n", this, &buffer_);

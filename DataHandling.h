@@ -147,6 +147,7 @@ public:
 
     void ComplexCall (int64_t arg)
     {
+        //ErrorPrintfBox ("%s %I64X", __PRETTY_FUNCTION__, arg);
         int arg_nested_call = 0;
         if (int (arg >> 32) == 0) arg_nested_call = callStack_[callStack_.size () - 1].var;
         else arg_nested_call = int (arg >> 32);
@@ -206,10 +207,12 @@ public:
 
     int64_t RspAdd ()
     {
+        size_t size = dataStack_.size () - stackDumpPoint_;
         int64_t result = 0;
-        for (int i = stackDumpPoint_ + 4; i < dataStack_.size (); i++)
+        result += 4 * sizeof (int64_t);
+        for (size_t i = 4; i < size; i++)
         {
-            if (dataStack_[i].size == 8) result += 8;
+            if (dataStack_[static_cast<int32_t> (i + stackDumpPoint_)].size == 8) result += 8;
             else result += 4;
         }
         return result;

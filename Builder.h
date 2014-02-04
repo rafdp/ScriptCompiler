@@ -204,7 +204,7 @@ ScriptCompiler_t::ScriptCompiler_t (std::string filename, exception_data* expn) 
     {
         for ( ; !feof (f); n_line ++)
         {
-            //printf ("LINE %d ", n_line);
+            //printf ("LINE %d\n", n_line);
             ScriptLine_t line (f);
             Cmd_t cmd (line.cmd);
             Arg_t arg (line.param1, line.param2);
@@ -607,7 +607,6 @@ void ScriptCompiler_t::ResolvePrototypes ()
             ERROR_EXCEPTION (str_err.c_str (), ERROR_UNDEFINED_REFERENCE_FUNC)
         }
     }
-
     STL_LOOP (i, args_)
     {
         switch (i->flag1)
@@ -622,7 +621,7 @@ void ScriptCompiler_t::ResolvePrototypes ()
             }
             case ARG_FUNC_MEMBER_IT:
             {
-                auto found = memberFuncs_.find (memberFuncsPrototypes_[i->arg1 >> (sizeof (int32_t) * 4)]);
+                auto found = memberFuncs_.find (memberFuncsPrototypes_[i->arg1 >> (sizeof (int32_t) * 8)]);
                 i->arg1 = found->second.func_;
                 i->flag1 = ARG_FUNC_MEMBER;
                 break;

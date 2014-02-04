@@ -212,13 +212,18 @@ FUNCTION_BEGIN (JIT_Call_Void, 1, 0, ARG_DLL_FUNC)
     //ErrorPrintfBox ("%d %d %s\n", $ stackDumpPoint_, $ dataStack_.size (), __PRETTY_FUNCTION__);
 
     JitCompiler_t comp;
-    comp.int3 ();
+    comp.push<int64_t> (comp.r_rbp);
+    comp.mov<int64_t> (comp.r_rbp, comp.r_rsp);
     PushStackValueJit (& $ dataStack_, $ stackDumpPoint_, &comp, expn_);
     comp.mov<int64_t> (comp.r_rax, reinterpret_cast<int64_t> ($ dllResolved_[arg.arg1]));
     comp.call<int64_t> (comp.r_rax);
     comp.add<int64_t> (comp.r_rsp, $ RspAdd ());
+
+    comp.mov<int64_t> (comp.r_rsp, comp.r_rbp);
+    comp.pop<int64_t> (comp.r_rbp);
     comp.retn ();
     comp.BuildAndRun ();
+    ErrorPrintfBox ("%s jit returned", __PRETTY_FUNCTION__);
 
 FUNCTION_END
 

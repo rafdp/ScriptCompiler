@@ -83,6 +83,7 @@ public:
 
     bool AddFunc (std::string func, int64_t line, int64_t struct_)
     {
+        //ErrorPrintfBox ("Adding func %s %I64d", func.c_str(), line);
         if (!Ok ()) return false;
         auto found = memberFuncs_->end ();
         if ((found = memberFuncs_->find (func)) != memberFuncs_->end () &&
@@ -198,6 +199,8 @@ public:
             }
             else //! isFunc
             {
+                //ErrorPrintfBox ("Calling func %d", func);
+
                 if (*flag & ARG_UNREF_MASK)
                     NAT_EXCEPTION (expn_, "Invalid use of '*'", ERROR_INVALID_UNREF)
                 if (func == -1)

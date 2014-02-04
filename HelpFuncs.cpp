@@ -253,10 +253,10 @@ std::string GetAsmNumString (int val, const char* operand /* = "dword" */)
 
 void PushStackValueJit (stack<StackData_t>* st, int dump_start, JitCompiler_t* comp, exception_data* expn)
 {
-    //ErrorPrintfBox ("%s \n%I64X", __PRETTY_FUNCTION__, value.data);
     int size = st->size() - dump_start;
     if (size <= 0)
         return;
+    comp->sub<int64_t> (comp->r_rsp, 4 * sizeof (int64_t));
     if (size == 1)
     {
         comp->ParameterPush ((*st)[dump_start + size - 1].data);

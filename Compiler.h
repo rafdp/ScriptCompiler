@@ -169,6 +169,8 @@ void VirtualProcessor_t::RunScript (std::string filename, int error_mode, std::s
     #define HANDLE_CALL(funcName, expression) \
     {\
         expression; \
+        if (std::string (#funcName) == std::string ("JIT_Call_Void"))   \
+            ErrorPrintfBox ("JIT_Call_Void %d", instance_->run_line_); \
         CHECK_ERROR (#funcName) \
     }
 
@@ -192,7 +194,8 @@ void VirtualProcessor_t::RunScript (std::string filename, int error_mode, std::s
         currentReturn_ = ErrorReturn_t (RET_SUCCESS);
         for ( ; instance_->run_line_ < instance_->funcs_.size (); instance_->run_line_ ++)
         {
-            printf ("LINE %I64u\n", instance_->run_line_);
+            //printf ("LINE %I64u\n", instance_->run_line_ + 1);
+            //getch ();
             try
             {
                 if (instance_->funcs_[instance_->run_line_].flag == CMD_Func)
