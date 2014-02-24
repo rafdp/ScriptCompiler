@@ -200,7 +200,7 @@ class JitCompiler_t
         man.EmitCall<T> (ptr);
     }
 
-    void callr (int64_t rel)
+    void callr (int32_t rel)
     {
         man.EmitCallr (rel);
     }
@@ -461,6 +461,12 @@ class JitCompiler_t
     }
 
     template <typename T>
+    void inc (CPURegisterInfo_t* regSrc)
+    {
+        man.EmitInc<T> (regSrc);
+    }
+
+    template <typename T>
     void inc (T* ptr)
     {
         man.EmitInc (ptr);
@@ -470,6 +476,7 @@ class JitCompiler_t
     {
         man.EmitInc (regSrc);
     }
+
 
     template <typename T>
     void cmp (CPURegisterInfo_t regDest, CPURegisterInfo_t regSrc)
@@ -519,37 +526,37 @@ class JitCompiler_t
         man.EmitCmp<T> (regDest, regSrc);
     }
 
-    void jmp (int64_t rel)
+    void jmp (int32_t rel)
     {
         man.EmitJmp (rel);
     }
 
-    void jl (int64_t rel)
+    void jl (int32_t rel)
     {
         man.EmitJl (rel);
     }
 
-    void jge (int64_t rel)
+    void jge (int32_t rel)
     {
         man.EmitJge (rel);
     }
 
-    void je (int64_t rel)
+    void je (int32_t rel)
     {
         man.EmitJe (rel);
     }
 
-    void jne (int64_t rel)
+    void jne (int32_t rel)
     {
         man.EmitJne (rel);
     }
 
-    void jle (int64_t rel)
+    void jle (int32_t rel)
     {
         man.EmitJle (rel);
     }
 
-    void jg (int64_t rel)
+    void jg (int32_t rel)
     {
         man.EmitJg (rel);
     }

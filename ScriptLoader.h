@@ -21,7 +21,7 @@ class ScriptLoader_t
 {
     DISABLE_CLASS_COPY (ScriptLoader_t)
 public:
-    std::map<int64_t, size_t> typeSizes_;
+    std::map<int64_t, size_t>   typeSizes_;
     std::vector<VarData_t>      vars_;
     std::vector<std::string>    userFuncs_;
     std::vector<char*>          strings_;

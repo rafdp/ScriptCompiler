@@ -40,13 +40,6 @@ struct Equation
     print PRINT_STRING, "\n"
   ret
 
-  func Input
-    init_stack_dump_point
-    push ptr
-    push "%d"
-    jit_call_void _scanf
-  ret
-
   func Init
 
     lea ptr, A
@@ -57,6 +50,13 @@ struct Equation
 
     lea ptr, C
     call Input
+  ret
+
+  func Input
+    init_stack_dump_point
+    push ptr
+    push "%d"
+    jit_call_void _scanf
   ret
 
   func Run

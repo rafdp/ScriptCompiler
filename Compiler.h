@@ -51,8 +51,6 @@ public:
         regFuncs_.clear ();
     }
 
-     __declspec(stdcall) void TestFunc() {int i = 0; i++;}
-
     VirtualProcessor_t (exception_data* expn);
 
     void RunScript (std::string filename,
@@ -169,8 +167,6 @@ void VirtualProcessor_t::RunScript (std::string filename, int error_mode, std::s
     #define HANDLE_CALL(funcName, expression) \
     {\
         expression; \
-        if (std::string (#funcName) == std::string ("JIT_Call_Void"))   \
-            ErrorPrintfBox ("JIT_Call_Void %d", instance_->run_line_); \
         CHECK_ERROR (#funcName) \
     }
 
@@ -298,11 +294,8 @@ void VirtualProcessor_t::RunScriptJit (std::string filename, int error_mode, std
     {
         currentlyExecuting_ = this;
         JitCompiler_t compiler;
-        ErrorPrintfBox ("About fill compiler");
         FillJitCompiler (&compiler, filename, error_mode, log);
-        ErrorPrintfBox ("About run");
         compiler.BuildAndRun ();
-        ErrorPrintfBox ("exiting");
 
         delete instance_;
         currentlyExecuting_ = nullptr;
@@ -403,7 +396,7 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
     //Print();
     //((void(*)())&int3)();
 
-    //compiler->int3();
+    compiler->int3();
     compiler->push (compiler->r_rbp);
     compiler->mov (compiler->r_rbp, compiler->r_rsp);
 
@@ -411,12 +404,16 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
     {
         printf ("Line %d\n", static_cast<int32_t> (i));
         instance_->func_offsets_[i] = static_cast <int64_t> (compiler->Size () + 1);
+        if (i == 26) compiler->int3();
 
         if (instance_->funcs_[i].flag == CMD_Func)
         {
             if (need_realignment)
             {
-                compiler->mov (&instance_->run_line_, i);
+                compiler->push<int64_t> (compiler->r_rax);
+                compiler->mov<int64_t> (compiler->r_rax, reinterpret_cast<int64_t> (&instance_->run_line_));
+                compiler->mov<int64_t> (&compiler->r_rax, i);
+                compiler->pop<int64_t> (compiler->r_rax);
                 need_realignment = false;
             }
             switch (instance_->funcs_[i].cmd)
@@ -464,7 +461,10 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
             compiler->push (reinterpret_cast <int64_t> (instance_));
             compiler->mov  (compiler->r_rax, reinterpret_cast <int64_t> (instance_->callImportFuncs_[instance_->funcs_[i].cmd].func));
             compiler->call (compiler->r_rax);
-            compiler->inc  (&instance_->run_line_);
+            compiler->push<int64_t> (compiler->r_rax);
+            compiler->mov<int64_t> (compiler->r_rax, reinterpret_cast<int64_t> (&instance_->run_line_));
+            compiler->inc<int64_t> (&compiler->r_rax);
+            compiler->pop<int64_t> (compiler->r_rax);
         }
         else
         if (instance_->funcs_[i].flag == CMD_CFunc)
@@ -475,7 +475,10 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
                 if (instance_->funcs_[j].cmd == CMD_Ret) break;
                 j++;
             }
-            compiler->mov  (&instance_->run_line_, j + 1);
+            compiler->push<int64_t> (compiler->r_rax);
+            compiler->mov<int64_t> (compiler->r_rax, reinterpret_cast<int64_t> (&instance_->run_line_));
+            compiler->mov<int64_t> (&compiler->r_rax, j + 1);
+            compiler->pop<int64_t> (compiler->r_rax);
             compiler->jmp (0);
             JmpPatchRequestLine (compiler->Size() - sizeof (int64_t), j + 1);
         }
@@ -489,7 +492,6 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
     compiler->pop (compiler->r_rbp);
     //compiler->int3();
     compiler->retn ();
-    ErrorPrintfBox ("About to patch");
     PatchJmp (compiler);
 }
 

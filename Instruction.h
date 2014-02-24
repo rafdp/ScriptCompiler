@@ -4,6 +4,7 @@ uint8_t BuildModRM (const uint8_t mod, uint8_t destination, uint8_t source);
 uint8_t BuildSIB (const uint8_t scale, uint8_t destination, uint8_t source);
 
 enum REX_PREFIXES
+
 {
     REX_W = 0b00001000,
     REX_R = 0b00000100,
@@ -474,7 +475,7 @@ public:
         emitter_.EmitInstruction (inCall_RM, reg, 2);
     }
 
-    void EmitCallr (int64_t rel)
+    void EmitCallr (int32_t rel)
     {
         emitter_.EmitInstruction (inCall_Rel, rel);
     }
@@ -929,6 +930,14 @@ public:
         emitter_.EmitInstruction (SIZED_CMD (inInc_RM), MODE_REGISTER, regSrc, 0);
     }
 
+    template <typename T = int>
+    void EmitInc (CPURegisterInfo_t* regSrc)
+    {
+        CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
+        emitter_.EmitInstruction (SIZED_CMD (inInc_RM), MODE_ADDRESS, *regSrc, 0);
+    }
+
     template <typename T>
     void EmitCmp (CPURegisterInfo_t regDest, CPURegisterInfo_t regSrc)
     {
@@ -1056,37 +1065,37 @@ public:
         emitter_.EmitData (imm);
     }
 
-    void EmitJmp (int64_t rel)
+    void EmitJmp (int32_t rel)
     {
         emitter_.EmitInstruction (inJmp_Rel, rel);
     }
 
-    void EmitJl (int64_t rel)
+    void EmitJl (int32_t rel)
     {
         emitter_.EmitInstruction (inJl_Rel, rel);
     }
 
-    void EmitJge (int64_t rel)
+    void EmitJge (int32_t rel)
     {
         emitter_.EmitInstruction (inJge_Rel, rel);
     }
 
-    void EmitJe (int64_t rel)
+    void EmitJe (int32_t rel)
     {
         emitter_.EmitInstruction (inJe_Rel, rel);
     }
 
-    void EmitJne (int64_t rel)
+    void EmitJne (int32_t rel)
     {
         emitter_.EmitInstruction (inJne_Rel, rel);
     }
 
-    void EmitJle (int64_t rel)
+    void EmitJle (int32_t rel)
     {
         emitter_.EmitInstruction (inJle_Rel, rel);
     }
 
-    void EmitJg (int64_t rel)
+    void EmitJg (int32_t rel)
     {
         emitter_.EmitInstruction (inJg_Rel, rel);
     }

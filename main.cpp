@@ -28,7 +28,7 @@ int main ()
         proc.RegFunc (UserFunc_t (printHello, &data), "printhello");
         ErrorPrintfBox ("E main");
         //proc.RunScriptJit ("Equation.pcs");
-        proc.RunScript ("test.pcs");
+        proc.RunScriptJit ("test.pcs");
         ErrorPrintfBox ("F main");
         //proc.RunScript ("Equation.pcs");
         ErrorPrintfBox ("G main");
