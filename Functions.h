@@ -173,6 +173,7 @@ FUNCTION_BEGIN (Ret, 1, 0, ARG_NULL)
 FUNCTION_END
 
 FUNCTION_BEGIN (Call, 2, 0, ARG_FUNC _ ARG_FUNC_MEMBER)
+        ErrorPrintfBox ("%I64d", $ run_line_);
     if (arg.flag1 == ARG_FUNC_MEMBER)
         $ ComplexCall (arg.arg1);
     else
@@ -759,6 +760,7 @@ comp->retn ();
 FUNCTION_END
 
 FUNCTION_BEGIN (Call, 2, 0, ARG_FUNC _ ARG_FUNC_MEMBER)
+comp->int3 ();
 comp->mov  (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&VirtualProcessor_t::Call)));
 comp->ParameterPush (reinterpret_cast<int64_t> (reinterpret_cast<void*>(this)));
 comp->call  (comp->r_rax);

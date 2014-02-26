@@ -450,7 +450,10 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
                 FuncCase (Lea)
                 FuncCase (Sqrt)
                 default:
-                    compiler->inc  (&instance_->run_line_);
+                    compiler->push<int64_t> (compiler->r_rax);
+                    compiler->mov<int64_t> (compiler->r_rax, reinterpret_cast<int64_t> (&instance_->run_line_));
+                    compiler->inc<int64_t> (&compiler->r_rax);
+                    compiler->pop<int64_t> (compiler->r_rax);
                     break;
             }
         }
@@ -480,11 +483,10 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
             compiler->mov<int64_t> (&compiler->r_rax, j + 1);
             compiler->pop<int64_t> (compiler->r_rax);
             compiler->jmp (0);
-            JmpPatchRequestLine (compiler->Size() - sizeof (int64_t), j + 1);
+            JmpPatchRequestLine (compiler->Size() - sizeof (int32_t), j + 1);
         }
         else
             need_realignment = true;
-            //compiler->inc  (&instance_->run_line_);
 
         //printf ("LINE %d\n", i);
     }
