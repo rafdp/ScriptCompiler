@@ -1,4 +1,3 @@
-
 #include "Builder.h"
 
 #include "Compiler.h"
@@ -44,7 +43,7 @@ int main ()
 
 /**
 struct YO
-  var nigga, type_qword
+  var specific_var, type_qword
 struct_end
 
 struct NEW
@@ -55,8 +54,8 @@ struct NEW
   func Init
     mov vara, 667
     push vara
-    mov yo.nigga 100500
-    push yo.nigga
+    mov yo.specific_var 100500
+    push yo.specific_var
     mov varw, 2
     push varw
   ret
@@ -64,9 +63,9 @@ struct NEW
   func Leave
     mov vara, 0
     mov varw, 0
-    mov yo.nigga, 0
+    mov yo.specific_var, 0
     push vara
-    push yo.nigga
+    push yo.specific_var
     push varw
   ret
 
@@ -76,7 +75,7 @@ var newvar, type_NEW
 
 call  newvar.Init
 
-push newvar.yo.nigga
+push newvar.yo.specific_var
 
 print PRINT_STRING, "\n"
 
