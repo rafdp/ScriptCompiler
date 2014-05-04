@@ -366,7 +366,7 @@ public:
         emitter_.EmitInstruction (SIZED_CMD (inMov_RM_Imm),
                                   MODE_ADDRESS,
                                   OFF, 0);
-        emitter_.EmitData (reinterpret_cast<int64_t> (ptr));
+        emitter_.EmitData (static_cast<int32_t> (reinterpret_cast<int64_t> (ptr)));
         if (sizeof (T_Mem) > sizeof (int32_t))
              emitter_.EmitData<int32_t> (static_cast<int32_t> (imm));
         else emitter_.EmitData<T_Mem>   (static_cast<T_Mem>   (imm));
@@ -959,14 +959,6 @@ public:
     }
 
     template <typename T>
-    void EmitCmp (CPURegisterInfo_t* regDest, CPURegisterInfo_t regSrc)
-    {
-        CHECK_SIZE_16 (T)
-        CHECK_SIZE_64 (T)
-        emitter_.EmitInstruction (SIZED_CMD (inCmp_RM_R), MODE_ADDRESS, *regDest, regSrc);
-    }
-
-    template <typename T>
     void EmitCmp (CPURegisterInfo_t regDest, T* pointer)
     {
         CHECK_SIZE_16 (T)
@@ -986,31 +978,39 @@ public:
         emitter_.EmitInstruction (SIZED_CMD (inCmp_R_RM), MODE_ADDRESS, *regSrc, regDest);
     }
 
-    template <typename T_Mem, typename T>
-    void EmitCmp (T_Mem* ptr, T imm)
+    template <typename T>
+    void EmitCmp (T* ptr, T imm)
     {
-        CHECK_SIZE_16 (T_Mem)
-        CHECK_SIZE_64 (T_Mem)
+        CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (SIZED_CMD (inCmp_RM_Imm), MODE_ADDRESS, OFF, 7);
-        if (sizeof (T_Mem) == sizeof (int64_t))
+        if (sizeof (T) == sizeof (int64_t))
             emitter_.EmitData (reinterpret_cast<int64_t> (ptr));
         else
             emitter_.EmitData (static_cast<int32_t> (reinterpret_cast<int64_t> (ptr)));
 
-        if (sizeof (T_Mem) > sizeof (int32_t))
+        if (sizeof (T) > sizeof (int32_t))
              emitter_.EmitData<int32_t> (static_cast<int32_t> (imm));
-        else emitter_.EmitData<T_Mem>   (static_cast<T_Mem>   (imm));
+        else emitter_.EmitData<T>   (static_cast<T>   (imm));
     }
 
-    template <typename T_Reg, typename T>
+    template <typename T>
     void EmitCmp (CPURegisterInfo_t* reg, T imm)
     {
-        CHECK_SIZE_16 (T_Reg)
-        CHECK_SIZE_64 (T_Reg)
+        CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
         emitter_.EmitInstruction (SIZED_CMD (inCmp_RM_Imm), MODE_ADDRESS, *reg, 7);
-        if (sizeof (T_Reg) > sizeof (int32_t))
+        if (sizeof (T) > sizeof (int32_t))
              emitter_.EmitData<int32_t> (static_cast<int32_t> (imm));
-        else emitter_.EmitData<T_Reg>   (static_cast<T_Reg>   (imm));
+        else emitter_.EmitData<T>   (static_cast<T>   (imm));
+    }
+
+    template <typename T_Mem, typename T>
+    void EmitCmp (CPURegisterInfo_t* regDest, CPURegisterInfo_t regSrc)
+    {
+        CHECK_SIZE_16 (T)
+        CHECK_SIZE_64 (T)
+        emitter_.EmitInstruction (SIZED_CMD (inCmp_RM_R), MODE_ADDRESS, *regDest, regSrc);
     }
 
     template <typename T_Reg, typename T>

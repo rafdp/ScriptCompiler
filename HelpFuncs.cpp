@@ -256,7 +256,6 @@ void PushStackValueJit (stack<StackData_t>* st, int dump_start, JitCompiler_t* c
     int size = st->size() - dump_start;
     if (size <= 0)
         return;
-    comp->sub<int64_t> (comp->r_rsp, 4 * sizeof (int64_t));
     if (size == 1)
     {
         comp->ParameterPush ((*st)[dump_start + size - 1].data);
@@ -288,7 +287,9 @@ void PushStackValueJit (stack<StackData_t>* st, int dump_start, JitCompiler_t* c
                              (*st)[dump_start + size - 2].data,
                              (*st)[dump_start + size - 3].data,
                              (*st)[dump_start + size - 4].data);
-        for (stack<StackData_t>::iterator i (st, & (*st)[dump_start + size - 4]); i > stack<StackData_t>::iterator (st, & (*st)[dump_start]); i--)
+        for (stack<StackData_t>::iterator i (st, & (*st)[dump_start + size - 4]);
+             i > stack<StackData_t>::iterator (st, & (*st)[dump_start]);
+             i--)
         {
             switch (i->size)
             {

@@ -573,8 +573,10 @@ class JitCompiler_t
 
     void ParameterPush (int64_t p1 = 0, int64_t p2 = 0, int64_t p3 = 0, int64_t p4 = 0)
     {
+        sub<int64_t> (r_rsp, 6 * sizeof (int64_t));
         man.ParameterPush (p1, p2, p3, p4);
     }
+
 
 };
 

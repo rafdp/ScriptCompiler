@@ -173,7 +173,7 @@ FUNCTION_BEGIN (Ret, 1, 0, ARG_NULL)
 FUNCTION_END
 
 FUNCTION_BEGIN (Call, 2, 0, ARG_FUNC _ ARG_FUNC_MEMBER)
-        ErrorPrintfBox ("%I64d", $ run_line_);
+        //ErrorPrintfBox ("%I64d", $ run_line_);
     if (arg.flag1 == ARG_FUNC_MEMBER)
         $ ComplexCall (arg.arg1);
     else
@@ -210,18 +210,14 @@ PushStackValueString (*i, &str);/*str += "push " + GetAsmNumString (*i) + "\n"; 
 str += "mov eax, " + GetAsmNumString (int (ptr)) + "\ncall eax\n";
 
 FUNCTION_BEGIN (JIT_Call_Void, 1, 0, ARG_DLL_FUNC)
-    //ErrorPrintfBox ("%d %d %s\n", $ stackDumpPoint_, $ dataStack_.size (), __PRETTY_FUNCTION__);
+    ErrorPrintfBox ("JIT_Call_Void %d %d %s\n", $ stackDumpPoint_, $ dataStack_.size (), __PRETTY_FUNCTION__);
 
     JitCompiler_t comp;
-    comp.push<int64_t> (comp.r_rbp);
-    comp.mov<int64_t> (comp.r_rbp, comp.r_rsp);
+    comp.int3 ();
     PushStackValueJit (& $ dataStack_, $ stackDumpPoint_, &comp, expn_);
     comp.mov<int64_t> (comp.r_rax, reinterpret_cast<int64_t> ($ dllResolved_[arg.arg1]));
     comp.call<int64_t> (comp.r_rax);
     comp.add<int64_t> (comp.r_rsp, $ RspAdd ());
-
-    comp.mov<int64_t> (comp.r_rsp, comp.r_rbp);
-    comp.pop<int64_t> (comp.r_rbp);
     comp.retn ();
     comp.BuildAndRun ();
 
@@ -238,7 +234,7 @@ FUNCTION_BEGIN (JIT_Call_DWord, 1, 3, ARG_DLL_FUNC _ ARG_REG _ ARG_VAR _ ARG_VAR
 
     ARG_SIZE_SWITCH_PTR_LONG(2, 0, comp.mov FUNC_OPEN, _ comp.r_rax FUNC_CLOSE)
 
-    comp.add<int64_t> (comp.r_rsp, $ RspAdd ());
+    //comp.add<int64_t> (comp.r_rsp, $ RspAdd ());
     comp.retn ();
     comp.BuildAndRun ();
 FUNCTION_END
@@ -253,7 +249,7 @@ FUNCTION_BEGIN (JIT_Call_QWord, 1, 3, ARG_DLL_FUNC _ ARG_REG _ ARG_VAR _ ARG_VAR
 
     ARG_SIZE_SWITCH_PTR_LONG(2, 0, comp.mov FUNC_OPEN, _ comp.r_rax FUNC_CLOSE)
 
-    comp.add<int64_t> (comp.r_rsp, $ RspAdd ());
+    //comp.add<int64_t> (comp.r_rsp, $ RspAdd ());
     comp.retn ();
     comp.BuildAndRun ();
 FUNCTION_END
@@ -313,10 +309,14 @@ void VirtualProcessor_t::Jit_##name (JitCompiler_t* comp, int i) \
 Arg_t& arg = $ args_[i]; \
 ManageInputArgs_t man (ExpectedArg_t (n_params1, n_params2, params), arg); \
 
-#define DEFAULT_BODY(name) \
-    comp->mov<int64_t>  (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&VirtualProcessor_t::name))); \
-    comp->mov<int64_t>  (comp->r_rcx, reinterpret_cast<int64_t> (reinterpret_cast<void*>(this))); \
+#define CALL_MEMBER(name, params) \
+    comp->mov<int64_t>  (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&name))); \
+    comp->ParameterPush (params); \
     comp->call<int64_t> (comp->r_rax); \
+    comp->add<int64_t>  (comp->r_rsp, 6*sizeof (int64_t));
+
+#define DEFAULT_BODY(name) \
+    CALL_MEMBER(VirtualProcessor_t::name, reinterpret_cast<int64_t> (reinterpret_cast<void*>(this))) \
     comp->push<int64_t> (comp->r_rax); \
     comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (&instance_->run_line_)); \
     comp->inc<int64_t> (&comp->r_rax); \
@@ -343,9 +343,8 @@ if ($ isNum (arg.flag2) || $ isStr (arg.flag2))
 {
     int64_t argN = $ isNum (arg.flag2) ? arg.arg2 : reinterpret_cast<int64_t> ($ strings_[arg.arg2]);
 
-    comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&RunInstanceDataHandler_t::GetPtr)));
-    comp->ParameterPush (reinterpret_cast<int64_t> (instance_), arg.flag1, arg.arg1);
-    comp->call<int64_t> (comp->r_rax);
+    CALL_MEMBER (RunInstanceDataHandler_t::GetPtr,
+                 reinterpret_cast<int64_t> (instance_) _ arg.flag1 _ arg.arg1)
 /*
     DebugBreak ();
     //TestFunc (instance_);
@@ -375,14 +374,12 @@ if ($ isNum (arg.flag2) || $ isStr (arg.flag2))
 }
 else
 {
-    comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&RunInstanceDataHandler_t::GetPtr)));
-    comp->ParameterPush (reinterpret_cast<int64_t> (instance_), arg.flag1, arg.arg1);
-    comp->call<int64_t> (comp->r_rax);
+    CALL_MEMBER (RunInstanceDataHandler_t::GetPtr,
+                 reinterpret_cast<int64_t> (instance_) _ arg.flag1 _ arg.arg1)
     comp->push<int64_t> (comp->r_rax);
 
-    comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&RunInstanceDataHandler_t::GetPtr)));
-    comp->ParameterPush (reinterpret_cast<int64_t> (instance_), arg.flag2, arg.arg2);
-    comp->call<int64_t> (comp->r_rax);
+    CALL_MEMBER (RunInstanceDataHandler_t::GetPtr,
+                 reinterpret_cast<int64_t> (instance_) _ arg.flag2 _ arg.arg2)
 
     comp->pop<int64_t> (comp->r_rcx);
 
@@ -445,9 +442,8 @@ size_t size2 = $ GetSize (arg.flag2, arg.arg2);
 
 if ($ isNum (arg.flag2) && ! $ isNum (arg.flag1))
 {
-    comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&RunInstanceDataHandler_t::GetPtr)));
-    comp->ParameterPush (reinterpret_cast<int64_t> (instance_), arg.flag1, arg.arg1);
-    comp->call<int64_t> (comp->r_rax);
+    CALL_MEMBER (RunInstanceDataHandler_t::GetPtr,
+                 reinterpret_cast<int64_t> (instance_) _ arg.flag1 _ arg.arg1)
 
 
     size_t jg_offset = 0;
@@ -484,17 +480,23 @@ if ($ isNum (arg.flag2) && ! $ isNum (arg.flag1))
     comp->jl (0);
     jl_offset = comp->Size() - sizeof (int32_t);
 
-    comp->mov<int8_t> (reinterpret_cast<int8_t*> (&instance_->cmpr_flag_), static_cast<int8_t> (FLAG_EQUAL));
+    comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (&instance_->cmpr_flag_));
+    comp->mov<int8_t>  (&comp->r_rax, static_cast<int8_t> (FLAG_EQUAL));
+
     comp->jmp (0);
     jmp_offset = comp->Size() - sizeof (int32_t);
 
     JmpPatchRequestOffset (jg_offset, comp->Size() + 1);
-    comp->mov<int8_t> (reinterpret_cast<int8_t*> (&instance_->cmpr_flag_), static_cast<int8_t> (FLAG_HIGH));
+    comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (&instance_->cmpr_flag_));
+    comp->mov<int8_t>  (&comp->r_rax, static_cast<int8_t> (FLAG_HIGH));
+
     comp->jmp (0);
     jg_offset = comp->Size() - sizeof (int32_t);
 
     JmpPatchRequestOffset (jl_offset, comp->Size() + 1);
-    comp->mov<int8_t> (reinterpret_cast<int8_t*> (&instance_->cmpr_flag_), static_cast<int8_t> (FLAG_LOW));
+
+    comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (&instance_->cmpr_flag_));
+    comp->mov<int8_t>  (&comp->r_rax, static_cast<int8_t> (FLAG_LOW));
 
     //! finally:
     JmpPatchRequestOffset (jg_offset, comp->Size() + 1);
@@ -505,9 +507,8 @@ if ($ isNum (arg.flag2) && ! $ isNum (arg.flag1))
 else
 if ($ isNum (arg.flag1) && ! $ isNum (arg.flag2))
 {
-    comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&RunInstanceDataHandler_t::GetPtr)));
-    comp->ParameterPush (reinterpret_cast<int64_t> (instance_), arg.flag2, arg.arg2);
-    comp->call<int64_t> (comp->r_rax);
+    CALL_MEMBER (RunInstanceDataHandler_t::GetPtr,
+                 reinterpret_cast<int64_t> (instance_) _ arg.flag2 _ arg.arg2)
 
 
     size_t jg_offset = 0;
@@ -544,17 +545,23 @@ if ($ isNum (arg.flag1) && ! $ isNum (arg.flag2))
     comp->jl (0);
     jl_offset = comp->Size() - sizeof (int32_t);
 
-    comp->mov<int8_t> (reinterpret_cast<int8_t*> (&instance_->cmpr_flag_), static_cast<int8_t> (FLAG_EQUAL));
+    comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (&instance_->cmpr_flag_));
+    comp->mov<int8_t>  (&comp->r_rax, static_cast<int8_t> (FLAG_EQUAL));
+
     comp->jmp (0);
     jmp_offset = comp->Size() - sizeof (int32_t);
 
     JmpPatchRequestOffset (jg_offset, comp->Size() + 1);
-    comp->mov<int8_t> (reinterpret_cast<int8_t*> (&instance_->cmpr_flag_), static_cast<int8_t> (FLAG_HIGH));
+    comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (&instance_->cmpr_flag_));
+    comp->mov<int8_t>  (&comp->r_rax, static_cast<int8_t> (FLAG_HIGH));
+
     comp->jmp (0);
     jg_offset = comp->Size() - sizeof (int32_t);
 
     JmpPatchRequestOffset (jl_offset, comp->Size() + 1);
-    comp->mov<int8_t> (reinterpret_cast<int8_t*> (&instance_->cmpr_flag_), static_cast<int8_t> (FLAG_LOW));
+
+    comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (&instance_->cmpr_flag_));
+    comp->mov<int8_t>  (&comp->r_rax, static_cast<int8_t> (FLAG_LOW));
 
     //! finally:
     JmpPatchRequestOffset (jg_offset, comp->Size() + 1);
@@ -564,14 +571,12 @@ if ($ isNum (arg.flag1) && ! $ isNum (arg.flag2))
 }
 else
 {
-    comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&RunInstanceDataHandler_t::GetPtr)));
-    comp->ParameterPush (reinterpret_cast<int64_t> (instance_), arg.flag1, arg.arg1);
-    comp->call<int64_t> (comp->r_rax);
+    CALL_MEMBER (RunInstanceDataHandler_t::GetPtr,
+                 reinterpret_cast<int64_t> (instance_) _ arg.flag1 _ arg.arg1)
     comp->push<int64_t> (comp->r_rax);
 
-    comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&RunInstanceDataHandler_t::GetPtr)));
-    comp->ParameterPush (reinterpret_cast<int64_t> (instance_), arg.flag2, arg.arg2);
-    comp->call<int64_t> (comp->r_rax);
+    CALL_MEMBER (RunInstanceDataHandler_t::GetPtr,
+                 reinterpret_cast<int64_t> (instance_) _ arg.flag2 _ arg.arg2)
 
     comp->pop<int64_t> (comp->r_rcx);
 
@@ -644,17 +649,23 @@ else
     comp->jl (0);
     jl_offset = comp->Size() - sizeof (int32_t);
 
-    comp->mov<int8_t> (reinterpret_cast<int8_t*> (&instance_->cmpr_flag_), static_cast<int8_t> (FLAG_EQUAL));
+    comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (&instance_->cmpr_flag_));
+    comp->mov<int8_t>  (&comp->r_rax, static_cast<int8_t> (FLAG_EQUAL));
+
     comp->jmp (0);
     jmp_offset = comp->Size() - sizeof (int32_t);
 
     JmpPatchRequestOffset (jg_offset, comp->Size() + 1);
-    comp->mov<int8_t> (reinterpret_cast<int8_t*> (&instance_->cmpr_flag_), static_cast<int8_t> (FLAG_HIGH));
+    comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (&instance_->cmpr_flag_));
+    comp->mov<int8_t>  (&comp->r_rax, static_cast<int8_t> (FLAG_HIGH));
+
     comp->jmp (0);
     jg_offset = comp->Size() - sizeof (int32_t);
 
     JmpPatchRequestOffset (jl_offset, comp->Size() + 1);
-    comp->mov<int8_t> (reinterpret_cast<int8_t*> (&instance_->cmpr_flag_), static_cast<int8_t> (FLAG_LOW));
+
+    comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (&instance_->cmpr_flag_));
+    comp->mov<int8_t>  (&comp->r_rax, static_cast<int8_t> (FLAG_LOW));
 
     //! finally:
     JmpPatchRequestOffset (jg_offset, comp->Size() + 1);
@@ -667,18 +678,18 @@ comp->pop<int64_t> (comp->r_rax);
 FUNCTION_END
 
 FUNCTION_BEGIN (Jmp, 1, 0, ARG_LABEL)
-comp->mov  (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&VirtualProcessor_t::Jmp)));
-comp->ParameterPush (reinterpret_cast<int64_t> (reinterpret_cast<void*>(this)));
-comp->call (comp->r_rax);
+CALL_MEMBER (VirtualProcessor_t::Jmp,
+             reinterpret_cast<int64_t> (reinterpret_cast<void*>(this)))
 comp->jmp (0);
 JmpPatchRequestLine (static_cast <int64_t> (comp->Size() - sizeof (int32_t)), arg.arg1);
 FUNCTION_END
 
 FUNCTION_BEGIN (Jne, 1, 0, ARG_LABEL)
-comp->mov  (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&VirtualProcessor_t::Jne)));
-comp->ParameterPush (reinterpret_cast<int64_t> (reinterpret_cast<void*>(this)));
-comp->call (comp->r_rax);
-comp->cmp (&instance_->cmpr_flag_, '\0');
+CALL_MEMBER (VirtualProcessor_t::Jne,
+             reinterpret_cast<int64_t> (reinterpret_cast<void*>(this)))
+
+comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (&instance_->cmpr_flag_));
+comp->cmp<int8_t>  (&comp->r_rax, '\0');
 comp->jne (0);
 JmpPatchRequestLine (static_cast <int64_t> (comp->Size() - sizeof (int32_t)), arg.arg1);
 comp->push<int64_t> (comp->r_rax);
@@ -688,10 +699,11 @@ comp->pop<int64_t> (comp->r_rax);
 FUNCTION_END
 
 FUNCTION_BEGIN (Je, 1, 0, ARG_LABEL)
-comp->mov  (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&VirtualProcessor_t::Je)));
-comp->ParameterPush (reinterpret_cast<int64_t> (reinterpret_cast<void*>(this)));
-comp->call (comp->r_rax);
-comp->cmp (&instance_->cmpr_flag_, '\0');
+CALL_MEMBER (VirtualProcessor_t::Je,
+             reinterpret_cast<int64_t> (reinterpret_cast<void*>(this)))
+
+comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (&instance_->cmpr_flag_));
+comp->cmp<int8_t>  (&comp->r_rax, '\0');
 comp->je (0);
 JmpPatchRequestLine (static_cast <int64_t> (comp->Size() - sizeof (int32_t)), arg.arg1);
 comp->push<int64_t> (comp->r_rax);
@@ -701,10 +713,11 @@ comp->pop<int64_t> (comp->r_rax);
 FUNCTION_END
 
 FUNCTION_BEGIN (Ja, 1, 0, ARG_LABEL)
-comp->mov  (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&VirtualProcessor_t::Ja)));
-comp->ParameterPush (reinterpret_cast<int64_t> (reinterpret_cast<void*>(this)));
-comp->call (comp->r_rax);
-comp->cmp (&instance_->cmpr_flag_, '\0');
+CALL_MEMBER (VirtualProcessor_t::Ja,
+             reinterpret_cast<int64_t> (reinterpret_cast<void*>(this)))
+
+comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (&instance_->cmpr_flag_));
+comp->cmp<int8_t>  (&comp->r_rax, '\0');
 comp->jg (0);
 JmpPatchRequestLine (static_cast <int64_t> (comp->Size() - sizeof (int32_t)), arg.arg1);
 comp->push<int64_t> (comp->r_rax);
@@ -714,10 +727,11 @@ comp->pop<int64_t> (comp->r_rax);
 FUNCTION_END
 
 FUNCTION_BEGIN (Jae, 1, 0, ARG_LABEL)
-comp->mov  (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&VirtualProcessor_t::Jae)));
-comp->ParameterPush (reinterpret_cast<int64_t> (reinterpret_cast<void*>(this)));
-comp->call (comp->r_rax);
-comp->cmp (&instance_->cmpr_flag_, '\0');
+CALL_MEMBER (VirtualProcessor_t::Jae,
+             reinterpret_cast<int64_t> (reinterpret_cast<void*>(this)))
+
+comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (&instance_->cmpr_flag_));
+comp->cmp<int8_t>  (&comp->r_rax, '\0');
 comp->jge (0);
 JmpPatchRequestLine (static_cast <int64_t> (comp->Size() - sizeof (int32_t)), arg.arg1);
 comp->push<int64_t> (comp->r_rax);
@@ -727,10 +741,11 @@ comp->pop<int64_t> (comp->r_rax);
 FUNCTION_END
 
 FUNCTION_BEGIN (Jb, 1, 0, ARG_LABEL)
-comp->mov  (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&VirtualProcessor_t::Jb)));
-comp->ParameterPush (reinterpret_cast<int64_t> (reinterpret_cast<void*>(this)));
-comp->call (comp->r_rax);
-comp->cmp (&instance_->cmpr_flag_, '\0');
+CALL_MEMBER (VirtualProcessor_t::Jb,
+             reinterpret_cast<int64_t> (reinterpret_cast<void*>(this)))
+
+comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (&instance_->cmpr_flag_));
+comp->cmp<int8_t>  (&comp->r_rax, '\0');
 comp->jl (0);
 JmpPatchRequestLine (static_cast <int64_t> (comp->Size() - sizeof (int32_t)), arg.arg1);
 comp->push<int64_t> (comp->r_rax);
@@ -740,10 +755,11 @@ comp->pop<int64_t> (comp->r_rax);
 FUNCTION_END
 
 FUNCTION_BEGIN (Jbe, 1, 0, ARG_LABEL)
-comp->mov  (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&VirtualProcessor_t::Jbe)));
-comp->ParameterPush (reinterpret_cast<int64_t> (reinterpret_cast<void*>(this)));
-comp->call (comp->r_rax);
-comp->cmp (&instance_->cmpr_flag_, '\0');
+CALL_MEMBER (VirtualProcessor_t::Jbe,
+             reinterpret_cast<int64_t> (reinterpret_cast<void*>(this)))
+
+comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (&instance_->cmpr_flag_));
+comp->cmp<int8_t>  (&comp->r_rax, '\0');
 comp->jle (0);
 JmpPatchRequestLine (static_cast <int64_t> (comp->Size() - sizeof (int32_t)), arg.arg1);
 comp->push<int64_t> (comp->r_rax);
@@ -753,17 +769,14 @@ comp->pop<int64_t> (comp->r_rax);
 FUNCTION_END
 
 FUNCTION_BEGIN (Ret, 1, 0, ARG_NULL)
-comp->mov  (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&VirtualProcessor_t::Ret)));
-comp->ParameterPush (reinterpret_cast<int64_t> (reinterpret_cast<void*>(this)));
-comp->call  (comp->r_rax);
+CALL_MEMBER (VirtualProcessor_t::Ret,
+             reinterpret_cast<int64_t> (reinterpret_cast<void*>(this)))
 comp->retn ();
 FUNCTION_END
 
 FUNCTION_BEGIN (Call, 2, 0, ARG_FUNC _ ARG_FUNC_MEMBER)
-comp->int3 ();
-comp->mov  (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&VirtualProcessor_t::Call)));
-comp->ParameterPush (reinterpret_cast<int64_t> (reinterpret_cast<void*>(this)));
-comp->call  (comp->r_rax);
+CALL_MEMBER (VirtualProcessor_t::Call,
+             reinterpret_cast<int64_t> (reinterpret_cast<void*>(this)))
 comp->push<int64_t> (comp->r_rax);
 comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (&instance_->run_line_));
 comp->inc<int64_t> (&comp->r_rax);
@@ -785,7 +798,11 @@ DEFAULT_BODY (JIT_Printf)
 FUNCTION_END
 
 FUNCTION_BEGIN (JIT_Call_Void, 1, 0, ARG_DLL_FUNC)
+comp->push (comp->r_rbp);
+comp->mov (comp->r_rbp, comp->r_rsp);
 DEFAULT_BODY (JIT_Call_Void)
+comp->mov (comp->r_rsp, comp->r_rbp);
+comp->pop (comp->r_rbp);
 FUNCTION_END
 
 FUNCTION_BEGIN (JIT_Call_DWord, 1, 0, ARG_DLL_FUNC)
@@ -803,9 +820,8 @@ size_t size2 = $ GetSize (arg.flag2, arg.arg2);
 
 if ($ isNum (arg.flag2))
 {
-    comp->mov (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&RunInstanceDataHandler_t::GetPtr)));
-    comp->ParameterPush (reinterpret_cast<int64_t> (instance_), arg.flag1, arg.arg1);
-    comp->call (comp->r_rax);
+    CALL_MEMBER (RunInstanceDataHandler_t::GetPtr,
+                 reinterpret_cast<int64_t> (instance_) _ arg.flag1 _ arg.arg1)
 
     switch (size1)
     {
@@ -831,16 +847,14 @@ if ($ isNum (arg.flag2))
 }
 else
 {
-    comp->mov (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&RunInstanceDataHandler_t::GetPtr)));
-    comp->ParameterPush (reinterpret_cast<int64_t> (instance_), arg.flag1, arg.arg1);
-    comp->call (comp->r_rax);
-    comp->push<int32_t> (comp->r_rax);
+    CALL_MEMBER (RunInstanceDataHandler_t::GetPtr,
+                 reinterpret_cast<int64_t> (instance_) _ arg.flag1 _ arg.arg1)
+    comp->push<int64_t> (comp->r_rax);
 
-    comp->mov (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&RunInstanceDataHandler_t::GetPtr)));
-    comp->ParameterPush (reinterpret_cast<int64_t> (instance_), arg.flag2, arg.arg2);
-    comp->call (comp->r_rax);
+    CALL_MEMBER (RunInstanceDataHandler_t::GetPtr,
+                 reinterpret_cast<int64_t> (instance_) _ arg.flag2 _ arg.arg2)
 
-    comp->pop<int32_t> (comp->r_rcx);
+    comp->pop<int64_t> (comp->r_rcx);
 
     if (size1 > sizeof (DWORD) && size2 > sizeof (DWORD))
     {
@@ -892,9 +906,8 @@ size_t size2 = $ GetSize (arg.flag2, arg.arg2);
 
 if ($ isNum (arg.flag2))
 {
-    comp->mov (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&RunInstanceDataHandler_t::GetPtr)));
-    comp->ParameterPush (reinterpret_cast<int64_t> (instance_), arg.flag1, arg.arg1);
-    comp->call (comp->r_rax);
+    CALL_MEMBER (RunInstanceDataHandler_t::GetPtr,
+                 reinterpret_cast<int64_t> (instance_) _ arg.flag1 _ arg.arg1)
 
     switch (size1)
     {
@@ -920,16 +933,14 @@ if ($ isNum (arg.flag2))
 }
 else
 {
-    comp->mov (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&RunInstanceDataHandler_t::GetPtr)));
-    comp->ParameterPush (reinterpret_cast<int64_t> (instance_), arg.flag1, arg.arg1);
-    comp->call (comp->r_rax);
-    comp->push<int32_t> (comp->r_rax);
+    CALL_MEMBER (RunInstanceDataHandler_t::GetPtr,
+                 reinterpret_cast<int64_t> (instance_) _ arg.flag1 _ arg.arg1)
+    comp->push<int64_t> (comp->r_rax);
 
-    comp->mov (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&RunInstanceDataHandler_t::GetPtr)));
-    comp->ParameterPush (reinterpret_cast<int64_t> (instance_), arg.flag2, arg.arg2);
-    comp->call (comp->r_rax);
+    CALL_MEMBER (RunInstanceDataHandler_t::GetPtr,
+                 reinterpret_cast<int64_t> (instance_) _ arg.flag2 _ arg.arg2)
 
-    comp->pop<int32_t> (comp->r_rcx);
+    comp->pop<int64_t> (comp->r_rcx);
 
     if (size1 > sizeof (DWORD) && size2 > sizeof (DWORD))
     {
