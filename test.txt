@@ -1,10 +1,5 @@
+
 import "msvcrt.dll", "scanf _scanf"
-
-var FOUR, type_dword
-mov FOUR, 4
-
-var TWO, type_dword
-mov TWO, 2
 
 struct Equation
   var A,      type_dword
@@ -31,7 +26,7 @@ struct Equation
 
     mov temp, A
     mul temp, C
-    mul temp, FOUR
+    mul temp, 4
 
     sub D, temp
 
@@ -43,12 +38,15 @@ struct Equation
   func Init
 
     lea ptr, A
+    print PRINT_STRING, "Enter a:\n"
     call Input
 
     lea ptr, B
+    print PRINT_STRING, "Enter b:\n"
     call Input
 
     lea ptr, C
+    print PRINT_STRING, "Enter c:\n"
     call Input
   ret
 
@@ -62,8 +60,11 @@ struct Equation
   func Run
 
     call Init
+
     call CalculateD
+
     call CalculateNroots
+
     call Result
   ret
 
@@ -91,7 +92,8 @@ struct Equation
     ja root2
 
     root0:
-    mov nRoots, 0
+    push 0
+    pop nRoots
     jmp endCalculateNroots
 
     root1:
@@ -104,7 +106,8 @@ struct Equation
     jmp endCalculateNroots
 
     rootInf:
-    mov nRoots, 3
+    push 3
+    pop nRoots
     jmp endCalculateNroots
 
     endCalculateNroots:
@@ -148,7 +151,7 @@ struct Equation
     mov x, -1
     mul x, B
     div x, A
-    div x, TWO
+    div x, 2
     jmp one_root_print
 
     ZeroA:
@@ -173,13 +176,13 @@ struct Equation
     mul x1, B
     add x1, D
     div x1, A
-    div x1, TWO
+    div x1, 2
 
     mov x2, -1
     mul x2, B
     sub x2, D
     div x2, A
-    div x2, TWO
+    div x2, 2
 
     print PRINT_STRING, "2 roots: "
     print PRINT_NUMBER, x1

@@ -10,6 +10,7 @@ void VirtualProcessor_t::name () \
 { \
 Arg_t& arg = $ args_[instance_->run_line_]; \
 ManageInputArgs_t man (ExpectedArg_t (n_params1, n_params2, params), arg); \
+if (man.error) {currentReturn_ = man.CreateError (); return;} \
 
 #define FUNCTION_END \
 currentReturn_ = RET_NO_ERRORS; \
@@ -47,6 +48,8 @@ FUNCTION_BEGIN (RebuildVar, 2, 4, ARG_VAR _ ARG_NULL _ ARG_NUM)
 FUNCTION_END
 
 FUNCTION_BEGIN (Push, 5, 0, ARG_NUM _ ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG _ ARG_STR)
+
+    //ErrorPrintfBox ("%d %d %lld %lld", arg.flag1, arg.flag2, arg.arg1, arg.arg2);
     $ dataStack_.push (StackData_t ($ GetVal (arg.flag1, arg.arg1), $ GetSize (arg.flag1, arg.arg1)));
 FUNCTION_END
 
@@ -165,8 +168,8 @@ JUMP_AUTOFILL (Jbe, $ cmpr_flag_ == FLAG_LOW || $ cmpr_flag_ == FLAG_EQUAL)
 
 
 FUNCTION_BEGIN (Ret, 1, 0, ARG_NULL)
-   // ErrorPrintfBox ("Returning to line %d", $ callStack_.top ().retLine);
-    $ run_line_ = $ callStack_.top ().retLine;
+    //ErrorPrintfBox ("Returning to line %d", $ callStack_.top ().retLine);
+    $ run_line_ = $ callStack_.top ().retLine + 1;
     $ callStack_.pop ();
     //$ callStack_.Dump ();
     //ErrorPrintfBox ("Returned to line %d", $ run_line_);
@@ -210,11 +213,12 @@ PushStackValueString (*i, &str);/*str += "push " + GetAsmNumString (*i) + "\n"; 
 str += "mov eax, " + GetAsmNumString (int (ptr)) + "\ncall eax\n";
 
 FUNCTION_BEGIN (JIT_Call_Void, 1, 0, ARG_DLL_FUNC)
-    ErrorPrintfBox ("JIT_Call_Void %d %d %s\n", $ stackDumpPoint_, $ dataStack_.size (), __PRETTY_FUNCTION__);
+    //ErrorPrintfBox ("JIT_Call_Void %d %d %s\n", $ stackDumpPoint_, $ dataStack_.size (), __PRETTY_FUNCTION__);
 
     JitCompiler_t comp;
-    comp.int3 ();
+    //comp.int3 ();
     PushStackValueJit (& $ dataStack_, $ stackDumpPoint_, &comp, expn_);
+    //comp.int3 ();
     comp.mov<int64_t> (comp.r_rax, reinterpret_cast<int64_t> ($ dllResolved_[arg.arg1]));
     comp.call<int64_t> (comp.r_rax);
     comp.add<int64_t> (comp.r_rsp, $ RspAdd ());
@@ -257,7 +261,7 @@ FUNCTION_END
 #undef ASM_FILL_STACK
 #undef ASM_CALL_FUNC
 #define ARITHMETIC_FUNCTION(name, operator, check0) \
-FUNCTION_BEGIN(name, 2, 3, ARG_VAR _ ARG_REG _ ARG_VAR _ ARG_REG _ ARG_NUM) \
+FUNCTION_BEGIN(name, 3, 4, ARG_VAR _ ARG_REG _ ARG_VAR_MEMBER _ ARG_VAR _ ARG_REG _ ARG_NUM _ ARG_VAR_MEMBER) \
 long long opVal = $ GetVal (arg.flag2, arg.arg2); \
 if (check0 && opVal == 0) \
 { \
@@ -313,14 +317,12 @@ ManageInputArgs_t man (ExpectedArg_t (n_params1, n_params2, params), arg); \
     comp->mov<int64_t>  (comp->r_rax, reinterpret_cast<int64_t> (reinterpret_cast<void*>(&name))); \
     comp->ParameterPush (params); \
     comp->call<int64_t> (comp->r_rax); \
-    comp->add<int64_t>  (comp->r_rsp, 6*sizeof (int64_t));
+    comp->add<int64_t>  (comp->r_rsp, 0x30/*8*sizeof (int64_t)*/);
 
 #define DEFAULT_BODY(name) \
     CALL_MEMBER(VirtualProcessor_t::name, reinterpret_cast<int64_t> (reinterpret_cast<void*>(this))) \
-    comp->push<int64_t> (comp->r_rax); \
     comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (&instance_->run_line_)); \
-    comp->inc<int64_t> (&comp->r_rax); \
-    comp->pop<int64_t> (comp->r_rax);
+    comp->inc<int64_t> (&comp->r_rax);
 
 FUNCTION_BEGIN (RebuildVar, 2, 4, ARG_VAR _ ARG_NULL _ ARG_NUM)
 DEFAULT_BODY (RebuildVar)
@@ -377,10 +379,12 @@ else
     CALL_MEMBER (RunInstanceDataHandler_t::GetPtr,
                  reinterpret_cast<int64_t> (instance_) _ arg.flag1 _ arg.arg1)
     comp->push<int64_t> (comp->r_rax);
+    comp->push<int64_t> (0);
 
     CALL_MEMBER (RunInstanceDataHandler_t::GetPtr,
                  reinterpret_cast<int64_t> (instance_) _ arg.flag2 _ arg.arg2)
 
+    comp->pop<int64_t> (comp->r_rcx);
     comp->pop<int64_t> (comp->r_rcx);
 
     if (size1 >= size2)
@@ -574,10 +578,12 @@ else
     CALL_MEMBER (RunInstanceDataHandler_t::GetPtr,
                  reinterpret_cast<int64_t> (instance_) _ arg.flag1 _ arg.arg1)
     comp->push<int64_t> (comp->r_rax);
+    comp->push<int64_t> (0);
 
     CALL_MEMBER (RunInstanceDataHandler_t::GetPtr,
                  reinterpret_cast<int64_t> (instance_) _ arg.flag2 _ arg.arg2)
 
+    comp->pop<int64_t> (comp->r_rcx);
     comp->pop<int64_t> (comp->r_rcx);
 
 
@@ -780,9 +786,9 @@ CALL_MEMBER (VirtualProcessor_t::Call,
 comp->push<int64_t> (comp->r_rax);
 comp->mov<int64_t> (comp->r_rax, reinterpret_cast<int64_t> (&instance_->run_line_));
 comp->inc<int64_t> (&comp->r_rax);
-comp->pop<int64_t> (comp->r_rax);
 comp->callr (0);
 JmpPatchRequestLine (static_cast<int64_t> (comp->Size() - sizeof (int32_t)), static_cast <int64_t> (static_cast <int32_t> (arg.arg1) + 1));
+comp->pop<int64_t> (comp->r_rax);
 FUNCTION_END
 
 FUNCTION_BEGIN (Decr, 3, 0, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG)
@@ -798,11 +804,8 @@ DEFAULT_BODY (JIT_Printf)
 FUNCTION_END
 
 FUNCTION_BEGIN (JIT_Call_Void, 1, 0, ARG_DLL_FUNC)
-comp->push (comp->r_rbp);
-comp->mov (comp->r_rbp, comp->r_rsp);
+//comp->int3 ();
 DEFAULT_BODY (JIT_Call_Void)
-comp->mov (comp->r_rsp, comp->r_rbp);
-comp->pop (comp->r_rbp);
 FUNCTION_END
 
 FUNCTION_BEGIN (JIT_Call_DWord, 1, 0, ARG_DLL_FUNC)
@@ -835,10 +838,8 @@ if ($ isNum (arg.flag2))
             comp->add<int32_t> (&comp->r_rax, static_cast<int32_t> (arg.arg2));
             break;
         case sizeof (int64_t):
-            comp->mov<int32_t> (comp->r_rbx, comp->r_rax);
-            comp->add<int32_t> (comp->r_rbx, sizeof (int32_t));
-            comp->add<int32_t> (&comp->r_rax, static_cast<int32_t> (arg.arg2));
-            comp->adc<int32_t> (&comp->r_rbx, static_cast<int32_t> (arg.arg2 >> (sizeof (int32_t)*8)));
+            comp->mov<int64_t> (comp->r_rbx, static_cast<int64_t> (arg.arg2));
+            comp->add<int64_t> (&comp->r_rax, comp->r_rbx);
             break;
         default:
             currentReturn_ = ErrorReturn_t (RET_ERROR_FATAL, "invalid argument 1 size");
@@ -850,20 +851,13 @@ else
     CALL_MEMBER (RunInstanceDataHandler_t::GetPtr,
                  reinterpret_cast<int64_t> (instance_) _ arg.flag1 _ arg.arg1)
     comp->push<int64_t> (comp->r_rax);
+    comp->push<int64_t> (0);
 
     CALL_MEMBER (RunInstanceDataHandler_t::GetPtr,
                  reinterpret_cast<int64_t> (instance_) _ arg.flag2 _ arg.arg2)
 
     comp->pop<int64_t> (comp->r_rcx);
-
-    if (size1 > sizeof (DWORD) && size2 > sizeof (DWORD))
-    {
-        comp->mov<int32_t> (comp->r_rdx, comp->r_rcx);
-        comp->add<int32_t> (comp->r_rdx, sizeof (int32_t));
-
-        comp->mov<int32_t> (comp->r_rbx, comp->r_rax);
-        comp->add<int32_t> (comp->r_rbx, sizeof (int32_t));
-    }
+    comp->pop<int64_t> (comp->r_rcx);
 
     switch (MIN (size1, size2))
     {
@@ -876,19 +870,16 @@ else
             comp->add<int16_t> (&comp->r_rcx, comp->r_rax);
             break;
         case sizeof (int32_t):
-        case sizeof (int64_t):
             comp->mov<int32_t> (comp->r_rax, &comp->r_rax);
             comp->add<int32_t> (&comp->r_rcx, comp->r_rax);
+            break;
+        case sizeof (int64_t):
+            comp->mov<int64_t> (comp->r_rax, &comp->r_rax);
+            comp->add<int64_t> (&comp->r_rcx, comp->r_rax);
             break;
         default:
             currentReturn_ = ErrorReturn_t (RET_ERROR_FATAL, "invalid argument size");
             return;
-    }
-
-    if (size1 > sizeof (DWORD) && size2 > sizeof (DWORD))
-    {
-        comp->mov<int32_t> (comp->r_rbx, &comp->r_rbx);
-        comp->adc<int32_t> (&comp->r_rdx, comp->r_rbx);
     }
 
 }
@@ -912,19 +903,17 @@ if ($ isNum (arg.flag2))
     switch (size1)
     {
         case sizeof (int8_t):
-            comp->add<int8_t> (&comp->r_rax,  static_cast<int8_t> (arg.arg2));
+            comp->sub<int8_t> (&comp->r_rax,  static_cast<int8_t> (arg.arg2));
             break;
         case sizeof (int16_t):
-            comp->add<int16_t> (&comp->r_rax, static_cast<int16_t> (arg.arg2));
+            comp->sub<int16_t> (&comp->r_rax, static_cast<int16_t> (arg.arg2));
             break;
         case sizeof (int32_t):
-            comp->add<int32_t> (&comp->r_rax, static_cast<int32_t> (arg.arg2));
+            comp->sub<int32_t> (&comp->r_rax, static_cast<int32_t> (arg.arg2));
             break;
         case sizeof (int64_t):
-            comp->mov<int32_t> (comp->r_rbx, comp->r_rax);
-            comp->add<int32_t> (comp->r_rbx, sizeof (int32_t));
-            comp->add<int32_t> (&comp->r_rax, static_cast<int32_t> (arg.arg2));
-            comp->adc<int32_t> (&comp->r_rbx, static_cast<int32_t> (arg.arg2 >> (sizeof (int32_t)*8)));
+            comp->mov<int64_t> (comp->r_rbx, static_cast<int64_t> (arg.arg2));
+            comp->sub<int64_t> (&comp->r_rax, comp->r_rbx);
             break;
         default:
             currentReturn_ = ErrorReturn_t (RET_ERROR_FATAL, "invalid argument 1 size");
@@ -936,20 +925,13 @@ else
     CALL_MEMBER (RunInstanceDataHandler_t::GetPtr,
                  reinterpret_cast<int64_t> (instance_) _ arg.flag1 _ arg.arg1)
     comp->push<int64_t> (comp->r_rax);
+    comp->push<int64_t> (0);
 
     CALL_MEMBER (RunInstanceDataHandler_t::GetPtr,
                  reinterpret_cast<int64_t> (instance_) _ arg.flag2 _ arg.arg2)
 
     comp->pop<int64_t> (comp->r_rcx);
-
-    if (size1 > sizeof (DWORD) && size2 > sizeof (DWORD))
-    {
-        comp->mov<int32_t> (comp->r_rdx, comp->r_rcx);
-        comp->add<int32_t> (comp->r_rdx, sizeof (int32_t));
-
-        comp->mov<int32_t> (comp->r_rbx, comp->r_rax);
-        comp->add<int32_t> (comp->r_rbx, sizeof (int32_t));
-    }
+    comp->pop<int64_t> (comp->r_rcx);
 
     switch (MIN (size1, size2))
     {
@@ -962,19 +944,16 @@ else
             comp->sub<int16_t> (&comp->r_rcx, comp->r_rax);
             break;
         case sizeof (int32_t):
-        case sizeof (int64_t):
             comp->mov<int32_t> (comp->r_rax, &comp->r_rax);
             comp->sub<int32_t> (&comp->r_rcx, comp->r_rax);
+            break;
+        case sizeof (int64_t):
+            comp->mov<int64_t> (comp->r_rax, &comp->r_rax);
+            comp->sub<int64_t> (&comp->r_rcx, comp->r_rax);
             break;
         default:
             currentReturn_ = ErrorReturn_t (RET_ERROR_FATAL, "invalid argument size");
             return;
-    }
-
-    if (size1 > sizeof (DWORD) && size2 > sizeof (DWORD))
-    {
-        comp->mov<int32_t> (comp->r_rbx, &comp->r_rbx);
-        comp->sbb<int32_t> (&comp->r_rdx, comp->r_rbx);
     }
 }
 comp->push<int64_t> (comp->r_rax);
@@ -1013,6 +992,7 @@ DEFAULT_BODY (Lea)
 FUNCTION_END
 
 FUNCTION_BEGIN (Sqrt, 3, 0, ARG_VAR _ ARG_VAR_MEMBER _ ARG_REG)
+//comp->int3 ();
 DEFAULT_BODY (Sqrt)
 FUNCTION_END
 

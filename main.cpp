@@ -12,13 +12,18 @@ void printHello (RunInstanceDataHandler_t*, void* pt)
 
 int main ()
 {
+    /*int i = 0;
+    DebugBreak ();
+    scanf ("%d\n", &i);
+    DebugBreak ();*/
+
     exception_data ex_data (100, "errors.txt");
     try
     {
         //ScriptCompiler_t comp ("Equation.txt", &ex_data);
         ScriptCompiler_t comp ("test.txt", &ex_data);
         comp.Save ();
-        VirtualProcessor_t proc (&ex_data);
+        VirtualProcessor_t proc (&ex_data, MODE_PRINTF);
         int data = 17;
         proc.RegFunc (UserFunc_t (printHello, &data), "printhello");
         //proc.RunScriptJit ("Equation.pcs");

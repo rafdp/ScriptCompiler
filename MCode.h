@@ -32,7 +32,7 @@ class MCode_t
     template <typename T>
     void EmitData (T val)
     {
-        for (int i = 0; i < sizeof (T); i++)
+        for (uint32_t i = 0; i < sizeof (T); i++)
         {
             buffer_.push_back (uint8_t (val >> i * 8));
         }
@@ -52,14 +52,12 @@ class MCode_t
                                                                   MEM_COMMIT | MEM_RESERVE,
                                                                   PAGE_EXECUTE_READWRITE));
         memcpy (func, buffer_.data (), buffer_.size ());
-        ErrorPrintfBox ("About to run %I64d", reinterpret_cast<int64_t> (func));
         //VirtualProtect (func, buffer_.size (), PAGE_EXECUTE_READWRITE, nullptr);
         //for (size_t i = 0; i < buffer_.size (); i++) printf ("%02X ", buffer_[i]);
         //printf ("\n");
         //ErrorPrintfBox ("A %x %x\n", this, &buffer_);
         //DebugBreak ();
         (reinterpret_cast<void (*)()> (func)) ();
-        ErrorPrintfBox ("Returned");
         //ErrorPrintfBox ("B %x %x\n", this, &buffer_);
         //delete [] func;
         VirtualFree (func, buffer_.size () + 1, MEM_DECOMMIT);

@@ -209,7 +209,7 @@ public:
     {
         size_t size = dataStack_.size () - stackDumpPoint_;
         int64_t result = 0;
-        result += 6 * sizeof (int64_t);
+        result += 0x30/*8 * sizeof (int64_t)*/;
         for (size_t i = 6; i < size; i++)
         {
             if (dataStack_[static_cast<int32_t> (i + stackDumpPoint_)].size == 8) result += 8;

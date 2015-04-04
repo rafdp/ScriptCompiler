@@ -20,7 +20,6 @@ class VirtualProcessor_t
     DISABLE_CLASS_COPY (VirtualProcessor_t)
     void FillJitCompiler (JitCompiler_t* compiler,
                           std::string filename,
-                          int error_mode,
                           std::string log);
     void PatchJmp (JitCompiler_t* compiler);
     void JmpPatchRequestLine (int64_t offset, int64_t line);
@@ -51,14 +50,12 @@ public:
         regFuncs_.clear ();
     }
 
-    VirtualProcessor_t (exception_data* expn);
+    VirtualProcessor_t (exception_data* expn, int error_mode = MODE_SILENT);
 
     void RunScript (std::string filename,
-                    int error_mode = MODE_SILENT,
                     std::string log = std::string ());
 
     void RunScriptJit (std::string filename,
-                       int error_mode = MODE_SILENT,
                        std::string log = std::string ());
 
 #define FUNC_PRT(name) __attribute__ ((noinline)) void name (); \
@@ -112,17 +109,17 @@ public:
 
 VirtualProcessor_t* VirtualProcessor_t::currentlyExecuting_ = nullptr;
 
-VirtualProcessor_t::VirtualProcessor_t (exception_data* expn) :
+VirtualProcessor_t::VirtualProcessor_t (exception_data* expn, int error_mode) :
     instance_      (nullptr),
     expn_          (expn),
-    error_mode_    (MODE_SILENT),
+    error_mode_    (error_mode),
     log_           (nullptr),
     regFuncs_      (),
     currentReturn_ (),
     patch_jmp_     ()
 {}
 
-void VirtualProcessor_t::RunScript (std::string filename, int error_mode, std::string log)
+void VirtualProcessor_t::RunScript (std::string filename, std::string log)
 {
     currentlyExecuting_ = this;
     std::map<int, std::string> checkIfError;
@@ -160,7 +157,7 @@ void VirtualProcessor_t::RunScript (std::string filename, int error_mode, std::s
     if (currentReturn_.retVal == RET_ERROR_FATAL) \
     { \
         static std::string str_error ("Fatal error occurred ("); \
-        str_error += checkIfError[error_mode] + ")"; \
+        str_error += checkIfError[error_mode_] + ")"; \
         NAT_EXCEPTION (instance_->expn_, str_error.c_str (), ERROR_FATAL_RETURN) \
     }
 
@@ -175,7 +172,6 @@ void VirtualProcessor_t::RunScript (std::string filename, int error_mode, std::s
         HANDLE_CALL (name, name ()); \
         break;
 
-    error_mode_ =  error_mode;
     if (error_mode_ == MODE_LOG)
     {
         if (log.empty ()) error_mode_ = MODE_SILENT;
@@ -288,13 +284,13 @@ void VirtualProcessor_t::RunScript (std::string filename, int error_mode, std::s
     currentlyExecuting_ = nullptr;
 }
 
-void VirtualProcessor_t::RunScriptJit (std::string filename, int error_mode, std::string log)
+void VirtualProcessor_t::RunScriptJit (std::string filename, std::string log)
 {
     try
     {
         currentlyExecuting_ = this;
         JitCompiler_t compiler;
-        FillJitCompiler (&compiler, filename, error_mode, log);
+        FillJitCompiler (&compiler, filename, log);
         compiler.BuildAndRun ();
 
         delete instance_;
@@ -335,7 +331,7 @@ void VirtualProcessor_t::JmpPatchRequestOffset (int64_t offset1, int64_t offset2
                                            true});
 }
 
-void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string filename, int error_mode, std::string log)
+void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string filename, std::string log)
 {
     std::map<int, std::string> checkIfError;
     checkIfError[MODE_LOG] = std::string ("check ") + log;
@@ -372,7 +368,7 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
     if (currentReturn_.retVal == RET_ERROR_FATAL) \
     { \
         static std::string str_error ("Fatal error occurred ("); \
-        str_error += checkIfError[error_mode] + ")"; \
+        str_error += checkIfError[error_mode_] + ")"; \
         NAT_EXCEPTION (instance_->expn_, str_error.c_str (), ERROR_FATAL_RETURN) \
     }
 
@@ -396,15 +392,15 @@ void VirtualProcessor_t::FillJitCompiler (JitCompiler_t* compiler, std::string f
     //Print();
     //((void(*)())&int3)();
 
-    compiler->int3();
+    //compiler->int3();
     compiler->push (compiler->r_rbp);
     compiler->mov (compiler->r_rbp, compiler->r_rsp);
 
     for (size_t i = 0; i < instance_->funcs_.size (); i ++)
     {
-        printf ("Line %d\n", static_cast<int32_t> (i));
+        //printf ("Line %d\n", static_cast<int32_t> (i));
         instance_->func_offsets_[i] = static_cast <int64_t> (compiler->Size () + 1);
-        if (i == 26) compiler->int3();
+        //if (i == 26) compiler->int3();
 
         if (instance_->funcs_[i].flag == CMD_Func)
         {
